@@ -1,0 +1,3 @@
+include: .
+depend: cubical-0.4
+flags: --cubical --prop
