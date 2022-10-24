@@ -6,6 +6,9 @@ open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.Equiv
+open import Cubical.Foundations.Structure
+open import Cubical.Foundations.Function
+open import Cubical.Foundations.Transport
 
 open import Cubical.Relation.Nullary
 
@@ -13,6 +16,8 @@ open import Cubical.Data.Sigma
 open import Cubical.Data.Unit
 open import Cubical.Data.Empty
 open import Cubical.Data.Bool
+
+open import Cubical.HITs.PropositionalTruncation
 
 open import Util.ModalOperatorSugar
 open import NegativeResizing
@@ -61,32 +66,29 @@ _↓ {A = A} x = Σ A λ a → [ ∇.is-this x a ]
     g-f : (x : ∇ A) → g (f x) ≡ x
     g-f x = refl
 
+∇=-in' : (x y : ∇ A) → ((a : A) → ∇.is-this x a ≡ ∇.is-this y a) → x ≡ y
+∇=-in' {A = A} x y p =
+  isoFunInjective (∇-as-Σ A) x y
+    (Σ≡Prop (λ a → isProp× (isPropΠ5 (λ _ _ _ _ _ → isProp⊥)) (isProp¬ _)) (funExt p))
+
 ∇=-in : (x y : ∇ A) → ((a : A) → ([ ∇.is-this x a ] ↔ [ ∇.is-this y a ])) → x ≡ y
-∇=-in {A = A}
-      x@(record { is-this = is-this
-                ; well-defd = well-defd
-                ; almost-inh = almost-inh })
-      y@(record { is-this = is-this'
-                ; well-defd = well-defd'
-                ; almost-inh = almost-inh' }) eq =
-      isoFunInjective (∇-as-Σ A) x y
-                      (Σ≡Prop (λ a → isProp× (isPropΠ5 (λ _ _ _ _ _ → isProp⊥))
-                              (isProp¬ _)) (funExt (λ a → Ω¬¬-ext _ _ (fst (eq a)) (snd (eq a)))))
+∇=-in x y p = ∇=-in' x y (λ a → Ω¬¬-ext _ _ (λ z → fst (p a) z) λ z → snd (p a) z)
+
+¬¬Sheaf : (A : Type ℓ) → Type (ℓ-max ℓ (ℓ-suc ℓ'))
+¬¬Sheaf {ℓ' = ℓ'} A = (P : hProp ℓ') → (¬ ¬ ⟨ P ⟩) → (f : ⟨ P ⟩ → A) →
+                       isContr (Σ A (λ a → (p : ⟨ P ⟩) → f p ≡ a))
+
 
 ∇-in : {A : Type ℓ} → A → ∇ A
-∇-in {A = A} a =
-  record { is-this = is-this
-         ; well-defd = well-defd
-         ; almost-inh = ¬¬-in (a , (¬¬resize-in refl)) }
-  where
-    is-this : A → Ω¬¬
-    is-this b = ¬¬resize (b ≡ a)
-    
-    well-defd : (a b : A) → [ is-this a ] → [ is-this b ] → ¬ ¬ (a ≡ b)
-    well-defd a b x y = do
-      is-a ← ¬¬resize-out x
-      is-b ← ¬¬resize-out y
-      ¬¬-in (is-a ∙ sym is-b)
+∇.is-this (∇-in a) b = ¬¬resize (b ≡ a)
+∇.well-defd (∇-in a) b c x y = do
+  is-b ← ¬¬resize-out x
+  is-c ← ¬¬resize-out y
+  ¬¬-in (is-b ∙ sym is-c)
+∇.almost-inh (∇-in a) = ¬¬-in (a , (¬¬resize-in refl))
+
+Separated∇ : {A : Type ℓ} → Separated (∇ A)
+Separated∇ x y z = ∇=-in' _ _ λ a → SeparatedΩ¬¬ _ _ (¬¬-map (cong _) z)
 
 ∇-in-inj : {a b : A} → (∇-in a ≡ ∇-in b) → ¬ ¬ (a ≡ b)
 ∇-in-inj {A = A} {a = a} {b = b} p = ∇.well-defd (∇-in b) a b (lem1 a (lem2 a)) (lem2 b)
@@ -96,6 +98,121 @@ _↓ {A = A} x = Σ A λ a → [ ∇.is-this x a ]
 
     lem2 : (c : A) → [ ∇.is-this (∇-in c) c ]
     lem2 c = ¬¬resize-in refl
+
+∇∩-to-→ : (x y : ∇ A) (a : A) → [ ∇.is-this x a ] → [ ∇.is-this y a ] →
+  (b : A) → [ ∇.is-this x b ] → [ ∇.is-this y b ]
+∇∩-to-→ x y a u v b z = Ω¬¬-stab _ (¬¬-map (λ p → subst _ p v) (∇.well-defd x a b u z))
+
+∇∩→≡ : (x y : ∇ A) (a : A) → [ ∇.is-this x a ] → [ ∇.is-this y a ] → x ≡ y
+∇∩→≡ x y a u v = ∇=-in x y (λ b → (∇∩-to-→ x y a u v b) , ∇∩-to-→ y x a v u b)
+
+isSet∇ : {A : Type ℓ} → isSet (∇ A)
+isSet∇ {A = A} = isOfHLevelRetractFromIso 2 (∇-as-Σ A) (isSetΣSndProp (isSet→ Ω¬¬Set)
+  (λ _ → isProp× (isPropΠ5 (λ _ _ _ _ _ → isProp⊥)) (isProp→ isProp⊥)))
+
+-- ∇-in-fibre : {A : Type ℓ} (α : ∇ A) → Iso (α ↓) (fiber ∇-in α)
+-- Iso.fun (∇-in-fibre α) (a , z) = a , ∇∩→≡ _ _ a (¬¬resize-in refl) z
+-- Iso.inv (∇-in-fibre α) (a , p) = a , subst (λ α' → [ ∇.is-this α' a ]) p (¬¬resize-in refl)
+-- Iso.rightInv (∇-in-fibre α) (a , p) = Σ≡Prop (λ _ → isSet∇ _ _) refl
+-- Iso.leftInv (∇-in-fibre α) (a , z) = Σ≡Prop (λ _ → Ω¬¬-props _) refl
+
+∇-defd→path : {A : Type ℓ} (α : ∇ A) (a : A) → [ ∇.is-this α a ] → α ≡ ∇-in a
+∇-defd→path α a z = ∇∩→≡ _ _ a z (¬¬resize-in refl)
+
+∇-path→defd : {A : Type ℓ} (α : ∇ A) (a : A) → α ≡ ∇-in a → [ ∇.is-this α a ]
+∇-path→defd α a p = subst (λ α' → [ ∇.is-this α' a ]) (sym p) (¬¬resize-in refl)
+
+∇-isSheaf : {A : Type ℓ} → ¬¬Sheaf {ℓ' = ℓ'} (∇ A)
+∇-isSheaf {A = A} P Pconn f = (α , path) , to
+  where
+    α : ∇ A
+    ∇.is-this α a = ¬¬resize (Σ ⟨ P ⟩ (λ z → [ ∇.is-this (f z) a ]))
+    ∇.well-defd α a b u v = do
+      ( p , u' ) ← ¬¬resize-out u
+      ( q , v' ) ← ¬¬resize-out v
+      let u'' = subst _ (str P p q) u'
+      ∇.well-defd (f q) a b u'' v'
+    ∇.almost-inh α = do
+      p ← Pconn
+      (a , u) ← ∇.almost-inh (f p)
+      ¬¬-in (a , ¬¬resize-in (p , u))
+
+    path : (p : ⟨ P ⟩) → f p ≡ α
+    path p = ∇=-in (f p) α (λ a → ltr a , rtl a)
+      where
+        ltr : (a : A) → [ ∇.is-this (f p) a ] → [ ∇.is-this α a ]
+        ltr a z = ¬¬resize-in (p , z)
+
+        rtl : (a : A) → [ ∇.is-this α a ] → [ ∇.is-this (f p) a ]
+        rtl a w = Ω¬¬-stab _ (¬¬-map (λ {(q , w') → subst _ (str P q p) w'}) (¬¬resize-out w))
+
+    to : (y : Σ (∇ A) (λ a → (p : ⟨ P ⟩) → f p ≡ a)) → (α , path) ≡ y
+    to (β , u) = Σ≡Prop (λ _ → isPropΠ (λ _ → isSet∇ _ _)) h
+      where
+        h : α ≡ β
+        h = Separated∇ _ _ (¬¬-map (λ p → sym (path p) ∙ u p) Pconn)
+
+∇-elim : (A : Type ℓ) (B : ∇ A → Type ℓ') → ((α : ∇ A) → Separated (B α)) →
+  ((α : ∇ A) → ¬¬Sheaf (B α)) → ((a : A) → B (∇-in a)) → (α : ∇ A) → (B α)
+
+∇-elim A B Bsep Bsh b₀ α = fst (fst (Bsh α (targets , target-unique) target-almost-inh fst))
+  where
+    Bset : isSet (B α)
+    Bset = Separated→isSet (Bsep α)
+  
+    targets : Type _
+    targets = Σ[ b ∈ B α ] ((a : A) → (p : ∇-in a ≡ α) → subst B p (b₀ a) ≡ b)
+
+    targets' : Type _
+    targets' = Σ[ b ∈ B α ] ((a : A) → (p : ∇-in a ≡ α) → PathP (λ i → B (p i)) (b₀ a) b)
+
+    target-unique : isProp targets
+    target-unique (b , u) (c , v) = Σ≡Prop (λ _ → isPropΠ2 (λ _ _ → Bset _ _)) (Bsep _ _ _ p)
+      where
+        p : ¬ ¬ (b ≡ c)
+        p = do
+          (a , w) ← ∇.almost-inh α
+          let q = sym (∇-defd→path _ _ w)
+          ¬¬-in (sym (u a q) ∙ v a q)
+
+    target-almost-inh : ¬ ¬ targets
+    target-almost-inh = 
+      ¬¬-map (λ {(a , z) → subst B (sym (∇-defd→path _ a z))
+                                   (b₀ a) , λ a' p → Bsep _ _ _
+                                   (¬¬-map (λ r → lem a' a p _ r) (∇-in-inj (sym (∇-defd→path _ _ z) ∙ sym p)))})
+                      (∇.almost-inh α)
+      where
+        lem : (a a' : A) (p : ∇-in a ≡ α) (p' : ∇-in a' ≡ α) (r : a' ≡ a) →
+              (subst B p (b₀ a) ≡ subst B p' (b₀ a'))
+        lem a a' p p' r =
+          subst B p (b₀ a)
+            ≡⟨ cong (subst B p) (sym (substCommSlice (λ _ → A) (B ∘ ∇-in) (λ a'' _ → b₀ a'') r a)) ⟩
+          subst B p (subst B (cong ∇-in r) (b₀ a'))
+            ≡⟨ sym (substComposite B (cong ∇-in r) p (b₀ a')) ⟩
+          subst B (cong ∇-in r ∙ p) (b₀ a')
+            ≡⟨ cong (λ q → subst B q (b₀ a')) (isSet∇ _ _ _ _) ⟩
+          subst B p' (b₀ a')
+            ∎
+
+module ∇-rec (A : Type ℓ) (B : Type ℓ') (Bsep : Separated B) (Bsh : ¬¬Sheaf {ℓ' = ℓ-max ℓ ℓ'} B) where
+  private
+    Bset = Separated→isSet Bsep
+  
+    f-with-comm : (g : A → B) → (α : ∇ A) → Σ[ b ∈ B ] ((a : A) → α ≡ ∇-in a → b ≡ g a)
+    f-with-comm g = ∇-elim A _ (λ α → λ x y z → Σ≡Prop (λ _ → isPropΠ2 (λ _ _ → Bset _ _)) (Bsep _ _ (¬¬-map (cong fst) z))) shf (λ a → (g a) , (λ a' p → Bsep _ _ (¬¬-map (cong g) (∇-in-inj p))))
+      where
+        -- TODO: instance of more general result
+        shf : (α : ∇ A) → ¬¬Sheaf (Σ[ b ∈ B ] ((a : A) → α ≡ ∇-in a → b ≡ g a))
+        shf α P x f = (((fst (fst bc)) , λ a p → Bsep _ _ (¬¬-map (λ z → sym (snd (fst bc) z) ∙ snd (f z) a p) x)) , λ z → Σ≡Prop (λ _ → isPropΠ2 (λ _ _ → Bset _ _)) (snd (fst bc) z)) , λ y → Σ≡Prop (λ _ → isPropΠ (λ _ → isSetΣSndProp Bset (λ _ → isPropΠ2 (λ _ _ → Bset _ _)) _ _)) (Σ≡Prop (λ _ → isPropΠ2 (λ _ _ → Bset _ _)) (cong fst (snd bc ((fst (fst y)) , (λ p → cong fst (snd y p))))))
+          where
+            bc = Bsh P x (fst ∘ f)
+
+  f : (A → B) → (∇ A → B)
+  f g = fst ∘ (f-with-comm g)
+
+  comm : (g : A → B) → (a : A) → (f g (∇-in a) ≡ g a)
+  comm g a = snd (f-with-comm g (∇-in a)) a refl
+
 
 ∇-prop : {A : Type ℓ} (Aprop : isProp A) → ∇ A ≃ (¬ ¬ A)
 ∇-prop {A = A} Aprop = propBiimpl→Equiv ∇A-isprop (isProp¬ _) f g
@@ -116,67 +233,13 @@ _↓ {A = A} x = Σ A λ a → [ ∇.is-this x a ]
 
 
 ∇-map : {A : Type ℓ} {B : Type ℓ'} (f : A → B) → ∇ A → ∇ B 
-∇-map {A = A} {B = B} f x =
-  record { is-this = is-this
-         ; well-defd = well-defd
-         ; almost-inh = almost-inh }
-  where
-    module ∇A = ∇ x
+∇-map {A = A} {B = B} f = ∇-rec.f _ _ Separated∇ ∇-isSheaf (∇-in ∘ f)
 
-    is-this : B → Ω¬¬
-    is-this b = ¬¬resize (Σ A λ a → (b ≡ f a) × [ ∇A.is-this a ])
-
-    well-defd : (b b' : B) → [ is-this b ] → [ is-this b' ] → ¬ ¬ (b ≡ b')
-    well-defd b b' x x' = do
-      (a , (p , z)) ← ¬¬resize-out x
-      (a' , (p' , z')) ← ¬¬resize-out x'
-      q ← ∇A.well-defd a a' z z'
-      ¬¬-in (p ∙ cong f q ∙ sym p')
-
-    almost-inh : ¬ ¬ (Σ B (λ b → [ is-this b ]))
-    almost-inh = do
-      (a , z) ← ∇A.almost-inh
-      ¬¬-in ((f a) , (¬¬resize-in (a , (refl , z))))
-
-∇-mult : ∇ (∇ A) → ∇ A
-∇-mult {A = A} x =
-  record { is-this = is-this ; well-defd = well-defd ; almost-inh = almost-inh }
-  where
-    is-this : A → Ω¬¬
-    is-this a = ∇.is-this x (∇-in a)
-
-    well-defd1 : (a b : A) → [ is-this a ] → [ is-this b ] → ¬ ¬ (∇-in a ≡ ∇-in b)
-    well-defd1 a b u v = ∇.well-defd x _ _ u v
-
-    well-defd : (a b : A) → [ is-this a ] → [ is-this b ] → ¬ ¬ (a ≡ b)
-    well-defd a b u v = do
-      p ← ∇.well-defd x _ _ u v
-      ∇-in-inj p
-
-    lem : (z : ∇ A) → (a : A) → [ ∇.is-this z a ] → z ≡ (∇-in a)
-    lem z a w = ∇=-in z (∇-in a) (λ a' → f a' , g a')
-      where
-        f : (a' : A) → [ ∇.is-this z a' ] → [ ∇.is-this (∇-in a) a' ]
-        f a' v = Ω¬¬-stab _ do
-          p ← ∇.well-defd z a' a v w
-          ¬¬-in (¬¬resize-in p)
-
-        g : (a' : A) → [ ∇.is-this (∇-in a) a' ] → [ ∇.is-this z a' ]
-        g a' u = Ω¬¬-stab _ do
-          p ← ¬¬resize-out u
-          ¬¬-in (subst _ (sym p) w)
-
-    almost-inh : ¬ ¬ (Σ A (λ a → [ is-this a ]))
-    almost-inh = do
-      (x' , z) ← ∇.almost-inh x
-      (a , w) ← ∇.almost-inh x'
-      let q = lem x' a w
-      ¬¬-in (a , subst (λ z → [ ∇.is-this x z ]) q z)
 
 instance
   open ModalOperator
-  ∇-bind : ModalOperator {ℓbase = ℓ-zero} {ℓ = ℓ} {ℓ' = ℓ'} ∇
-  bind (∇-bind) x f = ∇-mult (∇-map f x)
+  ∇-bind : ∀ {ℓa ℓb} → ModalOperator ℓ-zero ℓa ℓb ∇
+  bind (∇-bind) x f = ∇-rec.f _ _ Separated∇ ∇-isSheaf f x
 
 ∇2 : ∇ Bool ≃ Ω¬¬
 ∇2 = isoToEquiv (iso f g f-g g-f)

@@ -26,8 +26,6 @@ postulate
   ¬resize-out : (A : Type ℓ) → [ ¬resize A ] → ¬ A
   ¬resize-rtr : (P : Ω¬¬) → ¬resize(¬ [ P ]) ≡ P
 
-
-
 Ω¬¬-stab : (P : Ω¬¬) → Stable [ P ]
 Ω¬¬-stab P x = subst [_] (¬resize-rtr P) (¬resize-in (¬ [ P ]) x)
 
@@ -56,3 +54,10 @@ postulate
 
 Ω¬¬-invert : Ω¬¬ → Ω¬¬
 Ω¬¬-invert x = ¬¬resize (¬ [ x ])
+
+SeparatedΩ¬¬ : Separated Ω¬¬
+SeparatedΩ¬¬ = (λ x y z → Ω¬¬-ext x y (λ w → Ω¬¬-stab _ (¬¬-map (λ p → subst _ p w) z))
+                                            λ w → Ω¬¬-stab _ (¬¬-map (λ p → subst _ (sym p) w) z))
+
+Ω¬¬Set : isSet Ω¬¬
+Ω¬¬Set = Separated→isSet SeparatedΩ¬¬

@@ -22,5 +22,5 @@ _↔_ : ∀ {ℓ ℓ'} (A : Type ℓ) (B : Type ℓ') → Type (ℓ-max ℓ ℓ'
 A ↔ B = (A → B) × (B → A)
 
 instance
-  ¬¬-modal : ModalOperator {ℓbase = ℓ-zero} {ℓ = ℓ} {ℓ' = ℓ'} (λ {ℓ} A → ¬ ¬ A)
+  ¬¬-modal : {ℓa ℓb : Level} → ModalOperator ℓ-zero ℓa ℓb (λ {ℓ} A → ¬ ¬ A)
   ¬¬-modal = record { bind = λ nna f nb → nna (λ a → f a nb) }
