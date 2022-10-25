@@ -1,4 +1,4 @@
-module DoubleNegationPlus where
+module DoubleNegationSheaves where
 
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
@@ -9,6 +9,7 @@ open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.Structure
 open import Cubical.Foundations.Function
 open import Cubical.Foundations.Transport
+open import Cubical.Foundations.Path
 
 open import Cubical.Relation.Nullary
 
@@ -25,7 +26,7 @@ open import Util.DoubleNegation
 
 private
   variable
-    ℓ ℓ' : Level
+    ℓ ℓ' ℓ'' : Level
     A : Type ℓ
 
 {- ∇ is the plus construction for double negation. It follows that it restricts to
@@ -41,18 +42,18 @@ record ∇ (A : Type ℓ) : Type ℓ where
 {- We say x is defined, or that it denotes an element of A. -}
 
 _↓ : {A : Type ℓ} → ∇ A → Type ℓ
-_↓ {A = A} x = Σ A λ a → [ ∇.is-this x a ]
+_↓ {A = A} x = Σ[ a ∈ A ] [ ∇.is-this x a ]
 
 ∇defd-prop : {A : Type ℓ} → (Separated A) → (x : ∇ A) → isProp (x ↓)
 ∇defd-prop Asep x (a , z) (a' , z') = Σ≡Prop (λ b → Ω¬¬-props _) (Asep a a' (∇.well-defd x a a' z z'))
 
 ∇-as-Σ : (A : Type ℓ) →
-  Iso (∇ A) (Σ (A → Ω¬¬) (λ it → ((a b : A) → [ it a ] → [ it b ] → ¬ ¬ (a ≡ b)) ×
-                            (¬ ¬ Σ A (λ a → [ it a ]))))
+  Iso (∇ A) ( Σ[ P ∈ (A → Ω¬¬) ] (((a b : A) → [ P a ] → [ P b ] → ¬ ¬ (a ≡ b)) ×
+                            (¬ ¬ (Σ[ a ∈ A ] [ P a ]))))
 ∇-as-Σ A = iso f g f-g g-f
   where
-    target = Σ (A → Ω¬¬) (λ it → ((a b : A) → [ it a ] → [ it b ] → ¬ ¬ (a ≡ b)) ×
-                            (¬ ¬ Σ A (λ a → [ it a ])))
+    target = Σ[ P ∈ (A → Ω¬¬) ] (((a b : A) → [ P a ] → [ P b ] → ¬ ¬ (a ≡ b)) ×
+                            (¬ ¬ (Σ[ a ∈ A ] [ P a ])))
   
     f : ∇ A → target
     f x = ∇.is-this x , ((∇.well-defd x) , (∇.almost-inh x))
@@ -78,17 +79,72 @@ _↓ {A = A} x = Σ A λ a → [ ∇.is-this x a ]
 ¬¬Sheaf {ℓ' = ℓ'} A = (P : hProp ℓ') → (¬ ¬ ⟨ P ⟩) → (f : ⟨ P ⟩ → A) →
                        isContr (Σ A (λ a → (p : ⟨ P ⟩) → f p ≡ a))
 
+StableProp→¬¬Sheaf : {A : Type ℓ} (Aprop : isProp A) → Stable A → ¬¬Sheaf {ℓ' = ℓ'} A
+StableProp→¬¬Sheaf Aprop Astab P Pconn f =
+  ((Astab (¬¬-map f Pconn)) , (λ _ → Aprop _ _)) ,
+  λ {(a , w) → Σ≡Prop (λ _ → isPropΠ (λ _ → isProp→isSet Aprop _ _)) (Aprop _ _)}
+
+isProp¬¬Sheaf : {A : Type ℓ} → isProp (¬¬Sheaf {ℓ' = ℓ'} A)
+isProp¬¬Sheaf = isPropΠ3 (λ _ _ _ → isPropIsContr)
+
+¬¬SheafSet→Separated : isSet A → ¬¬Sheaf A → Separated A
+¬¬SheafSet→Separated {A = A} Aset Ash a a' p = sym q ∙ r
+  where
+    af : (a ≡ a') → A
+    af _ = a
+
+    c : isContr (Σ A (λ b → (z : a ≡ a') → a ≡ b))
+    c = Ash ((a ≡ a') , (Aset _ _)) p af
+
+    q = cong fst (snd c (a , (λ _ → refl)))
+    r = cong fst (snd c (a' , (λ z → z)))
+
+¬¬SheafΣ : {A : Type ℓ} {B : A → Type ℓ'} → ¬¬Sheaf A → ((a : A) → ¬¬Sheaf {ℓ' = ℓ''} (B a)) →
+           ¬¬Sheaf (Σ A B)
+¬¬SheafΣ {A = A} {B = B} Ash Bsh P Pconn f =
+  isOfHLevelRetractFromIso 0 (compIso eq eq2) (Bsh _ P Pconn _)
+    
+  where
+    eq : Iso (Σ[ ab ∈ Σ A B ] ((z : ⟨ P ⟩) → f z ≡ ab))
+         (Σ (Σ[ a ∈ A ] ((z : ⟨ P ⟩) → fst (f z) ≡ a))
+           (λ {(a , p) → Σ[ b ∈ B a ]
+                         ((z : ⟨ P ⟩) → PathP (λ i → B (p z i)) (snd (f z)) b)}))
+
+    Iso.fun eq ((a , b) , p) = (a , (λ z i → fst (p z i))) , (b , (λ z i → snd (p z i)))
+    Iso.inv eq ((a , p) , (b , q)) = (a , b) , (λ z i → (p z i) , (q z i))
+    Iso.rightInv eq ((a , p) , (b , q)) = refl
+    Iso.leftInv eq ((a , b) , p) = refl
+
+    ap = Ash P Pconn (fst ∘ f)
+
+    eq2 : Iso (Σ (Σ[ a ∈ A ] ((z : ⟨ P ⟩) → fst (f z) ≡ a))
+                  (λ {(a , p) → Σ[ b ∈ B a ]
+                            ((z : ⟨ P ⟩) → PathP (λ i → B (p z i)) (snd (f z)) b)}))
+               (Σ[ b ∈ B (fst (fst ap)) ] ((z : ⟨ P ⟩) → subst B (snd (fst ap) z) (snd (f z)) ≡ b))
+    eq2 =
+      Σ (Σ[ a ∈ A ] ((z : ⟨ P ⟩) → fst (f z) ≡ a))
+                  (λ {(a , p) → Σ[ b ∈ B a ]
+                           ((z : ⟨ P ⟩) → PathP (λ i → B (p z i)) (snd (f z)) b)})
+            Iso⟨ Σ-contractFstIso ap ⟩
+      Σ[ b ∈ B (fst (fst ap)) ] ((z : ⟨ P ⟩) → PathP (λ i → B (snd (fst ap) z i))
+                         (snd (f z)) b)
+           Iso⟨ Σ-cong-iso-snd (λ b → codomainIsoDep (λ z → PathPIsoPath _ _ _)) ⟩
+      (Σ[ b ∈ B (fst (fst ap)) ] ((z : ⟨ P ⟩) → subst B (snd (fst ap) z) (snd (f z)) ≡ b))
+          ∎Iso
 
 ∇-in : {A : Type ℓ} → A → ∇ A
-∇.is-this (∇-in a) b = ¬¬resize (b ≡ a)
-∇.well-defd (∇-in a) b c x y = do
-  is-b ← ¬¬resize-out x
-  is-c ← ¬¬resize-out y
-  ¬¬-in (is-b ∙ sym is-c)
-∇.almost-inh (∇-in a) = ¬¬-in (a , (¬¬resize-in refl))
+∇.is-this    (∇-in a) b       = ¬¬resize (b ≡ a)
+∇.well-defd  (∇-in a) b c x y = do
+             is-b ← ¬¬resize-out x
+             is-c ← ¬¬resize-out y
+             ¬¬-in (is-b ∙ sym is-c)
+∇.almost-inh (∇-in a)         = ¬¬-in (a , (¬¬resize-in refl))
 
 Separated∇ : {A : Type ℓ} → Separated (∇ A)
 Separated∇ x y z = ∇=-in' _ _ λ a → SeparatedΩ¬¬ _ _ (¬¬-map (cong _) z)
+
+isSet∇ : {A : Type ℓ} → isSet (∇ A)
+isSet∇ {A = A} = Separated→isSet Separated∇
 
 ∇-in-inj : {a b : A} → (∇-in a ≡ ∇-in b) → ¬ ¬ (a ≡ b)
 ∇-in-inj {A = A} {a = a} {b = b} p = ∇.well-defd (∇-in b) a b (lem1 a (lem2 a)) (lem2 b)
@@ -105,16 +161,6 @@ Separated∇ x y z = ∇=-in' _ _ λ a → SeparatedΩ¬¬ _ _ (¬¬-map (cong _
 
 ∇∩→≡ : (x y : ∇ A) (a : A) → [ ∇.is-this x a ] → [ ∇.is-this y a ] → x ≡ y
 ∇∩→≡ x y a u v = ∇=-in x y (λ b → (∇∩-to-→ x y a u v b) , ∇∩-to-→ y x a v u b)
-
-isSet∇ : {A : Type ℓ} → isSet (∇ A)
-isSet∇ {A = A} = isOfHLevelRetractFromIso 2 (∇-as-Σ A) (isSetΣSndProp (isSet→ Ω¬¬Set)
-  (λ _ → isProp× (isPropΠ5 (λ _ _ _ _ _ → isProp⊥)) (isProp→ isProp⊥)))
-
--- ∇-in-fibre : {A : Type ℓ} (α : ∇ A) → Iso (α ↓) (fiber ∇-in α)
--- Iso.fun (∇-in-fibre α) (a , z) = a , ∇∩→≡ _ _ a (¬¬resize-in refl) z
--- Iso.inv (∇-in-fibre α) (a , p) = a , subst (λ α' → [ ∇.is-this α' a ]) p (¬¬resize-in refl)
--- Iso.rightInv (∇-in-fibre α) (a , p) = Σ≡Prop (λ _ → isSet∇ _ _) refl
--- Iso.leftInv (∇-in-fibre α) (a , z) = Σ≡Prop (λ _ → Ω¬¬-props _) refl
 
 ∇-defd→path : {A : Type ℓ} (α : ∇ A) (a : A) → [ ∇.is-this α a ] → α ≡ ∇-in a
 ∇-defd→path α a z = ∇∩→≡ _ _ a z (¬¬resize-in refl)
@@ -152,22 +198,21 @@ isSet∇ {A = A} = isOfHLevelRetractFromIso 2 (∇-as-Σ A) (isSetΣSndProp (isS
         h : α ≡ β
         h = Separated∇ _ _ (¬¬-map (λ p → sym (path p) ∙ u p) Pconn)
 
-∇-elim : (A : Type ℓ) (B : ∇ A → Type ℓ') → ((α : ∇ A) → Separated (B α)) →
-  ((α : ∇ A) → ¬¬Sheaf (B α)) → ((a : A) → B (∇-in a)) → (α : ∇ A) → (B α)
+module _ (A : Type ℓ) (B : ∇ A → Type ℓ') (Bsep : (α : ∇ A) → Separated (B α))
+  (Bsh : (α : ∇ A) → ¬¬Sheaf (B α)) (b₀ : (a : A) → B (∇-in a)) where
 
-∇-elim A B Bsep Bsh b₀ α = fst (fst (Bsh α (targets , target-unique) target-almost-inh fst))
-  where
+  private
+    variable
+      α : ∇ A
+
     Bset : isSet (B α)
-    Bset = Separated→isSet (Bsep α)
-  
-    targets : Type _
-    targets = Σ[ b ∈ B α ] ((a : A) → (p : ∇-in a ≡ α) → subst B p (b₀ a) ≡ b)
+    Bset {α = α} = Separated→isSet (Bsep α)
 
-    targets' : Type _
-    targets' = Σ[ b ∈ B α ] ((a : A) → (p : ∇-in a ≡ α) → PathP (λ i → B (p i)) (b₀ a) b)
+    targets : (α : ∇ A) → Type _
+    targets α = Σ[ b ∈ B α ] ((a : A) → (p : ∇-in a ≡ α) → subst B p (b₀ a) ≡ b)
 
-    target-unique : isProp targets
-    target-unique (b , u) (c , v) = Σ≡Prop (λ _ → isPropΠ2 (λ _ _ → Bset _ _)) (Bsep _ _ _ p)
+    target-unique : isProp (targets α)
+    target-unique {α = α} (b , u) (c , v) = Σ≡Prop (λ _ → isPropΠ2 (λ _ _ → Bset _ _)) (Bsep _ _ _ p)
       where
         p : ¬ ¬ (b ≡ c)
         p = do
@@ -175,8 +220,8 @@ isSet∇ {A = A} = isOfHLevelRetractFromIso 2 (∇-as-Σ A) (isSetΣSndProp (isS
           let q = sym (∇-defd→path _ _ w)
           ¬¬-in (sym (u a q) ∙ v a q)
 
-    target-almost-inh : ¬ ¬ targets
-    target-almost-inh = 
+    target-almost-inh : ¬ ¬ (targets α)
+    target-almost-inh {α = α} =
       ¬¬-map (λ {(a , z) → subst B (sym (∇-defd→path _ a z))
                                    (b₀ a) , λ a' p → Bsep _ _ _
                                    (¬¬-map (λ r → lem a' a p _ r) (∇-in-inj (sym (∇-defd→path _ _ z) ∙ sym p)))})
@@ -194,18 +239,27 @@ isSet∇ {A = A} = isOfHLevelRetractFromIso 2 (∇-as-Σ A) (isSetΣSndProp (isS
           subst B p' (b₀ a')
             ∎
 
+  ∇-elim : (α : ∇ A) → (B α)
+  ∇-elim α = fst (fst (Bsh α ((targets α) , target-unique) target-almost-inh fst))
+
+  ∇-elim-β : (a : A) → (∇-elim (∇-in a) ≡ (b₀ a))
+  ∇-elim-β a = sym (snd (fst (Bsh (∇-in a) _ target-almost-inh fst)) ((b₀ a) , λ a' p → Bsep _ _ _ (¬¬-map (λ q → cong (λ r → subst B r (b₀ a')) (isSet∇ _ _ p (cong ∇-in q)) ∙ fromPathP (cong b₀ q)) (∇-in-inj p))))
+
+
 module ∇-rec (A : Type ℓ) (B : Type ℓ') (Bsep : Separated B) (Bsh : ¬¬Sheaf {ℓ' = ℓ-max ℓ ℓ'} B) where
   private
     Bset = Separated→isSet Bsep
   
     f-with-comm : (g : A → B) → (α : ∇ A) → Σ[ b ∈ B ] ((a : A) → α ≡ ∇-in a → b ≡ g a)
-    f-with-comm g = ∇-elim A _ (λ α → λ x y z → Σ≡Prop (λ _ → isPropΠ2 (λ _ _ → Bset _ _)) (Bsep _ _ (¬¬-map (cong fst) z))) shf (λ a → (g a) , (λ a' p → Bsep _ _ (¬¬-map (cong g) (∇-in-inj p))))
+    f-with-comm g = ∇-elim A _ (λ α → λ x y z → Σ≡Prop (λ _ → isPropΠ2 (λ _ _ → Bset _ _))
+                           (Bsep _ _ (¬¬-map (cong fst) z)))
+                           shf (λ a → (g a) , (λ a' p → Bsep _ _ (¬¬-map (cong g) (∇-in-inj p))))
       where
-        -- TODO: instance of more general result
         shf : (α : ∇ A) → ¬¬Sheaf (Σ[ b ∈ B ] ((a : A) → α ≡ ∇-in a → b ≡ g a))
-        shf α P x f = (((fst (fst bc)) , λ a p → Bsep _ _ (¬¬-map (λ z → sym (snd (fst bc) z) ∙ snd (f z) a p) x)) , λ z → Σ≡Prop (λ _ → isPropΠ2 (λ _ _ → Bset _ _)) (snd (fst bc) z)) , λ y → Σ≡Prop (λ _ → isPropΠ (λ _ → isSetΣSndProp Bset (λ _ → isPropΠ2 (λ _ _ → Bset _ _)) _ _)) (Σ≡Prop (λ _ → isPropΠ2 (λ _ _ → Bset _ _)) (cong fst (snd bc ((fst (fst y)) , (λ p → cong fst (snd y p))))))
-          where
-            bc = Bsh P x (fst ∘ f)
+        shf α =
+          ¬¬SheafΣ Bsh
+                   (λ b → StableProp→¬¬Sheaf (isPropΠ2 (λ _ _ → Bset _ _))
+                          (λ z a p → Bsep _ _ (λ w → z (λ u → w (u a p)))))
 
   f : (A → B) → (∇ A → B)
   f g = fst ∘ (f-with-comm g)
