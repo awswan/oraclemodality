@@ -267,6 +267,17 @@ module ∇-rec (A : Type ℓ) (B : Type ℓ') (Bsep : Separated B) (Bsh : ¬¬Sh
   comm : (g : A → B) → (a : A) → (f g (∇-in a) ≡ g a)
   comm g a = snd (f-with-comm g (∇-in a)) a refl
 
+  unique : (g : A → B) → (f' : ∇ A → B) → (comm' : (a : A) → (f' (∇-in a)) ≡ g a) →
+           (α : ∇ A) → (f' α ≡ f g α)
+  unique g f' comm' = ∇-elim A (λ α → f' α ≡ f g α) (λ _ _ _ _ → Bset _ _ _ _)
+                             (λ α → StableProp→¬¬Sheaf (Bset _ _) (Bsep _ _))
+                             λ a → comm' a ∙ sym (comm g a)
+
+  equiv : (∇ A → B) ≃ (A → B)
+  fst equiv h = h ∘ ∇-in
+  equiv-proof (snd equiv) g = ((f g) , funExt (comm g)) ,
+    λ {(f' , comm') → Σ≡Prop (λ _ → isSetΠ (λ _ → Bset) _ _)
+      (sym (funExt (λ α → unique g f' (λ a i → comm' i a) α)))}
 
 ∇-prop : {A : Type ℓ} (Aprop : isProp A) → ∇ A ≃ (¬ ¬ A)
 ∇-prop {A = A} Aprop = propBiimpl→Equiv ∇A-isprop (isProp¬ _) f g
