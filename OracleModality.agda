@@ -2,13 +2,15 @@ module OracleModality where
 
 open import Util.ModalOperatorSugar
 open import Util.DoubleNegation
-open import DoubleNegationPlus
-open import NegativeResizing
 
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Function
 open import Cubical.Foundations.Equiv
+open import Cubical.Foundations.HLevels
+open import Cubical.Foundations.Equiv.PathSplit
+open import Cubical.Foundations.Structure hiding (⟨_⟩)
+open import Cubical.Foundations.Isomorphism
 
 open import Cubical.Relation.Nullary
 open import Cubical.Induction.WellFounded
@@ -24,20 +26,21 @@ open import Cubical.HITs.Nullification renaming (rec to Null-rec)
 
 open import Cubical.Modalities.Modality
 
+open import Util.HasUnderlyingType
+open import NegativeResizing
 open import MarkovInduction
-open import DoubleNegationPlus
+open import DoubleNegationSheaves
 
 variable
   ℓ ℓ' ℓ'' ℓa ℓb : Level
-  A : Type ℓ
-  B : Type ℓ
+  A B X : Type ℓ
 
 Oracle : (A : Type ℓa) (B : Type ℓb) → Type (ℓ-max ℓa ℓb)
 Oracle A B = A → ∇ B
 
-module OM (f : Oracle A B) {ℓ : Level} where
+module OM (χ : Oracle A B) {ℓ : Level} where
   domain : A → Type _
-  domain a = (f a) ↓
+  domain a = χ a ↓
 
   open Modality (NullModality {ℓ = ℓ} domain) public
 
@@ -60,7 +63,7 @@ module _ (χ : Oracle A B) where
   private
     _is_ = ∇.is-this {A = ℕ}
     mp-inst : ∇ ℕ → Type _
-    mp-inst N = ((n : ℕ) → ◯⟨ χ ⟩ (Dec [ N is n ])) → ◯⟨ χ ⟩ (N ↓)
+    mp-inst N = ((n : ℕ) → ◯⟨ χ ⟩ (Dec ⟨ N is n ⟩)) → ◯⟨ χ ⟩ (N ↓)
 
   rel-markov : (N : ∇ ℕ) → mp-inst N
   rel-markov = markov-ind mp-inst step
@@ -74,7 +77,7 @@ module _ (χ : Oracle A B) where
         n₀ ← ih (Pred.M N ¬p) (Pred.is-suc N ¬p) (convert-dec ¬p)
         ∣ ((suc (fst n₀)) , snd n₀) ∣
         where
-          convert-dec : (¬p : ¬ [ N is 0 ]) (n : ℕ) → ◯⟨ χ ⟩ (Dec [ (Pred.M N ¬p) is n ])
+          convert-dec : (¬p : ¬ ⟨ N is 0 ⟩) (n : ℕ) → ◯⟨ χ ⟩ (Dec ⟨ (Pred.M N ¬p) is n ⟩)
           convert-dec ¬p n = do
             yes p ← dec (suc n)
               where no ¬p' → ∣ no (λ z → ¬p' (Pred.is-suc N ¬p n z)) ∣
@@ -96,7 +99,7 @@ module _ (χ : Oracle A B) where
         ¬¬-in (is-unique n m x' y')
       ∇.almost-inh N = ¬¬-map (λ {(n , x) → (n , ¬¬resize-in x)}) exists
 
-      dec' : (n : ℕ) → ◯⟨ χ ⟩ (Dec [ ∇.is-this N n ])
+      dec' : (n : ℕ) → ◯⟨ χ ⟩ (Dec ⟨ ∇.is-this N n ⟩)
       dec' n = do
         (no ¬p) ← dec n
           where (yes p) → ∣ yes (¬¬resize-in p) ∣
@@ -107,7 +110,7 @@ module _ (χ : Oracle A B) where
   locate-first X exists dec = locate-unique X' unique (λ w → exists (λ (n , v) → convert-ex w n v)) dec'
     where
       X' : ℕ → Type _
-      X' n = X n × ((m : ℕ) → m < n → ¬ (X m))
+      X' n = X n × ((m : ℕ) → m < n → ¬ (X m)) -- n is the first witness for X
 
       convert-ex : ¬ (Σ ℕ X') → (n : ℕ) → ¬ (X n)
       convert-ex z = WFI.induction <-wellfounded λ n w v → z (n , (v , w))
@@ -121,11 +124,11 @@ module _ (χ : Oracle A B) where
       scan : (n : ℕ) → ◯⟨ χ ⟩(((m : ℕ) → m < n → ¬ (X m)) ⊎ Σ ℕ λ k → (k < n) × (X' k))
       scan zero = ∣ inl (λ m p _ → ¬-<-zero p) ∣
       scan (suc n) = do
-        inl z ← scan n
-          where inr (m , (p , z)) → ∣ inr (m , (<-trans p ≤-refl) , z) ∣
-        no ¬xn ← dec n
-          where yes xn → ∣ inr (n , (≤-refl , (xn , z))) ∣
-        ∣ inl (λ m p → ⊎rec (z m) (λ q → subst _ (sym q) ¬xn) (<-split p)) ∣
+        inl z ← scan n -- has the first witness already occured for m < n?
+          where inr (m , (p , z)) → ∣ inr (m , (<-trans p ≤-refl) , z) ∣ -- already found the least witness
+        no ¬xn ← dec n -- check if n is a witness
+          where yes xn → ∣ inr (n , (≤-refl , (xn , z))) ∣ -- first witness appears here
+        ∣ inl (λ m p → ⊎rec (z m) (λ q → subst _ (sym q) ¬xn) (<-split p)) ∣ -- otherwise return proof there's no witness so far
 
       dec' : (n : ℕ) → ◯⟨ χ ⟩ (Dec (X' n))
       dec' n = do
@@ -140,22 +143,47 @@ module _ (χ : Oracle A B) where
     (n , (x , _)) ← locate-first X exists dec
     ∣ n , x ∣
 
-  query : (a : A) → ◯⟨ χ ⟩((χ a) ↓)
+  query : (a : A) → ◯⟨ χ ⟩(χ a ↓)
   query a = hub a (λ z → ∣ z ∣)
 
 --  query-correct : (a : A) → ◯⟨ χ ⟩ (
 
 -- compute-section : (χ : ℕ → ∇ ℕ) →  →
   
-search-fibre : (χ : ℕ → ∇ ℕ) (m : ℕ) → ¬ ¬ (Σ ℕ (λ n → [ ∇.is-this (χ n) m ])) →
-  ◯⟨ χ ⟩ (Σ ℕ (λ n → [ ∇.is-this (χ n) m ]))
+search-fibre : (χ : ℕ → ∇ ℕ) (m : ℕ) → ¬ ¬ (Σ ℕ (λ n → ⟨ ∇.is-this (χ n) m ⟩)) →
+  ◯⟨ χ ⟩ (Σ ℕ (λ n → ⟨ ∇.is-this (χ n) m ⟩))
 
 search-fibre χ m z = locate χ _ z λ n → do
   z ← query χ n
   ∣ dec' n z ∣
   where
-    dec' : (n : ℕ) → ((χ n) ↓) → Dec [ ∇.is-this (χ n) m ]
+    dec' : (n : ℕ) → ((χ n) ↓) → Dec ⟨ ∇.is-this (χ n) m ⟩
     dec' n (χn , w) with discreteℕ χn m
     ... | yes p = yes (subst _ p w)
     ... | no ¬p = no (λ v → ∇.well-defd (χ n) χn m w v ¬p)
+
+
+variable
+  χ χ' χ'' : Oracle A B
+
+¬¬Sheaf→Null : {A : Type ℓ} {X : Type ℓ'} {χ : Oracle A B} → (Separated B) → (¬¬Sheaf X) → isNull (λ a → (χ a) ↓) X
+¬¬Sheaf→Null {A = A} {X = X} {χ = χ} Bsep Xsh a = fromIsEquiv const (record { equiv-proof = λ f → isOfHLevelRetractFromIso 0 (fibequiv f) (Xsh (P a) (∇.almost-inh (χ a)) f) })
+  where
+    P : (a : A) → hProp _
+    P a = (χ a ↓) , ∇defd-prop Bsep (χ a)
+    
+    fibequiv : (f : χ a ↓ → X) → Iso (fiber const f) (Σ[ x ∈ X ] ((z : ⟨ P a ⟩) → f z ≡ x))
+    Iso.fun (fibequiv f) (x , u) = x , λ z i → u (~ i) z
+    Iso.inv (fibequiv f) (x , p) = x , funExt (λ z → sym (p z))
+    Iso.rightInv (fibequiv f) (x , p) = refl
+    Iso.leftInv (fibequiv f) (x , u) = refl
+
+strip : {χ : Oracle A B} → (Separated B) → ◯⟨ χ ⟩ X → ∇ X
+strip {χ = χ} Bsep = Null-rec (¬¬Sheaf→Null {χ = χ} Bsep ∇-isSheaf) ∇-in
+
+variable
+  A' B' : Type ℓ'
+
+_≤T_ : {A : Type ℓ} (χ : Oracle A B) (χ' : Oracle A' B') → Type _
+_≤T_ {A = A} χ χ' = (a : A) → ◯⟨ χ' ⟩(χ a ↓)
 

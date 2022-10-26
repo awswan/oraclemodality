@@ -11,6 +11,7 @@ open import Cubical.Data.Empty
 
 open import Util.ModalOperatorSugar
 open import Util.DoubleNegation
+open import Util.HasUnderlyingType
 
 private
   variable
@@ -61,3 +62,7 @@ SeparatedΩ¬¬ = (λ x y z → Ω¬¬-ext x y (λ w → Ω¬¬-stab _ (¬¬-map
 
 Ω¬¬Set : isSet Ω¬¬
 Ω¬¬Set = Separated→isSet SeparatedΩ¬¬
+
+instance
+  Ω¬¬underlyingType : HasUnderlyingType Ω¬¬
+  HasUnderlyingType.get-underlying-type Ω¬¬underlyingType = [_]
