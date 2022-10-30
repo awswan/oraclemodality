@@ -23,6 +23,7 @@ open import Cubical.HITs.PropositionalTruncation
 open import Util.HasUnderlyingType
 open import Util.ModalOperatorSugar
 open import NegativeResizing
+open import PartialElements
 
 open import Util.DoubleNegation
 
@@ -38,17 +39,8 @@ private
 record ∇ (A : Type ℓ) : Type ℓ where
   field
     is-this : A → Ω¬¬
-    well-defd : (a b : A) → ⟨ is-this a ⟩ → ⟨ is-this b ⟩ → ¬ ¬ (a ≡ b)
+    well-defd : (a a' : A) → ⟨ is-this a ⟩ → ⟨ is-this a' ⟩ → ¬ ¬ a ≡ a'
     almost-inh : ¬ ¬ Σ A (λ a → ⟨ is-this a ⟩)
-
-{- We say x is defined, or that it denotes an element of A. -}
-
-_↓ : {A : Type ℓ} → ∇ A → Type ℓ
-_↓ {A = A} x = Σ[ a ∈ A ] ⟨ ∇.is-this x a ⟩
-
-
-∇defd-prop : {A : Type ℓ} → (Separated A) → (x : ∇ A) → isProp (x ↓)
-∇defd-prop Asep x (a , z) (a' , z') = Σ≡Prop (λ b → Ω¬¬-props _) (Asep a a' (∇.well-defd x a a' z z'))
 
 ∇-as-Σ : (A : Type ℓ) →
   Iso (∇ A) ( Σ[ P ∈ (A → Ω¬¬) ] (((a b : A) → ⟨ P a ⟩ → ⟨ P b ⟩ → ¬ ¬ (a ≡ b)) ×
@@ -77,6 +69,27 @@ _↓ {A = A} x = Σ[ a ∈ A ] ⟨ ∇.is-this x a ⟩
 
 ∇=-in : (x y : ∇ A) → ((a : A) → (⟨ ∇.is-this x a ⟩ ↔ ⟨ ∇.is-this y a ⟩)) → x ≡ y
 ∇=-in x y p = ∇=-in' x y (λ a → Ω¬¬-ext _ _ (λ z → fst (p a) z) λ z → snd (p a) z)
+
+∇-in : {A : Type ℓ} → A → ∇ A
+∇.is-this    (∇-in a) b       = ¬¬resize (b ≡ a)
+∇.well-defd  (∇-in a) b c x y = do
+             is-b ← ¬¬resize-out x
+             is-c ← ¬¬resize-out y
+             ¬¬-in (is-b ∙ sym is-c)
+∇.almost-inh (∇-in a)         = ¬¬-in (a , (¬¬resize-in refl))
+
+instance
+  open HasUnderlyingPartial
+  ∇hasUnderlyingPartial : HasUnderlyingPartial {ℓ = ℓ} ∇
+  ∂.is-this (getUnderlyingPartial ∇hasUnderlyingPartial α) = ∇.is-this α
+  ∂.well-defd (getUnderlyingPartial ∇hasUnderlyingPartial α) = ∇.well-defd α
+  includeTotal ∇hasUnderlyingPartial = ∇-in
+  totalIs ∇hasUnderlyingPartial a = ¬¬resize-in refl
+
+∇defd-prop : {A : Type ℓ} → (Separated A) → (x : ∇ A) → isProp (x ↓)
+∇defd-prop Asep x (a , z) (a' , z') = Σ≡Prop (λ b → Ω¬¬-props _) (Asep a a' (∇.well-defd x a a' z z'))
+
+
 
 ¬¬Sheaf : (A : Type ℓ) → Type (ℓ-max ℓ (ℓ-suc ℓ'))
 ¬¬Sheaf {ℓ' = ℓ'} A = (P : hProp ℓ') → (¬ ¬ ⟨ P ⟩) → (f : ⟨ P ⟩ → A) →
@@ -134,14 +147,6 @@ isProp¬¬Sheaf = isPropΠ3 (λ _ _ _ → isPropIsContr)
            Iso⟨ Σ-cong-iso-snd (λ b → codomainIsoDep (λ z → PathPIsoPath _ _ _)) ⟩
       (Σ[ b ∈ B (fst (fst ap)) ] ((z : ⟨ P ⟩) → subst B (snd (fst ap) z) (snd (f z)) ≡ b))
           ∎Iso
-
-∇-in : {A : Type ℓ} → A → ∇ A
-∇.is-this    (∇-in a) b       = ¬¬resize (b ≡ a)
-∇.well-defd  (∇-in a) b c x y = do
-             is-b ← ¬¬resize-out x
-             is-c ← ¬¬resize-out y
-             ¬¬-in (is-b ∙ sym is-c)
-∇.almost-inh (∇-in a)         = ¬¬-in (a , (¬¬resize-in refl))
 
 Separated∇ : {A : Type ℓ} → Separated (∇ A)
 Separated∇ x y z = ∇=-in' _ _ λ a → SeparatedΩ¬¬ _ _ (¬¬-map (cong _) z)
@@ -355,3 +360,4 @@ instance
 instance
   ∇2UnderlyingType : HasUnderlyingType (∇ Bool)
   HasUnderlyingType.get-underlying-type ∇2UnderlyingType b = ⟨ ∇.is-this b true ⟩
+

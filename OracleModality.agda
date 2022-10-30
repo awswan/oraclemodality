@@ -11,28 +11,32 @@ open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Equiv.PathSplit
 open import Cubical.Foundations.Structure hiding (⟨_⟩)
 open import Cubical.Foundations.Isomorphism
+open import Cubical.Foundations.Equiv.Properties
 
 open import Cubical.Relation.Nullary
 open import Cubical.Induction.WellFounded
 
-open import Cubical.Data.Nat
+open import Cubical.Data.Nat renaming (elim to ℕelim)
 open import Cubical.Data.Nat.Order
 open import Cubical.Data.Fin
+open import Cubical.Data.Bool hiding (_≟_)
 open import Cubical.Data.Sigma
 open import Cubical.Data.Empty renaming (rec to ⊥rec)
 open import Cubical.Data.Sum renaming (rec to ⊎rec)
+open import Cubical.Data.Unit
 
-open import Cubical.HITs.Nullification renaming (rec to Null-rec)
+open import Cubical.HITs.Nullification renaming (rec to Null-rec ; elim to Null-elim)
 
 open import Cubical.Modalities.Modality
 
 open import Util.HasUnderlyingType
+open import PartialElements
 open import NegativeResizing
 open import MarkovInduction
 open import DoubleNegationSheaves
 
 variable
-  ℓ ℓ' ℓ'' ℓa ℓb : Level
+  ℓ ℓ' ℓ'' ℓa ℓb ℓa' ℓb' : Level
   A B X : Type ℓ
 
 Oracle : (A : Type ℓa) (B : Type ℓb) → Type (ℓ-max ℓa ℓb)
@@ -146,9 +150,9 @@ module _ (χ : Oracle A B) where
   query : (a : A) → ◯⟨ χ ⟩(χ a ↓)
   query a = hub a (λ z → ∣ z ∣)
 
---  query-correct : (a : A) → ◯⟨ χ ⟩ (
+-- --  query-correct : (a : A) → ◯⟨ χ ⟩ (
 
--- compute-section : (χ : ℕ → ∇ ℕ) →  →
+-- -- compute-section : (χ : ℕ → ∇ ℕ) →  →
   
 search-fibre : (χ : ℕ → ∇ ℕ) (m : ℕ) → ¬ ¬ (Σ ℕ (λ n → ⟨ ∇.is-this (χ n) m ⟩)) →
   ◯⟨ χ ⟩ (Σ ℕ (λ n → ⟨ ∇.is-this (χ n) m ⟩))
@@ -166,7 +170,7 @@ search-fibre χ m z = locate χ _ z λ n → do
 variable
   χ χ' χ'' : Oracle A B
 
-¬¬Sheaf→Null : {A : Type ℓ} {X : Type ℓ'} {χ : Oracle A B} → (Separated B) → (¬¬Sheaf X) → isNull (λ a → (χ a) ↓) X
+¬¬Sheaf→Null : {A : Type ℓ} {B : Type ℓ'} {X : Type ℓ''} {χ : Oracle A B} → (Separated B) → (¬¬Sheaf X) → isNull (λ a → (χ a) ↓) X
 ¬¬Sheaf→Null {A = A} {X = X} {χ = χ} Bsep Xsh a = fromIsEquiv const (record { equiv-proof = λ f → isOfHLevelRetractFromIso 0 (fibequiv f) (Xsh (P a) (∇.almost-inh (χ a)) f) })
   where
     P : (a : A) → hProp _
@@ -178,12 +182,93 @@ variable
     Iso.rightInv (fibequiv f) (x , p) = refl
     Iso.leftInv (fibequiv f) (x , u) = refl
 
-strip : {χ : Oracle A B} → (Separated B) → ◯⟨ χ ⟩ X → ∇ X
-strip {χ = χ} Bsep = Null-rec (¬¬Sheaf→Null {χ = χ} Bsep ∇-isSheaf) ∇-in
+strip : (χ : Oracle A B) → (Separated B) → ◯⟨ χ ⟩ X → ∇ X
+strip χ Bsep = Null-rec (¬¬Sheaf→Null {χ = χ} Bsep ∇-isSheaf) ∇-in
+
+recallStrip : (χ : Oracle A B) → (sB : Separated B) → {X : Type ℓ} → (x : ◯⟨ χ ⟩ X) → ◯⟨ χ ⟩(strip χ sB x ↓)
+recallStrip χ sB = Null-elim (λ x → isNull-Null (λ a → χ a ↓)) λ x → ∣ x , (¬¬resize-in refl) ∣
 
 variable
   A' B' : Type ℓ'
 
-_≤T_ : {A : Type ℓ} (χ : Oracle A B) (χ' : Oracle A' B') → Type _
-_≤T_ {A = A} χ χ' = (a : A) → ◯⟨ χ' ⟩(χ a ↓)
+-- Making this a record type encourages agda to keep hold of χ and χ' when type checking
+record _≤T_ {A : Type ℓa} {B : Type ℓb} {A' : Type ℓa'} {B' : Type ℓb'}
+            (χ : Oracle A B) (χ' : Oracle A' B') : Type (ℓ-max (ℓ-max ℓa ℓb) (ℓ-max ℓa' ℓb')) where
+  constructor Tred
+  field
+    red : (a : A) → ◯⟨ χ' ⟩(χ a ↓)
 
+TReducible→isNull : {B : Type ℓ} {χ : Oracle A B} {χ' : Oracle A' B'} (sB : Separated B)
+  → χ ≤T χ' → (isNull (λ a → χ a ↓) (◯⟨ χ' ⟩ X))
+TReducible→isNull {X = X} {χ = χ} {χ' = χ'} sB (Tred e) a  = fromIsEquiv _ (snd equiv)
+  where
+    ic : isContr (◯⟨ χ' ⟩ (χ a ↓))
+    ic = inhProp→isContr (e a) (NullPreservesProp (∇defd-prop sB (χ a)))
+  
+    equiv : ◯⟨ χ' ⟩ X ≃ (χ a ↓ → ◯⟨ χ' ⟩ X)
+    equiv =
+      ◯⟨ χ' ⟩ X
+        ≃⟨ invEquiv (UnitToType≃ _) ⟩
+      (Unit → ◯⟨ χ' ⟩ X)
+        ≃⟨ preCompEquiv (isContr→≃Unit ic) ⟩
+      (◯⟨ χ' ⟩( χ a ↓) → ◯⟨ χ' ⟩ X)
+        ≃⟨ NullRecEquiv (isNull-Null _) ⟩
+      (χ a ↓ → ◯⟨ χ' ⟩ X)
+        ■
+
+_≡T_ : (χ : Oracle A B) (χ' : Oracle A' B') → Type _
+χ ≡T χ' = (χ ≤T χ') × (χ' ≤T χ)
+
+Trefl : (χ : Oracle A B) → χ ≤T χ
+Trefl χ = Tred (query χ)
+
+simulate : {χ : Oracle A B} (sB : Separated B) → χ ≤T χ' → ◯⟨ χ ⟩ X → ◯⟨ χ' ⟩ X
+simulate sB e = Null-rec (TReducible→isNull sB e) ∣_∣
+
+≤TTrans : {χ' : Oracle A' B'} (sB : Separated B') →
+          χ ≤T χ' → χ' ≤T χ'' → χ ≤T χ''
+≤TTrans sB (Tred e) f = Tred (λ a → simulate sB f (e a))
+
+module _ (χ : ℕ × ℕ → ∇ Bool) (uniq : (a : ℕ) → (b b' : ℕ) → ⟨ χ (a , b) ⟩ → ⟨ χ (a , b') ⟩ → ¬ ¬ b ≡ b')
+  (defd : (a : ℕ) → ¬ ¬ (Σ[ b ∈ ℕ ] ⟨ χ (a , b) ⟩)) where
+  graphToFn : ℕ → ∇ ℕ
+  
+  ∇.is-this (graphToFn a) b = ∇.is-this (χ (a , b)) true
+  ∇.well-defd (graphToFn a) b b' u v = uniq a b b' u v
+  ∇.almost-inh (graphToFn a) = defd a
+
+
+  graphToFn≤T : graphToFn ≤T χ
+  graphToFn≤T = Tred λ a → locate χ (λ b → ⟨ χ (a , b) ⟩) (defd a) (dec a)
+    where
+      dec : (a : ℕ) → (b : ℕ) → ◯⟨ χ ⟩ (Dec ⟨ χ (a , b) ⟩)
+      dec a b = do
+        (false , z) ← query χ (a , b)
+          where (true , z) → ∣ yes z ∣
+        ∣ no (λ w → ∇.well-defd (χ (a , b)) false true z w false≢true) ∣
+
+module invert (χ : ℕ → ∇ ℕ) (inj : (n m : ℕ) → χ n ≡ χ m → n ≡ m) (surj : (m : ℕ) → ¬ ¬ (Σ[ n ∈ ℕ ] ⟨ ∇.is-this (χ n) m ⟩)) where
+  compute-inverse : (n : ℕ) → ◯⟨ χ ⟩ (Σ[ m ∈ ℕ ] ⟨ ∇.is-this (χ m) n ⟩)
+  compute-inverse n = locate χ (λ m → ⟨ ∇.is-this (χ m) n ⟩) (surj n) (dec n)
+    where
+      dec : (m n : ℕ) → ◯⟨ χ ⟩ (Dec ⟨ ∇.is-this (χ n) m ⟩)
+      dec m n = do
+        (k , z) ← query χ n
+        ∣ decRec (λ p → yes (subst _ p z))
+                 (λ np → no (λ w → np (separatedℕ _ _
+                            (∇.well-defd (χ n) k m z w)))) (discreteℕ k m) ∣
+  inverse : ℕ → ∇ ℕ
+  inverse n = strip χ separatedℕ (OM.◯-map χ fst (compute-inverse n))
+
+  inverse≤T : inverse ≤T χ
+  _≤T_.red (inverse≤T) n = recallStrip χ separatedℕ (OM.◯-map χ fst (compute-inverse n))
+
+relativeℕElim : (χ : Oracle A B) → (X : ◯⟨ χ ⟩ ℕ → OM.◯-Types χ {ℓ = ℓ}) → ⟨ X (∣ 0 ∣) ⟩ →
+  ((n : ◯⟨ χ ⟩ ℕ) → ⟨ X n ⟩ → ⟨ X (OM.◯-map χ suc n) ⟩) → (n : ◯⟨ χ ⟩ ℕ) → ⟨ X n ⟩
+
+relativeℕElim χ X base step = Null-elim (snd ∘ X) (ℕelim base (λ n ih → step ∣ n ∣ ih))
+
+manyOne→≤T : {C : Type ℓ} (χ : Oracle A B) → (f : C → A) → ((χ ∘ f) ≤T χ)
+manyOne→≤T χ f = Tred λ c → query χ (f c)
+
+-- cont : ((χ : Oracle A B) → ◯⟨ χ ⟩ X)
