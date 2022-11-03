@@ -24,3 +24,9 @@ A ↔ B = (A → B) × (B → A)
 instance
   ¬¬-modal : {ℓa ℓb : Level} → ModalOperator ℓ-zero ℓa ℓb (λ {ℓ} A → ¬ ¬ A)
   ¬¬-modal = record { bind = λ nna f nb → nna (λ a → f a nb) }
+
+¬¬Dec : (A : Type ℓ) → ¬ ¬ (Dec A)
+¬¬Dec A z = z (no noA)
+  where
+    noA : ¬ A
+    noA a = z (yes a)

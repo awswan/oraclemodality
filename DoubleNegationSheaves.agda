@@ -81,8 +81,8 @@ record ∇ (A : Type ℓ) : Type ℓ where
 instance
   open HasUnderlyingPartial
   ∇hasUnderlyingPartial : HasUnderlyingPartial {ℓ = ℓ} ∇
-  ∂.is-this (getUnderlyingPartial ∇hasUnderlyingPartial α) = ∇.is-this α
-  ∂.well-defd (getUnderlyingPartial ∇hasUnderlyingPartial α) = ∇.well-defd α
+  is-this ∇hasUnderlyingPartial = ∇.is-this
+  well-defd ∇hasUnderlyingPartial = ∇.well-defd
   includeTotal ∇hasUnderlyingPartial = ∇-in
   totalIs ∇hasUnderlyingPartial a = ¬¬resize-in refl
 
@@ -147,6 +147,22 @@ isProp¬¬Sheaf = isPropΠ3 (λ _ _ _ → isPropIsContr)
            Iso⟨ Σ-cong-iso-snd (λ b → codomainIsoDep (λ z → PathPIsoPath _ _ _)) ⟩
       (Σ[ b ∈ B (fst (fst ap)) ] ((z : ⟨ P ⟩) → subst B (snd (fst ap) z) (snd (f z)) ≡ b))
           ∎Iso
+
+¬¬SheafΠ : {A : Type ℓ} {B : A → Type ℓ'} → ((a : A) → ¬¬Sheaf {ℓ' = ℓ''} (B a)) → ¬¬Sheaf ((a : A) → B a)
+¬¬SheafΠ {A = A} {B = B} shB P x f = isOfHLevelRetractFromIso 0 lem3 lem2
+  where
+    lem1 : (a : A) → isContr (Σ[ b ∈ B a ] ((p : ⟨ P ⟩) → f p a ≡ b))
+    lem1 a = shB a P x λ p → f p a
+
+    lem2 : isContr ((a : A) → Σ[ b ∈ B a ] ((p : ⟨ P ⟩) → f p a ≡ b))
+    lem2 = isContrΠ lem1
+
+    lem3 : Iso (Σ ((a : A) → B a) (λ a → (p : ⟨ P ⟩) → f p ≡ a))
+                ((a : A) → Σ[ b ∈ B a ] ((p : ⟨ P ⟩) → f p a ≡ b))
+    Iso.inv lem3 g = (fst ∘ g) , (λ z → funExt (λ a → snd (g a) z))
+    Iso.fun lem3 (h , q) a = (h a) , (λ z → funExt⁻ (q z) a)
+    Iso.leftInv lem3 _ = refl
+    Iso.rightInv lem3 _ = refl
 
 Separated∇ : {A : Type ℓ} → Separated (∇ A)
 Separated∇ x y z = ∇=-in' _ _ λ a → SeparatedΩ¬¬ _ _ (¬¬-map (cong _) z)
@@ -313,6 +329,28 @@ instance
   open ModalOperator
   ∇-bind : ∀ {ℓa ℓb} → ModalOperator ℓ-zero ℓa ℓb ∇
   bind (∇-bind) x f = ∇-rec.f _ _ Separated∇ ∇-isSheaf f x
+
+separatedΠ : {A : Type ℓ} {B : A → Type ℓ'} → ((a : A) → Separated (B a)) → Separated ((a : A) → B a)
+separatedΠ sepB f g p = funExt (λ a → sepB _ _ _ (¬¬-map (λ p' → funExt⁻ p' a) p))
+
+∇defd : {A : Type ℓ} → (α : ∇ A) → (∇ (α ↓))
+∇.is-this (∇defd α) (a , z) = ¬¬⊤
+∇.well-defd (∇defd α) (a , u) (b , v) _ _ = ¬¬-map (Σ≡Prop (λ _ → Ω¬¬-props _)) (∇.well-defd α _ _ u v)
+∇.almost-inh (∇defd α) = ¬¬-map (λ {(a , u) → (a , u) , (¬¬resize-in tt)}) (∇.almost-inh α)
+
+∇breakΣ : (A : Type ℓ) (B : A → Type ℓ') → (Separated A) → ∇ (Σ A B) → Σ[ α ∈ ∇ A ] ((z : α ↓) → ∇ (B (fst z)))
+∇breakΣ A B sepA = ∇-elim _ _ (λ _ → separatedΣ Separated∇ (λ _ → separatedΠ (λ _ → Separated∇)))
+                              (λ _ → ¬¬SheafΣ ∇-isSheaf (λ _ → ¬¬SheafΠ (λ _ → ∇-isSheaf)))
+                              λ {(a , b) → (∇-in a) , (λ z → subst (∇ ∘ B) (sym (sepA _ _ (¬¬resize-out (snd z)))) (∇-in b)) }
+
+-- ∇preservesΣ : (A : Type ℓ) (B : A → Type ℓ') → (Σ[ α ∈ ∇ A ] ((z : α ↓) → ∇ (B (fst z)))) ≃ (∇ (Σ A B))
+-- fst (∇preservesΣ A B) (α , β) = do
+--   z ← ∇defd α
+--   b ← β z
+--   ∇-in ((fst z) , b)
+
+-- equiv-proof (snd (∇preservesΣ A B)) = ∇-elim _ _ {!!} {!!} {!!}
+-- Iso.fun (∇preservesΣ A B) = ∇-rec.f (Σ A B ) (Σ[ α ∈ ∇ A ] ((z : α ↓) → ∇ (B (fst z)))) (separatedΣ Separated∇ λ a → separatedΠ (λ _ → Separated∇)) (¬¬SheafΣ ∇-isSheaf λ a → ¬¬SheafΠ (λ _ → ∇-isSheaf)) λ {(a , b) → (∇-in a) , (λ z → subst (∇ ∘ B) {!!} (∇-in b))}
 
 ∇2 : ∇ Bool ≃ Ω¬¬
 ∇2 = isoToEquiv (iso f g f-g g-f)

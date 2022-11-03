@@ -1,29 +1,14 @@
 module OracleModality where
 
-open import Util.ModalOperatorSugar
-open import Util.DoubleNegation
 
-open import Cubical.Core.Everything
-open import Cubical.Foundations.Prelude
-open import Cubical.Foundations.Function
-open import Cubical.Foundations.Equiv
-open import Cubical.Foundations.HLevels
-open import Cubical.Foundations.Equiv.PathSplit
-open import Cubical.Foundations.Structure hiding (⟨_⟩)
-open import Cubical.Foundations.Isomorphism
-open import Cubical.Foundations.Equiv.Properties
+open import Includes
+
+open import Util.Everything
+
 
 open import Cubical.Relation.Nullary
 open import Cubical.Induction.WellFounded
 
-open import Cubical.Data.Nat renaming (elim to ℕelim)
-open import Cubical.Data.Nat.Order
-open import Cubical.Data.Fin
-open import Cubical.Data.Bool hiding (_≟_)
-open import Cubical.Data.Sigma
-open import Cubical.Data.Empty renaming (rec to ⊥rec)
-open import Cubical.Data.Sum renaming (rec to ⊎rec)
-open import Cubical.Data.Unit
 
 open import Cubical.HITs.Nullification renaming (rec to Null-rec ; elim to Null-elim)
 
@@ -36,7 +21,7 @@ open import MarkovInduction
 open import DoubleNegationSheaves
 
 variable
-  ℓ ℓ' ℓ'' ℓa ℓb ℓa' ℓb' : Level
+  ℓa ℓb ℓa' ℓb' : Level
   A B X : Type ℓ
 
 Oracle : (A : Type ℓa) (B : Type ℓb) → Type (ℓ-max ℓa ℓb)
@@ -113,7 +98,7 @@ module _ (χ : Oracle A B) where
                     ◯⟨ χ ⟩ (Dec (X n))) → ◯⟨ χ ⟩ (Σ ℕ (λ n → X n × ((m : ℕ) → m < n → ¬ (X m))))
   locate-first X exists dec = locate-unique X' unique (λ w → exists (λ (n , v) → convert-ex w n v)) dec'
     where
-      X' : ℕ → Type _
+      X' : ℕ → Type _ -- TODO: Simplify using functions from MarkovInduction
       X' n = X n × ((m : ℕ) → m < n → ¬ (X m)) -- n is the first witness for X
 
       convert-ex : ¬ (Σ ℕ X') → (n : ℕ) → ¬ (X n)
@@ -150,10 +135,6 @@ module _ (χ : Oracle A B) where
   query : (a : A) → ◯⟨ χ ⟩(χ a ↓)
   query a = hub a (λ z → ∣ z ∣)
 
--- --  query-correct : (a : A) → ◯⟨ χ ⟩ (
-
--- -- compute-section : (χ : ℕ → ∇ ℕ) →  →
-  
 search-fibre : (χ : ℕ → ∇ ℕ) (m : ℕ) → ¬ ¬ (Σ ℕ (λ n → ⟨ ∇.is-this (χ n) m ⟩)) →
   ◯⟨ χ ⟩ (Σ ℕ (λ n → ⟨ ∇.is-this (χ n) m ⟩))
 
@@ -271,4 +252,3 @@ relativeℕElim χ X base step = Null-elim (snd ∘ X) (ℕelim base (λ n ih �
 manyOne→≤T : {C : Type ℓ} (χ : Oracle A B) → (f : C → A) → ((χ ∘ f) ≤T χ)
 manyOne→≤T χ f = Tred λ c → query χ (f c)
 
--- cont : ((χ : Oracle A B) → ◯⟨ χ ⟩ X)
