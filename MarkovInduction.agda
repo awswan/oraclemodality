@@ -65,10 +65,10 @@ dec→decLeast nnA decA n with (any? {n = n} (decA ∘ fst))
 markovsPrinciple₀ : (N : ∇ ℕ) → ((n : ℕ) → Dec (N ↓= n)) → Σ[ n ∈ ℕ ] (N ↓= n)
 markovsPrinciple₀ = markov-ind _ step
   where
-    A : ∇ ℕ → Type _
-    A N = ((n : ℕ) → Dec (N ↓= n)) → N ↓
+    A' : ∇ ℕ → Type _
+    A' N = ((n : ℕ) → Dec (N ↓= n)) → N ↓
 
-    step : (N : (∇ ℕ)) (ih : (M : (∇ ℕ)) → (N is-suc-of M) → (A M)) → (A N)
+    step : (N : (∇ ℕ)) (ih : (M : (∇ ℕ)) → (N is-suc-of M) → (A' M)) → (A' N)
     step N ih dec with (dec 0)
     ... | yes p = 0 , p
     ... | no ¬p = (suc (fst Mdefd)) , snd Mdefd

@@ -8,6 +8,7 @@ open import Cubical.Foundations.Isomorphism public
 open import Cubical.Foundations.Equiv public
 open import Cubical.Foundations.Equiv.PathSplit public
 open import Cubical.Foundations.Equiv.Properties public
+open import Cubical.Foundations.Structure hiding (⟨_⟩)
 
 open import Cubical.Relation.Nullary public
 open import Cubical.Induction.WellFounded public
@@ -19,10 +20,11 @@ open import Cubical.Data.Nat public renaming (elim to ℕelim)
 open import Cubical.Data.Nat.Order public
 open import Cubical.Data.Fin public renaming (elim to FinElim)
 open import Cubical.Data.Sum public renaming (rec to ⊎rec ; elim to ⊎elim)
-open import Cubical.Data.Bool public hiding (_≟_ ; _≤_ ; _≥_ ; isProp≤)
+open import Cubical.Data.Bool public hiding (_≤_ ; _≥_ ; isProp≤) renaming (_≟_ to discreteBool)
 open import Cubical.Data.Maybe public renaming (rec to maybeRec ; elim to maybeElim)
 
 open import Cubical.HITs.Nullification public renaming (rec to nullRec ; elim to nullElim)
 
 variable
   ℓ ℓ' ℓ'' : Level
+  A B X : Type ℓ

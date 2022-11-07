@@ -58,8 +58,8 @@ module _ {S : Type ℓ → Type ℓ} ⦃ hup : HasUnderlyingPartial S ⦄ {A : T
   partialUnique : (α : S A) {a b : A} → (α ↓= a) → (α ↓= b) → ¬ ¬ a ≡ b
   partialUnique α = HasUnderlyingPartial.well-defd hup α _ _
 
-  ↓=compose≡ : {α : S A} {a b : A} → (α ↓= a) → (p : a ≡ b) → (α ↓= b)
-  ↓=compose≡ {α} u p = subst (λ a' → α ↓= a') p u
+  ↓=compose≡ : (α : S A) {a b : A} → (α ↓= a) → (p : a ≡ b) → (α ↓= b)
+  ↓=compose≡ α u p = subst (λ a' → α ↓= a') p u
 
   ≡compose↓= : {α β : S A} (p : α ≡ β) {a : A} → (β ↓= a) → (α ↓= a)
   ≡compose↓= p {a} u = subst (λ γ → γ ↓= a) (sym p) u

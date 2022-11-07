@@ -22,8 +22,8 @@ open import DoubleNegationSheaves
 
 variable
   ℓa ℓb ℓa' ℓb' : Level
-  A B X : Type ℓ
 
+-- TODO: See if making this a record lets us make more variables implicit
 Oracle : (A : Type ℓa) (B : Type ℓb) → Type (ℓ-max ℓa ℓb)
 Oracle A B = A → ∇ B
 
@@ -45,6 +45,9 @@ instance
               ModalOperator (ℓ-max ℓa ℓb) ℓc ℓd (Null S)
   bind (Null-bind {S = S}) a g = Null-rec (isNull-Null S) g a
     -- Nullification.rec is more flexible than ◯-rec in allowing differing universe levels
+
+◯⟨⟩≡-in : (χ : Oracle A B) → {a b : ◯⟨ χ ⟩ X} → (◯⟨ χ ⟩ (a ≡ b)) → a ≡ b
+◯⟨⟩≡-in χ = nullRec (≡-isNull (isNull-Null _)) (λ x → x)
 
 module _ (χ : Oracle A B) where
   open OM χ
