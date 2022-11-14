@@ -24,7 +24,7 @@ module _ {ℓa ℓs ℓ} {A : Type ℓa} (S : A → hProp ℓs) where
     extn-type = (x : ⟨ S α ⟩) → f0 x
 
     extn-null : isNull (fst ∘ S) extn-type
-    extn-null = NullPreservesΠ f1
+    extn-null = isNullΠ f1
 
 
     extn-equiv : (x0 : ⟨ S α ⟩) → extn-type ≃ f0 x0

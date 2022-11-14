@@ -6,9 +6,10 @@ open import Cubical.Foundations.Function public
 open import Cubical.Foundations.HLevels public
 open import Cubical.Foundations.Isomorphism public
 open import Cubical.Foundations.Equiv public
+open import Cubical.Foundations.Univalence public
 open import Cubical.Foundations.Equiv.PathSplit public
 open import Cubical.Foundations.Equiv.Properties public
-open import Cubical.Foundations.Structure hiding (⟨_⟩)
+open import Cubical.Foundations.Structure hiding (⟨_⟩) public
 
 open import Cubical.Relation.Nullary public
 open import Cubical.Induction.WellFounded public

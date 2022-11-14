@@ -27,8 +27,11 @@ variable
 Oracle : (A : Type ℓa) (B : Type ℓb) → Type (ℓ-max ℓa ℓb)
 Oracle A B = A → ∇ B
 
+oDefd : (χ : Oracle A B) → A → Type _
+oDefd χ a = χ a ↓
+
 module OM (χ : Oracle A B) {ℓ : Level} where
-  domain : A → Type _
+  domain : A → Type _ -- TODO: delete
   domain a = χ a ↓
 
   open Modality (NullModality {ℓ = ℓ} domain) public
@@ -47,7 +50,7 @@ instance
     -- Nullification.rec is more flexible than ◯-rec in allowing differing universe levels
 
 ◯⟨⟩≡-in : (χ : Oracle A B) → {a b : ◯⟨ χ ⟩ X} → (◯⟨ χ ⟩ (a ≡ b)) → a ≡ b
-◯⟨⟩≡-in χ = nullRec (≡-isNull (isNull-Null _)) (λ x → x)
+◯⟨⟩≡-in χ = nullRec (isNull≡ (isNull-Null _)) (λ x → x)
 
 module _ (χ : Oracle A B) where
   open OM χ
