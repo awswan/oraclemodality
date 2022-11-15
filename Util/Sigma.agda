@@ -1,7 +1,7 @@
 open import Includes
 open import Cubical.Foundations.GroupoidLaws
 
-module Util.Sigma {A : Type ℓ} {B : A → Type ℓ'} where
+module Util.Sigma {A : Type ℓ} (B : A → Type ℓ') where
 
 private variable
   a a' : A
@@ -20,11 +20,17 @@ private variable
 conjugatePath : {a a' : A} (p : a ≡ a') {b b' : B a} (q : b ≡ b') →
   ΣPathSnd (cong (subst B p) q) ≡ (sym (ΣPathFst p) ∙∙ ΣPathSnd q ∙∙ ΣPathFst p)
 
-conjugatePath {a} {a'} p {b} {b'} q i j =
+conjugatePath {a} {a'} p {b} {b'} q i j = 
   hcomp (λ k → λ {(j = i0) → ΣPathFst {b = b} p k
                  ; (j = i1) → ΣPathFst {b = b'} p k
                  ; (i = i0) → (p k) , subst-filler B p (q j) k})
         (a , q j)
+
+conjugatePathSquare : {a a' : A} (p : a ≡ a') {b b' : B a} (q : b ≡ b') →
+  PathP (λ i → ΣPathFst {b = b} p i ≡ ΣPathFst {b = b'} p i)
+           (ΣPathSnd q) (ΣPathSnd (cong (subst B p) q))
+conjugatePathSquare p q i j = (p i) , subst-filler B p (q j) i
+
 
 conjugateLoop : {a : A} (p : a ≡ a) {b : B a} (q : b ≡ b) →
   ΣPathSnd (cong (subst B p) q) ≡ (sym (ΣPathFst p) ∙∙ ΣPathSnd q ∙∙ ΣPathFst p)
