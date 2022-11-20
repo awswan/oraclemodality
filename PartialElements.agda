@@ -8,7 +8,7 @@ open import Cubical.Data.Sigma
 open import Util.HasUnderlyingType
 open import Util.DoubleNegation
 open import Util.ModalOperatorSugar
-open import NegativeResizing
+open import Axioms.NegativeResizing
 
 private
   variable

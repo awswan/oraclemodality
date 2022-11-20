@@ -1,4 +1,4 @@
-module ChurchsThesis where
+module Axioms.ChurchsThesis where
 
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
@@ -13,8 +13,8 @@ open import Cubical.Data.Empty
 
 open import Includes
 
-open import MarkovInduction
-open import NegativeResizing
+open import Axioms.MarkovInduction
+open import Axioms.NegativeResizing
 open import StablePartial
 open import PartialElements
 open import Util.Everything

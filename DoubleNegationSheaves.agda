@@ -22,7 +22,7 @@ open import Cubical.HITs.PropositionalTruncation
 
 open import Util.HasUnderlyingType
 open import Util.ModalOperatorSugar
-open import NegativeResizing
+open import Axioms.NegativeResizing
 open import PartialElements
 
 open import Util.DoubleNegation

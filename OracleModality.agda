@@ -16,8 +16,8 @@ open import Cubical.Modalities.Modality
 
 open import Util.HasUnderlyingType
 open import PartialElements
-open import NegativeResizing
-open import MarkovInduction
+open import Axioms.NegativeResizing
+open import Axioms.MarkovInduction
 open import DoubleNegationSheaves
 
 variable

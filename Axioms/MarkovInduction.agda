@@ -1,11 +1,11 @@
-module MarkovInduction where
+module Axioms.MarkovInduction where
 
 open import Includes
 
 open import Util.Everything
 
 open import DoubleNegationSheaves
-open import NegativeResizing
+open import Axioms.NegativeResizing
 open import PartialElements
 
 _is-suc-of_ : (∇ ℕ) → (∇ ℕ) → Type

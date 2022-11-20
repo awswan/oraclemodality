@@ -2,7 +2,7 @@ module StablePartial where
 
 open import Includes
 open import PartialElements
-open import NegativeResizing
+open import Axioms.NegativeResizing
 
 open import Util.Everything
 

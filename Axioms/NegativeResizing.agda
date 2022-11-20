@@ -1,4 +1,4 @@
-module NegativeResizing where
+module Axioms.NegativeResizing where
 
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude

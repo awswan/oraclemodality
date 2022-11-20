@@ -18,11 +18,11 @@ open import Cubical.Foundations.Univalence
 open import Cubical.Homotopy.Loopspace
 
 
-open import MarkovInduction
-open import ChurchsThesis
+open import Axioms.MarkovInduction
+open import Axioms.ChurchsThesis
 open import OracleModality
 open import DoubleNegationSheaves
-open import NegativeResizing
+open import Axioms.NegativeResizing
 open import PartialElements
 open import Util.LexNull
 open import Util.Sigma
