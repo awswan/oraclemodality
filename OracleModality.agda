@@ -141,6 +141,15 @@ module _ (χ : Oracle A B) where
   query : (a : A) → ◯⟨ χ ⟩(χ a ↓)
   query a = hub a (λ z → ∣ z ∣)
 
+  evalWithPath : (x : ◯⟨ χ ⟩ X) → ◯⟨ χ ⟩ (Σ[ x' ∈ X ] (x ≡ ∣ x' ∣))
+  evalWithPath = nullElim (λ _ → isNull-Null _) λ x → ∣ x , refl ∣
+
+  isNull⊥ : isNull (oDefd χ) ⊥
+  isPathSplitEquiv.sec (isNull⊥ a) = (∇.almost-inh (χ a)) , (λ b → funExt (λ _ → isProp⊥ _ _))
+
+  extract⊥ : ◯⟨ χ ⟩ ⊥ → ⊥
+  extract⊥ = nullRec isNull⊥ (λ x → x)
+
 search-fibre : (χ : ℕ → ∇ ℕ) (m : ℕ) → ¬ ¬ (Σ ℕ (λ n → ⟨ ∇.is-this (χ n) m ⟩)) →
   ◯⟨ χ ⟩ (Σ ℕ (λ n → ⟨ ∇.is-this (χ n) m ⟩))
 
@@ -249,11 +258,6 @@ module invert (χ : ℕ → ∇ ℕ) (inj : (n m : ℕ) → χ n ≡ χ m → n 
 
   inverse≤T : inverse ≤T χ
   _≤T_.red (inverse≤T) n = recallStrip χ separatedℕ (OM.◯-map χ fst (compute-inverse n))
-
-relativeℕElim : (χ : Oracle A B) → (X : ◯⟨ χ ⟩ ℕ → OM.◯-Types χ {ℓ = ℓ}) → ⟨ X (∣ 0 ∣) ⟩ →
-  ((n : ◯⟨ χ ⟩ ℕ) → ⟨ X n ⟩ → ⟨ X (OM.◯-map χ suc n) ⟩) → (n : ◯⟨ χ ⟩ ℕ) → ⟨ X n ⟩
-
-relativeℕElim χ X base step = Null-elim (snd ∘ X) (ℕelim base (λ n ih → step ∣ n ∣ ih))
 
 manyOne→≤T : {C : Type ℓ} (χ : Oracle A B) → (f : C → A) → ((χ ∘ f) ≤T χ)
 manyOne→≤T χ f = Tred λ c → query χ (f c)

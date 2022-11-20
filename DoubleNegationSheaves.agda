@@ -399,3 +399,5 @@ instance
   ∇2UnderlyingType : HasUnderlyingType (∇ Bool)
   HasUnderlyingType.get-underlying-type ∇2UnderlyingType b = ⟨ ∇.is-this b true ⟩
 
+∇→¬¬ :  {A : Type ℓ} → ∇ A → ¬ ¬ A
+∇→¬¬ α = ¬¬-map fst (∇.almost-inh α)

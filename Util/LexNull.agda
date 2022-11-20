@@ -60,3 +60,9 @@ module _ {ℓa ℓs ℓ} {A : Type ℓa} (S : A → hProp ℓs) where
   Type◯-Null α = fromIsEquiv _ (isoToIsEquiv (iso _ (λ f → (extn-type f) , (extn-null f)) (λ f → funExt (λ z → Σ≡Prop (λ _ → isPropΠ (λ _ → isPropIsPathSplitEquiv _)) (ua (extn-equiv f z)))) λ X → Σ≡Prop (λ _ → isPropΠ (λ _ → isPropIsPathSplitEquiv _)) (sym (ua (extn-unique (λ _ → X) X (λ _ → idEquiv _))))))
     where
       open ExtendTop α
+
+  ∣∣-inj : {X : Type ℓ} → (x y : X) → (∣ x ∣ ≡ ∣ y ∣) → Null (fst ∘ S) (x ≡ y)
+  ∣∣-inj {X = X} x y p = subst (fst ∘ Z) p ∣ refl ∣
+    where
+      Z : Null (fst ∘ S) X → Type◯
+      Z = nullRec Type◯-Null (λ y' → Null (fst ∘ S) (x ≡ y') , isNull-Null _)
