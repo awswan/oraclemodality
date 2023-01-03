@@ -181,6 +181,9 @@ variable
 strip : (χ : Oracle A B) → (Separated B) → ◯⟨ χ ⟩ X → ∇ X
 strip χ Bsep = Null-rec (¬¬Sheaf→Null {χ = χ} Bsep ∇-isSheaf) ∇-in
 
+◯→¬¬ : (χ : Oracle A B) → (Separated B) → ◯⟨ χ ⟩ X → ¬ ¬ X
+◯→¬¬ χ Bsep z = ∇→¬¬ (strip χ Bsep z)
+
 recallStrip : (χ : Oracle A B) → (sB : Separated B) → {X : Type ℓ} → (x : ◯⟨ χ ⟩ X) → ◯⟨ χ ⟩(strip χ sB x ↓)
 recallStrip χ sB = Null-elim (λ x → isNull-Null (λ a → χ a ↓)) λ x → ∣ x , (¬¬resize-in refl) ∣
 
@@ -227,6 +230,7 @@ simulate sB e = Null-rec (TReducible→isNull sB e) ∣_∣
 
 module _ (χ : ℕ × ℕ → ∇ Bool) (uniq : (a : ℕ) → (b b' : ℕ) → ⟨ χ (a , b) ⟩ → ⟨ χ (a , b') ⟩ → ¬ ¬ b ≡ b')
   (defd : (a : ℕ) → ¬ ¬ (Σ[ b ∈ ℕ ] ⟨ χ (a , b) ⟩)) where
+
   graphToFn : ℕ → ∇ ℕ
   
   ∇.is-this (graphToFn a) b = ∇.is-this (χ (a , b)) true
@@ -261,4 +265,3 @@ module invert (χ : ℕ → ∇ ℕ) (inj : (n m : ℕ) → χ n ≡ χ m → n 
 
 manyOne→≤T : {C : Type ℓ} (χ : Oracle A B) → (f : C → A) → ((χ ∘ f) ≤T χ)
 manyOne→≤T χ f = Tred λ c → query χ (f c)
-

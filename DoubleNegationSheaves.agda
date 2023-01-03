@@ -222,6 +222,9 @@ isSet∇ {A = A} = Separated→isSet Separated∇
         h : α ≡ β
         h = Separated∇ _ _ (¬¬-map (λ p → sym (path p) ∙ u p) Pconn)
 
+∇injective : {A : Type ℓ} (P : hProp ℓ') → (¬ ¬ ⟨ P ⟩) → (f : ⟨ P ⟩ → ∇ A) → Σ[ α ∈ ∇ A ] ((p : ⟨ P ⟩) → f p ≡ α)
+∇injective P p₀ f = fst (∇-isSheaf P p₀ f)
+
 module _ (A : Type ℓ) (B : ∇ A → Type ℓ') (Bsep : (α : ∇ A) → Separated (B α))
   (Bsh : (α : ∇ A) → ¬¬Sheaf (B α)) (b₀ : (a : A) → B (∇-in a)) where
 

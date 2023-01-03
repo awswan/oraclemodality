@@ -1,7 +1,7 @@
 module Util.ModalOperatorInstances.PropTruncation where
 
 open import Cubical.Core.Everything
-open import Cubical.HITs.PropositionalTruncation
+open import Cubical.HITs.PropositionalTruncation public
 
 open import Util.ModalOperatorSugar
 
