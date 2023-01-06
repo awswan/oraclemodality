@@ -48,7 +48,29 @@ postulate
   where
     dom : φ-domain e n
     dom = φ-domainStable e n (¬¬resize-out z)
-  
+
+module _ (e : ℕ) (n : ℕ) where
+  φ-domainIn : (φ-domain e n) → (φ e n ↓)
+  φ-domainIn z = snd (fst (φ-domainStable e n (¬¬resize-out (¬¬resize-in z)))) ,
+    ¬¬resize-in ((¬¬resize-in z) , refl)
+
+  φ-domainOut : (φ e n ↓) → (φ-domain e n)
+  φ-domainOut (m , z) = φ-domainStable e n do
+    (u , p) ← ¬¬resize-out z
+    ¬¬resize-out u
+
+  φ-domainStable' : Stable (φ e n ↓)
+  φ-domainStable' z = φ-domainIn (φ-domainStable e n (¬¬-map φ-domainOut z))
+
+  φ-domainIsProp : isProp (φ e n ↓)
+  φ-domainIsProp (m , u) (l , v) = Σ≡Prop (λ k → Ω¬¬-props _) (separatedℕ _ _ p)
+    where
+      p : NonEmpty (m ≡ l)
+      p = do
+        u' ← ¬¬resize-out u
+        v' ← ¬¬resize-out v
+        ¬¬-in (sym (snd u') ∙∙ cong (λ z → ∂.value (φ e n) z) (Ω¬¬-props _ (fst u') (fst v')) ∙∙ snd v')
+
 postulate
   ECT : (f : ℕ → ∂ ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → f n ↓ → φ e n ≡ f n) ∥₁
 

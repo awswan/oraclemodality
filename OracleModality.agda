@@ -4,6 +4,7 @@ module OracleModality where
 open import Includes
 
 open import Util.Everything
+open import Util.LexNull
 
 
 open import Cubical.Relation.Nullary
@@ -265,3 +266,10 @@ module invert (χ : ℕ → ∇ ℕ) (inj : (n m : ℕ) → χ n ≡ χ m → n 
 
 manyOne→≤T : {C : Type ℓ} (χ : Oracle A B) → (f : C → A) → ((χ ∘ f) ≤T χ)
 manyOne→≤T χ f = Tred λ c → query χ (f c)
+
+separated◯⟨⟩ : (χ : Oracle A B) → (Separated B) → (Separated X) → (Separated (◯⟨ χ ⟩ X))
+separated◯⟨⟩ χ sepB sepX =
+  nullElim (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull≡ (isNull-Null (oDefd χ)))))
+  λ x → nullElim (λ _ → isNullΠ (λ _ → isNull≡ (isNull-Null (oDefd χ))))
+                 (λ y p → cong ∣_∣ (sepX _ _ (p >>= λ p' →
+                   ◯→¬¬ χ sepB (∣∣-inj (λ a → (oDefd χ a) , (∇defd-prop sepB (χ a))) _ _ p'))))
