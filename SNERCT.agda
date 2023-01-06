@@ -11,6 +11,7 @@ open import Axioms.DenseNegativeChoice
 open import PartialElements
 open import OracleModality
 open import DoubleNegationSheaves
+open import StablePartial
 open import Util.DoubleNegation
 open import Util.ModalOperatorSugar
 open import Util.HasUnderlyingType
@@ -27,6 +28,24 @@ postulate
 ℕ→ℕwithVec = Iso.inv ℕwithVecℕIso
 ℕwithVec→ℕ = Iso.fun ℕwithVecℕIso
 
+postulate
+  ℕPairIso : Iso (ℕ × ℕ) ℕ
+
+p₀ : ℕ → ℕ
+p₀ n = fst (Iso.inv ℕPairIso n)
+
+p₁ : ℕ → ℕ
+p₁ n = snd (Iso.inv ℕPairIso n)
+
+pair : ℕ → ℕ → ℕ
+pair n m = Iso.fun ℕPairIso (n , m)
+
+pairβ₀ : (x y : ℕ) → (p₀ (pair x y) ≡ x)
+pairβ₀ x y = cong fst (Iso.leftInv ℕPairIso (x , y))
+
+pairβ₁ : (x y : ℕ) → (p₁ (pair x y) ≡ y)
+pairβ₁ x y = cong snd (Iso.leftInv ℕPairIso (x , y))
+
 finiteSearchMaybe : (n : ℕ) → (A : Type ℓ) → (f : (m : Fin n) → Maybe A) → ((m : Fin n) → f m ≡ nothing) ⊎ (Σ[ (m , a) ∈ Fin n × A ] f m ≡ just a)
 finiteSearchMaybe zero A f = inl (λ (m , p) → ⊥rec (¬-<-zero p))
 finiteSearchMaybe (suc n) A f = ⊎rec (λ z → ⊎rec (λ p → inl (λ m → ⊎rec (λ q → cong f (toℕ-injective refl) ∙ z ((fst m) , q)) (λ q → cong f (toℕ-injective q) ∙ p) (<-split (snd m)))) (λ {(a , p) → inr (((n , ≤-refl) , a) , p)}) (lem (f (n , ≤-refl)))) (λ {((m , a) , p) → inr ((((fst m) , (≤-suc (snd m))) , a) , p)}) (finiteSearchMaybe n A λ m → f ((fst m) , (≤-suc (snd m))))
@@ -39,17 +58,6 @@ data prOutputPoss : Type where
   continue : prOutputPoss
   halt : ℕ → prOutputPoss
   callOracle : ℕ → prOutputPoss
-
--- instance
---   open HasUnderlyingPartial
---   OMHasUnderlyingPartial : {χ : Oracle ℕ ℕ} → HasUnderlyingPartial {ℓ = ℓ} ◯⟨ χ ⟩
---   is-this (OMHasUnderlyingPartial {χ = χ}) z x = ¬¬resize (z ≡ ∣ x ∣)
---   well-defd (OMHasUnderlyingPartial {χ = χ}) z a b p q = do
---     p' ← ¬¬resize-out p
---     q' ← ¬¬resize-out q
---     ◯→¬¬ χ separatedℕ (∣∣-inj (λ n → (χ n ↓) , (∇defd-prop separatedℕ (χ n))) a b (sym p' ∙ q'))
---   includeTotal (OMHasUnderlyingPartial {χ = χ}) = ∣_∣
---   totalIs (OMHasUnderlyingPartial {χ = χ}) a = ¬¬resize-in refl
 
 below∇ : ∇ ℕ → ℕ → Type
 below∇ N m = (n : ℕ) → N ↓= n → m < n
@@ -135,41 +143,78 @@ module _ (χ : Oracle ℕ ℕ) where
       zp : ◯⟨ χ ⟩ (fiber ∣_∣ z)
       zp = nullElim (λ z' → isNull-Null (oDefd χ) {X = fiber ∣_∣ z'}) (λ z' → ∣ z' , refl ∣) z
 
+  decodeDom : ℕ → ℕ → Type
+  decodeDom e zero = p₀ e ≡ 0
+  decodeDom e (suc k) = Σ[ z ∈ p₀ e > 0 ] ((w : χ (fst z) ↓) → Σ[ u ∈ φ (p₁ e) (fst w) ↓ ] decodeDom (fst u) k)
+
+  decodeDomProp : (e : ℕ) → (k : ℕ) → (u v : decodeDom e k) → u ≡ v
+  decodeDomProp e zero u v = isSetℕ _ _ u v
+  decodeDomProp e (suc k) u v = isPropΣ isProp≤ (λ _ → isPropΠ (λ _ → isPropΣ (φ-domainIsProp _ _) (λ _ → decodeDomProp _ k))) _ _
+
+  decodeDomStable : (e : ℕ) → (k : ℕ) → Stable (decodeDom e k)
+  decodeDomStable e zero = separatedℕ _ _
+  decodeDomStable e (suc k) p = z , (λ w → u w , decodeDomStable (fst (u w)) k (s w))
+    where
+      z : p₀ e > 0
+      z = ≤Stable _ _ (¬¬-map fst p)
+
+      p2 : (w : χ (fst z) ↓) → NonEmpty (Σ[ u ∈ φ (p₁ e) (fst w) ↓ ] decodeDom (fst u) k)
+      p2 w = do
+        (z' , f) ← p
+        ¬¬-in (f (subst (λ z'' → χ (fst z'') ↓) (isProp≤ z z') w))
+
+      u : (w : χ (fst z) ↓) → φ (p₁ e) (fst w) ↓
+      u w = φ-domainStable' (p₁ e) (fst w) (¬¬-map fst (p2 w))
+
+      s : (w : χ (fst z) ↓) → NonEmpty (decodeDom (fst (u w)) k)
+      s w = do
+        (u' , t) ← p2 w
+        ¬¬-in (subst (λ u'' → decodeDom (fst u'') k) (φ-domainIsProp _ _ u' (u w)) t)
+
+  decodeFromDom : (e k : ℕ) → (decodeDom e k) → ◯⟨ χ ⟩ ℕ
+  decodeFromDom e zero z = ∣ p₁ e ∣
+  decodeFromDom e (suc k) (nz , w) = hub (fst nz) λ s → decodeFromDom (fst (fst (w s))) k (snd (w s))
+
+  decode : ℕ → ℕ → ∂ (◯⟨ χ ⟩ ℕ)
+  ∂.domain (decode e k) = ¬¬resize (decodeDom e k)
+  ∂.value (decode e k) z = decodeFromDom e k (decodeDomStable e k (¬¬resize-out z))
+    where
+      dom : decodeDom e k
+      dom = decodeDomStable e k (¬¬resize-out z)
+
+  decodeWellDefd : (e k : ℕ) → (z : decodeDom e k) → (decode e k ↓= decodeFromDom e k z)
+  decodeWellDefd e k z = ↓=compose≡ (decode e k)
+                                    (¬¬resize-in ((¬¬resize-in (decodeDomStable e k (¬¬resize-out (¬¬resize-in z)))) , refl))
+                                      (cong (decodeFromDom e k)
+                                            (decodeDomProp e k (decodeDomStable e k (¬¬resize-out (¬¬resize-in (decodeDomStable e k (¬¬resize-out (¬¬resize-in z))))))
+                                            z))
+
+  decodeWellDefdLemma : (e k n : ℕ) → (f : χ n ↓ → ◯⟨ χ ⟩ ℕ) →
+                   (w : χ n ↓) → (u : φ e (fst w) ↓) → (decode (fst u) k ↓= f w) →
+                   decode (pair (suc n) e) (suc k) ↓= hub n f
+  decodeWellDefdLemma e k n f w u v = ↓=compose≡ (decode (pair (suc n) e) (suc k)) (decodeWellDefd (pair (suc n) e) (suc k) dom') (cong (hub n) (funExt (λ s → separated◯⟨⟩ χ separatedℕ separatedℕ _ _ (partialUnique (decode (fst u) k) (decodeWellDefd (fst u) k _) (↓=compose≡ (decode (fst u) k) v (cong f (∇defd-prop separatedℕ (χ n) w s)))))))
+    where
+      dom' : decodeDom (pair (suc n) e) (suc k)
+      dom' = (n , +-comm n 1 ∙  sym (pairβ₀ _ _)) , λ w' → ((fst u) , ≡compose↓= (cong₂ φ (pairβ₁ _ _) (separatedℕ _ _ (∇.well-defd (χ n) _ _ (snd w') (snd w)))) (snd u)) , decodeDomStable (fst u) k ((¬¬resize-out v) >>= (¬¬resize-out ∘ fst))
 
 
-
-  -- queryBound : (z : ◯⟨ χ ⟩ A) → ∥ sufficientBound z ∥₁
-  -- queryBound = NullPropElim (oDefd χ) (λ z → ∥ sufficientBound z ∥₁ , isPropPropTrunc) (λ a → ∣ (∇-in 0) , (λ _ → a , refl) ∣₁) λ n f → λ w → dnc (χ n) (λ s → sufficientBound (f s)) w >>= λ w' → ∣ givenBound n f w' ∣₁
-  --   where
-  --     givenBound : (n : ℕ) → (f : oDefd χ n → Null (oDefd χ) A) → ((s : χ n ↓) → sufficientBound (f s)) →
-  --                     sufficientBound (hub n f)
-  --     givenBound n f w' =
-  --       (fst (fst M)) , (λ g → fst (snd (w' (g n (λ m s → {!!})) , {!!}))) -- subst (λ m → n < m) (separatedℕ _ _ {!!}) left-≤-max))) {!!}) , {!!})
-  --       where
-  --         packst :  ¬ (¬ (Σ[ s ∈ χ n ↓ ] (fst (w' s) ↓)))
-  --         packst = do
-  --               s ← ∇.almost-inh (χ n)
-  --               t ← ∇.almost-inh (fst (w' s))
-  --               ¬¬-in (s , t)
-
-  --         M : isContr _
-  --         M = ∇-isSheaf ((Σ[ s ∈ χ n ↓ ] (fst (w' s) ↓)) , isPropΣ (∇defd-prop separatedℕ (χ n)) λ s → ∇defd-prop separatedℕ (fst (w' s))) packst λ {(s , t) → ∇-in (max (suc n) (fst t))}
-
---          lemma : ¬ ¬ (max (suc n)
---           M : ∇ ℕ
---           is-this M m = ¬¬resize ((s : χ n ↓) → (t : fst (w' s) ↓) → m ≡ max (fst s) (fst t))
---           well-defd M m m' u v = do
---             u' ← ¬¬resize-out u
---             v' ← ¬¬resize-out v
---             s ← almost-inh (χ n)
---             t ← almost-inh (fst (w' s))
---             ¬¬-in (u' s t ∙ sym (v' s t))
---           almost-inh M = do
---             s ← almost-inh (χ n)
---             t ← almost-inh (fst (w' s))
---             -- ¬¬-in ((max (fst s) (fst t)) , (¬¬resize-in (λ s' t' i → max (separatedℕ (fst s) (fst s') (well-defd (χ n) (fst s) (fst s') (snd s) (snd s')) i) (fst (isProp→PathP (λ j → ∇defd-prop {!!} {!!}) {!!} {!!} {!!})))))
---             ¬¬-in (max (fst s) (fst t) , ¬¬resize-in (λ s' t' → cong₂ {B = λ s → fst (w' s) ↓} {C = λ s' t' → ℕ} (λ s t → max (fst s) (fst t)) (Σ≡Prop (λ m → Ω¬¬-props (is-this (χ n) m)) (separatedℕ (fst s) (fst s') (well-defd (χ n) (fst s) (fst s') (snd s) (snd s')))) {!!}))
--- --            max (fst s) (fst t) ≡ max (fst s') (fst t')
+  decodeSurj : (z : ◯⟨ χ ⟩ ℕ) → ∥ Σ[ e ∈ ℕ ] ¬ ¬ (Σ[ k ∈ ℕ ] (decode e k ↓= z)) ∥₁
+  decodeSurj = NullPropElim (oDefd χ) (λ z → ∥ Σ[ e ∈ ℕ ] ¬ ¬ (Σ[ k ∈ ℕ ] (decode e k ↓= z)) ∥₁ , isPropPropTrunc) (λ n → ∣ (pair 0 n) , ¬¬-in (0 , (¬¬resize-in ((¬¬resize-in (pairβ₀ _ _)) , cong ∣_∣ (pairβ₁ _ _)))) ∣₁) step
+    where
+      step : (n : ℕ) (f : χ n ↓ → ◯⟨ χ ⟩ ℕ)  →
+              ((s : χ n ↓) → ∥ Σ[ e ∈ ℕ ] ¬ ¬ (Σ[ k ∈ ℕ ] (decode e k ↓= f s)) ∥₁) →
+              ∥ Σ[ e ∈ ℕ ] ¬ ¬ (Σ[ k ∈ ℕ ] (decode e k ↓= hub n f)) ∥₁
+      step n f ih = do
+         esWithPf ← dnc (χ n) (λ s → Σ[ e ∈ ℕ ] ¬ ¬ (Σ[ k ∈ ℕ ] (decode e k ↓= f s))) ih
+         (e , eworks) ← ECT (λ m → record { domain = ∇.is-this (χ n) m ; value = λ z → fst (esWithPf (m , z)) })
+         let w = do
+           (m , u) ← ∇.almost-inh (χ n)
+           let v = eworks m (fst (esWithPf (m , u)) , (¬¬resize-in (u , refl)))
+           (k , x) ← snd (esWithPf (m , u))
+           x' ← ¬¬resize-out x
+           ¬¬-in (suc k , decodeWellDefdLemma e k n f (m , u) (fst (esWithPf (m , u)) ,
+                     ≡compose↓= v (¬¬resize-in (u , refl))) (¬¬resize-in x'))
+         ∣ (pair (suc n) e) , w ∣₁
             
 
   -- -- eth Turing machine halts on input n in < l steps given first l - 1 values of oracle but may halt on other fragments of χ
