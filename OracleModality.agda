@@ -248,7 +248,7 @@ module _ (χ : ℕ × ℕ → ∇ Bool) (uniq : (a : ℕ) → (b b' : ℕ) → �
           where (true , z) → ∣ yes z ∣
         ∣ no (λ w → ∇.well-defd (χ (a , b)) false true z w false≢true) ∣
 
-module invert (χ : ℕ → ∇ ℕ) (inj : (n m : ℕ) → χ n ≡ χ m → n ≡ m) (surj : (m : ℕ) → ¬ ¬ (Σ[ n ∈ ℕ ] ⟨ ∇.is-this (χ n) m ⟩)) where
+module invert (χ : ℕ → ∇ ℕ) (surj : (m : ℕ) → ¬ ¬ (Σ[ n ∈ ℕ ] ⟨ ∇.is-this (χ n) m ⟩)) where
   compute-inverse : (n : ℕ) → ◯⟨ χ ⟩ (Σ[ m ∈ ℕ ] ⟨ ∇.is-this (χ m) n ⟩)
   compute-inverse n = locate χ (λ m → ⟨ ∇.is-this (χ m) n ⟩) (surj n) (dec n)
     where
