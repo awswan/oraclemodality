@@ -1,7 +1,7 @@
 open import OracleModality
 
 open import Includes
-open import Util.Everything
+open import Util.Everything hiding (map)
 open import PartialElements
 open import DoubleNegationSheaves
 
