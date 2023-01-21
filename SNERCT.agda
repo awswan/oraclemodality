@@ -8,6 +8,8 @@ open import Axioms.NegativeResizing
 open import Axioms.ChurchsThesis
 open import Axioms.NegativeCountableChoice
 open import Axioms.DenseNegativeChoice
+open import Axioms.StableSubcountableChoice
+
 open import PartialElements
 open import OracleModality
 open import DoubleNegationSheaves
@@ -54,95 +56,8 @@ finiteSearchMaybe (suc n) A f = ⊎rec (λ z → ⊎rec (λ p → inl (λ m → 
     lem nothing = inl refl
     lem (just x) = inr (x , refl)
 
-data prOutputPoss : Type where
-  continue : prOutputPoss
-  halt : ℕ → prOutputPoss
-  callOracle : ℕ → prOutputPoss
-
-below∇ : ∇ ℕ → ℕ → Type
-below∇ N m = (n : ℕ) → N ↓= n → m < n
-
-data M⟨_⟩ {A : Type ℓa} {B : Type ℓb} (χ : Oracle A B) (X : Type ℓ) : Type (ℓ-max ℓ (ℓ-max ℓa ℓb)) where
-  ∣_∣M : X → M⟨ χ ⟩ X
-  queryM : (a : A) → (f : χ a ↓ → M⟨ χ ⟩ X) → M⟨ χ ⟩ X
-
-M→◯⟨_⟩ : (χ : Oracle A B) → (X : Type ℓ) → M⟨ χ ⟩ X → ◯⟨ χ ⟩ X
-M→◯⟨ χ ⟩ X ∣ x ∣M = ∣ x ∣
-M→◯⟨ χ ⟩ X (queryM a f) = hub a (λ s → M→◯⟨ χ ⟩ X (f s))
-
-mixedMax : ℕ → ∇ ℕ → ∇ ℕ
-∇.is-this (mixedMax n M) k = ¬¬resize ((m : ℕ) → M ↓= m → k ≡ max n m)
-∇.well-defd (mixedMax n M) k k' u v = do
-  u ← ¬¬resize-out u
-  v ← ¬¬resize-out v
-  (m , w) ← ∇.almost-inh M
-  ¬¬-in (u m w ∙ sym (v m w))
-∇.almost-inh (mixedMax n M) = do
-  (m , w) ← ∇.almost-inh M
-  ¬¬-in (max n m , (¬¬resize-in (λ m' w' → cong (max n) (separatedℕ _ _ (∇.well-defd M _ _ w w')))))
-
-
-module _ (n : ℕ) (M : ∇ ℕ) where
-  mixedMax≤Left :  (k : ℕ) → (mixedMax n M ↓= k) → (n ≤ k)
-  mixedMax≤Left k u = ≤Stable _ _ do
-    (m , v) ← ∇.almost-inh M
-    u ← ¬¬resize-out u
-    ¬¬-in (subst (λ k → n ≤ k) (sym (u m v)) left-≤-max)
-
-  mixedMaxRight↓ : M ↓ → (mixedMax n M ↓)
-  mixedMaxRight↓ (m , u) = max n m , ¬¬resize-in (λ m' u' → cong (max n)
-    (separatedℕ _ _ (∇.well-defd M _ _ u u')))
-
-  mixedMax≤Right : (k : ℕ) → (below∇ M k) → (below∇ (mixedMax n M) k)
-  mixedMax≤Right k u l v = <Stable _ _ do
-    (m , w) ← ∇.almost-inh M
-    p ← ∇.well-defd (mixedMax n M) (max n m) l
-                    (¬¬resize-in (λ m' w' → cong (max n) (separatedℕ _ _ (∇.well-defd M _ _ w w')))) v
-    ¬¬-in (<≤-trans (u _ w) (subst (λ l' → m ≤ l') p right-≤-max))
 
 module _ (χ : Oracle ℕ ℕ) where
-  initialSeg : (l : ℕ) → (Fin l) → ∇ ℕ
-  initialSeg l (i , _) = χ i
-
-  initialSegDefd : (l : ℕ) → Type
-  initialSegDefd l = (k : Fin l) → χ (fst k) ↓
-
-  valuesBelow : ∇ ℕ → Type
-  valuesBelow N = (m : ℕ) → below∇ N m → χ m ↓
-
-  bound : M⟨ χ ⟩ X → ∇ ℕ
-  bound ∣ x ∣M = ∇-in 0
-  bound (queryM n f) = mixedMax (suc n) (fst (∇injective ((χ n ↓) , (∇defd-prop separatedℕ (χ n)))
-                                         (∇.almost-inh (χ n)) (λ s → (bound (f s)))))
-
-
-  fromBound : (x : M⟨ χ ⟩ X) → valuesBelow (bound x) → X
-  fromBound ∣ x ∣M g = x
-  fromBound (queryM n f) g = fromBound (f χn) g'
-    where
-      χn : χ n ↓
-      χn = g n (mixedMax≤Left (suc n) ((fst (∇injective ((χ n ↓) , (∇defd-prop separatedℕ (χ n)))
-                                         (∇.almost-inh (χ n)) (λ s → (bound (f s)))))))
-
-      injWitness = snd (∇injective ((χ n ↓) , (∇defd-prop separatedℕ (χ n)))
-                                         (∇.almost-inh (χ n)) (λ s → (bound (f s))))
-
-      g' : valuesBelow (bound (f χn))
-      g' m mlt = g m (subst (λ z → below∇ (mixedMax (suc n) z) m) (injWitness χn)
-                                                    (mixedMax≤Right _ (bound (f χn)) _ mlt))
-
-  oracleCover : isSurjection (M→◯⟨ χ ⟩ X)
-  oracleCover = NullPropElim _ (λ z → _ , isPropPropTrunc) (λ x → ∣ ∣ x ∣M , refl ∣₁)
-    λ a f ih → dnc (χ a) _ ih >>= λ g → ∣ (queryM a (λ s → fst (g s))) , (cong (hub a) (funExt (λ s → snd (g s)))) ∣₁
-
-
-
-  sufficientBound : {A : Type ℓ} → (z : ◯⟨ χ ⟩ A) → ∥ Σ[ N ∈ ∇ ℕ ] (valuesBelow N → fiber ∣_∣ z) ∥₁
-  sufficientBound z = oracleCover zp >>= λ {(zp' , q) → ∣ (bound zp') , (fromBound zp') ∣₁}
-    where
-      zp : ◯⟨ χ ⟩ (fiber ∣_∣ z)
-      zp = nullElim (λ z' → isNull-Null (oDefd χ) {X = fiber ∣_∣ z'}) (λ z' → ∣ z' , refl ∣) z
-
   decodeDom : ℕ → ℕ → Type
   decodeDom e zero = p₀ e ≡ 0
   decodeDom e (suc k) = Σ[ z ∈ p₀ e > 0 ] ((w : χ (fst z) ↓) → Σ[ u ∈ φ (p₁ e) (fst w) ↓ ] decodeDom (fst u) k)
@@ -205,17 +120,50 @@ module _ (χ : Oracle ℕ ℕ) where
               ((s : χ n ↓) → ∥ Σ[ e ∈ ℕ ] ¬ ¬ (Σ[ k ∈ ℕ ] (decode e k ↓= f s)) ∥₁) →
               ∥ Σ[ e ∈ ℕ ] ¬ ¬ (Σ[ k ∈ ℕ ] (decode e k ↓= hub n f)) ∥₁
       step n f ih = do
-         esWithPf ← dnc (χ n) (λ s → Σ[ e ∈ ℕ ] ¬ ¬ (Σ[ k ∈ ℕ ] (decode e k ↓= f s))) ih
-         (e , eworks) ← ECT (λ m → record { domain = ∇.is-this (χ n) m ; value = λ z → fst (esWithPf (m , z)) })
+         esWithPf ← sscc (λ m → ∇.is-this (χ n) m) (λ m z → Σ[ e ∈ ℕ ] (¬ ¬ (Σ[ k ∈ ℕ ] (decode e k ↓= f (m , z))))) λ m z → ih (m , z)
+         (e , eworks) ← ECT (λ m → record { domain = ∇.is-this (χ n) m ; value = λ z → fst (esWithPf m  z) })
          let w = do
            (m , u) ← ∇.almost-inh (χ n)
-           let v = eworks m (fst (esWithPf (m , u)) , (¬¬resize-in (u , refl)))
-           (k , x) ← snd (esWithPf (m , u))
+           let v = eworks m (fst (esWithPf m u) , (¬¬resize-in (u , refl)))
+           (k , x) ← snd (esWithPf m u)
            x' ← ¬¬resize-out x
-           ¬¬-in (suc k , decodeWellDefdLemma e k n f (m , u) (fst (esWithPf (m , u)) ,
+           ¬¬-in (suc k , decodeWellDefdLemma e k n f (m , u) (fst (esWithPf m u) ,
                      ≡compose↓= v (¬¬resize-in (u , refl))) (¬¬resize-in x'))
          ∣ (pair (suc n) e) , w ∣₁
             
+
+  SNERCT : (f : ℕ → ∂ (◯⟨ χ ⟩ ℕ)) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (s : f n ↓) → Σ[ u ∈ φ e n ↓ ] ¬ ¬ (Σ[ k ∈ ℕ ] (decode (fst u) k ↓= fst s))) ∥₁
+  SNERCT f = do
+    g ← sscc (λ n → ∂.domain (f n)) (λ n t → Σ[ d ∈ ℕ ] (¬ ¬ (Σ[ k ∈ ℕ ] (decode d k ↓= ∂.value (f n) t)))) λ n t → decodeSurj (∂.value (f n) t)
+    (e , eWorks) ← ECT (λ n → record { domain = ∂.domain (f n) ; value = λ t → fst (g n t) })
+    ∣ e , (λ n s → subst (λ w → Σ[ u ∈ w ↓ ] ¬ ¬ (Σ[ k ∈ ℕ ] (decode (fst u) k ↓= fst s))) (sym (eWorks n (fst (g n (Ω¬¬-stab (∂.domain (f n)) (¬¬-map fst (¬¬resize-out (snd s))))) , ¬¬resize-in ((Ω¬¬-stab (∂.domain (f n)) (¬¬-map fst (¬¬resize-out (snd s)))) , refl)))) (({!!} , {!!}) , {!!})) ∣₁
+
+-- Goal: Σ-syntax (φ e n ↓)
+--       (λ u → ¬ (¬ Σ-syntax ℕ (λ k → decode (fst u) k ↓= fst s)))
+-- ————————————————————————————————————————————————————————————
+-- s      : f n ↓
+-- n      : ℕ
+-- eWorks : (n₁ : ℕ) →
+--          record { domain = ∂.domain (f n₁) ; value = λ t → fst (g n₁ t) }
+--          ↓ →
+--          φ e n₁ ≡
+--          record { domain = ∂.domain (f n₁) ; value = λ t → fst (g n₁ t) }
+-- e      : ℕ
+-- g      : (n₁ : ℕ) (z : ⟨ ∂.domain (f n₁) ⟩) →
+--          Σ-syntax ℕ
+--          (λ d →
+--             ¬
+--             (¬
+--              Σ-syntax ℕ
+--              (λ k →
+--                 record
+--                 { domain = ¬resize (¬ decodeDom d k)
+--                 ; value =
+--                     λ z₁ → decodeFromDom d k (decodeDomStable d k (¬¬resize-out z₁))
+--                 }
+--                 ↓= ∂.value (f n₁) z)))
+-- f      : ℕ → ∂ (◯⟨ χ ⟩ ℕ)
+-- χ      : Oracle ℕ ℕ
 
   -- -- eth Turing machine halts on input n in < l steps given first l - 1 values of oracle but may halt on other fragments of χ
   -- ψ₀ : ℕ → ℕ → (l : ℕ) → ((k : Fin l) → initialSeg l k ↓) → Maybe ℕ

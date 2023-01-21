@@ -73,6 +73,7 @@ module _ (e : ℕ) (n : ℕ) where
 
 postulate
   ECT : (f : ℕ → ∂ ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → f n ↓ → φ e n ≡ f n) ∥₁
+  ECT' : (f : ℕ → ∂ ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (z : f n ↓) → φ e n ↓= ∂.value (f n) (Ω¬¬-stab (∂.domain (f n)) (¬¬-map (λ {(s , p) → s}) (¬¬resize-out (snd z))))) ∥₁
 
 CT : (f : ℕ → ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → φ e n ↓= f n) ∥₁
 CT f = do
