@@ -28,7 +28,7 @@ variable
 Oracle : (A : Type ℓa) (B : Type ℓb) → Type (ℓ-max ℓa ℓb)
 Oracle A B = A → ∇ B
 
-oDefd : (χ : Oracle A B) → A → Type _
+oDefd : (χ : Oracle A B) → A → Type _ -- NB: χ is the Greek letter \chi
 oDefd χ a = χ a ↓
 
 module OM (χ : Oracle A B) {ℓ : Level} where
