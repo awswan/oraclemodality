@@ -1,4 +1,4 @@
-module SNERCT where
+module RelativisedCT where
 
 open import Includes
 
@@ -47,15 +47,6 @@ pairβ₀ x y = cong fst (Iso.leftInv ℕPairIso (x , y))
 
 pairβ₁ : (x y : ℕ) → (p₁ (pair x y) ≡ y)
 pairβ₁ x y = cong snd (Iso.leftInv ℕPairIso (x , y))
-
-finiteSearchMaybe : (n : ℕ) → (A : Type ℓ) → (f : (m : Fin n) → Maybe A) → ((m : Fin n) → f m ≡ nothing) ⊎ (Σ[ (m , a) ∈ Fin n × A ] f m ≡ just a)
-finiteSearchMaybe zero A f = inl (λ (m , p) → ⊥rec (¬-<-zero p))
-finiteSearchMaybe (suc n) A f = ⊎rec (λ z → ⊎rec (λ p → inl (λ m → ⊎rec (λ q → cong f (toℕ-injective refl) ∙ z ((fst m) , q)) (λ q → cong f (toℕ-injective q) ∙ p) (<-split (snd m)))) (λ {(a , p) → inr (((n , ≤-refl) , a) , p)}) (lem (f (n , ≤-refl)))) (λ {((m , a) , p) → inr ((((fst m) , (≤-suc (snd m))) , a) , p)}) (finiteSearchMaybe n A λ m → f ((fst m) , (≤-suc (snd m))))
-  where -- TODO: Cleanup
-    lem : (w : Maybe A) → (w ≡ nothing) ⊎ (Σ[ a ∈ A ] w ≡ just a)
-    lem nothing = inl refl
-    lem (just x) = inr (x , refl)
-
 
 module _ (χ : Oracle ℕ ℕ) where
   decodeDom : ℕ → ℕ → Type
