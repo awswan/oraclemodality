@@ -7,7 +7,8 @@ This is the Agda formalisation to accompany the paper *Oracle modalities*.
 The main directory contains the following files:
   * `Includes.agda` Imports modules from the cubical library that are used multiple times
   * `DoubleNegationSheaves.agda` Implementation of 0-truncated double negation sheafification using the classifier for double negation stable propositions
-  * 
+  * `OracleModalities.agda` Main results about oracle modalities, including their definition, proof of relativised Markov's principle and its applications, definition of Turing degrees
+  * `ParallelSearch.agda` parallel unbounded search using relativised Markov's principle
 
 `Axioms/` This directory contains files postulating the main axioms that we will be using together with some basic results using the axioms.
 
@@ -23,6 +24,8 @@ The main directory contains the following files:
 	  - `PropositionalTruncation.agda` Propositional truncation implements `ModalOperator`
   * `HasUnderlyingType.agda` Utility function for getting the underlying type of some structure via instance resolution
   * `LexNull.agda` Proof that nullification of a family of propositions is lex
+  * `PartialElements.agda` Implementation of partial elements, including notation for any modal operator whose elements can be viewed as partial elements.
+  * `StablePartial.agda` Partial elements with double negation stable domain
   * `Everything.agda` Packages commonly used utility functions into a single import
 
 
