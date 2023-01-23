@@ -179,14 +179,14 @@ variable
     Iso.rightInv (fibequiv f) (x , p) = refl
     Iso.leftInv (fibequiv f) (x , u) = refl
 
-strip : (χ : Oracle A B) → (Separated B) → ◯⟨ χ ⟩ X → ∇ X
-strip χ Bsep = Null-rec (¬¬Sheaf→Null {χ = χ} Bsep ∇-isSheaf) ∇-in
+erase : (χ : Oracle A B) → (Separated B) → ◯⟨ χ ⟩ X → ∇ X
+erase χ Bsep = Null-rec (¬¬Sheaf→Null {χ = χ} Bsep ∇-isSheaf) ∇-in
 
 ◯→¬¬ : (χ : Oracle A B) → (Separated B) → ◯⟨ χ ⟩ X → ¬ ¬ X
-◯→¬¬ χ Bsep z = ∇→¬¬ (strip χ Bsep z)
+◯→¬¬ χ Bsep z = ∇→¬¬ (erase χ Bsep z)
 
-recallStrip : (χ : Oracle A B) → (sB : Separated B) → {X : Type ℓ} → (x : ◯⟨ χ ⟩ X) → ◯⟨ χ ⟩(strip χ sB x ↓)
-recallStrip χ sB = Null-elim (λ x → isNull-Null (λ a → χ a ↓)) λ x → ∣ x , (¬¬resize-in refl) ∣
+recallErase : (χ : Oracle A B) → (sB : Separated B) → {X : Type ℓ} → (x : ◯⟨ χ ⟩ X) → ◯⟨ χ ⟩(erase χ sB x ↓)
+recallErase χ sB = Null-elim (λ x → isNull-Null (λ a → χ a ↓)) λ x → ∣ x , (¬¬resize-in refl) ∣
 
 variable
   A' B' : Type ℓ'
@@ -259,10 +259,10 @@ module invert (χ : ℕ → ∇ ℕ) (surj : (m : ℕ) → ¬ ¬ (Σ[ n ∈ ℕ 
                  (λ np → no (λ w → np (separatedℕ _ _
                             (∇.well-defd (χ n) k m z w)))) (discreteℕ k m) ∣
   inverse : ℕ → ∇ ℕ
-  inverse n = strip χ separatedℕ (OM.◯-map χ fst (compute-inverse n))
+  inverse n = erase χ separatedℕ (OM.◯-map χ fst (compute-inverse n))
 
   inverse≤T : inverse ≤T χ
-  _≤T_.red (inverse≤T) n = recallStrip χ separatedℕ (OM.◯-map χ fst (compute-inverse n))
+  _≤T_.red (inverse≤T) n = recallErase χ separatedℕ (OM.◯-map χ fst (compute-inverse n))
 
 manyOne→≤T : {C : Type ℓ} (χ : Oracle A B) → (f : C → A) → ((χ ∘ f) ≤T χ)
 manyOne→≤T χ f = Tred λ c → query χ (f c)
