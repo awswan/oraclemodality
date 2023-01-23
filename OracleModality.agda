@@ -16,7 +16,7 @@ open import Cubical.HITs.Nullification renaming (rec to Null-rec ; elim to Null-
 open import Cubical.Modalities.Modality
 
 open import Util.HasUnderlyingType
-open import PartialElements
+open import Util.PartialElements
 open import Axioms.NegativeResizing
 open import Axioms.MarkovInduction
 open import DoubleNegationSheaves
