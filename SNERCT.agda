@@ -7,19 +7,19 @@ open import Cubical.Functions.Surjection
 open import Axioms.NegativeResizing
 open import Axioms.ChurchsThesis
 open import Axioms.NegativeCountableChoice
-open import Axioms.DenseNegativeChoice
 open import Axioms.StableSubcountableChoice
 
-open import PartialElements
-open import OracleModality
-open import DoubleNegationSheaves
-open import StablePartial
+open import Util.PartialElements
+open import Util.StablePartial
 open import Util.DoubleNegation
 open import Util.ModalOperatorSugar
 open import Util.HasUnderlyingType
 open import Util.ModalOperatorInstances.PropTruncation
 open import Util.LexNull
 open import Util.Nullification
+
+open import OracleModality
+open import DoubleNegationSheaves
 
 ℕwithVec : Type
 ℕwithVec = ℕ × (Σ[ n ∈ ℕ ] (Fin n → ℕ))
