@@ -17,7 +17,10 @@ private
   variable
     ℓ ℓ' : Level
 
-{- We postulate a classifier for all negated propositions. -}
+{- We postulate a classifier for all negated propositions. We formulate it
+   in terms of negated types rather than ¬¬-stable types because that is
+   closer to what happens in the semantics in cubical assemblies.
+-}
 postulate
   Ω¬¬ : Type
   [_] : Ω¬¬ → Type
