@@ -17,7 +17,7 @@ The main directory contains the following files:
   * `MarkovInduction.agda` Markov induction allows us to construct functions that include unbounded search. Includes a derivation of Markov's principle
   * `StableSubcountableChoice.agda` The choice axiom used in one of the sections of the paper
 
-`Util/` Anything used in the formalisation that isn't specifically mentioned in the paper
+`Util/` Anything used in the formalisation that isn't specifically mentioned in the paper or isn't new
   * `ModalOperatorSugar.agda` load the bind function required for [syntactic sugar](https://agda.readthedocs.io/en/v2.6.2.2/language/syntactic-sugar.html) via [instance resolution](https://agda.readthedocs.io/en/v2.6.2.2/language/instance-arguments.html). Allows us to use `do` notation for anything implementing the `ModalOperator` type
   * `ModalOperatorInstances/` Two basic examples modal operators that we load via instance resolution
       - `DoubleNegation.agda` Proof double negation implements `ModalOperator`
