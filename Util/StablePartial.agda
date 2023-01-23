@@ -1,7 +1,7 @@
-module StablePartial where
+module Util.StablePartial where
 
 open import Includes
-open import PartialElements
+open import Util.PartialElements
 open import Axioms.NegativeResizing
 
 open import Util.Everything

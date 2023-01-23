@@ -6,7 +6,7 @@ open import Util.Everything
 
 open import DoubleNegationSheaves
 open import Axioms.NegativeResizing
-open import PartialElements
+open import Util.PartialElements
 
 _is-suc-of_ : (∇ ℕ) → (∇ ℕ) → Type
 N is-suc-of M = (n : ℕ) → ⟨ ∇.is-this M n ⟩ → ⟨ ∇.is-this N (suc n) ⟩

@@ -15,8 +15,8 @@ open import Includes
 
 open import Axioms.MarkovInduction
 open import Axioms.NegativeResizing
-open import StablePartial
-open import PartialElements
+open import Util.StablePartial
+open import Util.PartialElements
 open import Util.Everything
 
 

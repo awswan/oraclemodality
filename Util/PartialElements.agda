@@ -1,4 +1,4 @@
-module PartialElements where
+module Util.PartialElements where
 
 open import Cubical.Core.Everything
 open import Cubical.Relation.Nullary
