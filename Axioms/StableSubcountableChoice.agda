@@ -8,6 +8,7 @@ open import Axioms.NegativeResizing
 
 module Axioms.StableSubcountableChoice where
 
+{- Postulate choice axiom used in Section VI -}
 postulate
   sscc : (P : ℕ → Ω¬¬) → (X : (n : ℕ) → ⟨ P n ⟩ → Type ℓ) → ((n : ℕ) → (z : ⟨ P n ⟩) → ∥ X n z ∥₁) → ∥ ((n : ℕ) → (z : ⟨ P n ⟩) → X n z) ∥₁
 

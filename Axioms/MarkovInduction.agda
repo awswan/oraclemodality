@@ -36,6 +36,7 @@ module Pred (N : (∇ ℕ)) (nz : ¬ ⟨ ∇.is-this N 0 ⟩) where
   is-suc : N is-suc-of M
   is-suc n x = x
 
+{- Postulate Markov induction -}
 postulate
   markov-ind : (A : (∇ ℕ) → Type ℓ)
                (step : (N : (∇ ℕ)) (ih : (M : (∇ ℕ)) → (N is-suc-of M) → (A M)) → (A N)) →
@@ -62,6 +63,7 @@ dec→decLeast nnA decA n with (any? {n = n} (decA ∘ fst))
 ... | yes b = yes (¬¬resize-in (b , λ m c → ¬p (m , c)))
 ... | no ¬q = no (λ z → ¬¬resize-out z (λ {(c , _) → ¬q c}))
 
+{- We illustrate the use of Markov induction by deriving Markov's principle -}
 markovsPrinciple₀ : (N : ∇ ℕ) → ((n : ℕ) → Dec (N ↓= n)) → Σ[ n ∈ ℕ ] (N ↓= n)
 markovsPrinciple₀ = markov-ind _ step
   where

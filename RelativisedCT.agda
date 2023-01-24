@@ -14,7 +14,7 @@ open import Util.StablePartial
 open import Util.DoubleNegation
 open import Util.ModalOperatorSugar
 open import Util.HasUnderlyingType
-open import Util.ModalOperatorInstances.PropTruncation
+open import Util.PropTruncationModalInstance
 open import Util.LexNull
 open import Util.Nullification
 

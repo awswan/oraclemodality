@@ -1,47 +1,27 @@
 module DoubleNegationSheaves where
 
-open import Cubical.Core.Everything
-open import Cubical.Foundations.Prelude
-open import Cubical.Foundations.Isomorphism
-open import Cubical.Foundations.HLevels
-open import Cubical.Foundations.Univalence
-open import Cubical.Foundations.Equiv
-open import Cubical.Foundations.Structure hiding (⟨_⟩)
-open import Cubical.Foundations.Function
+open import Includes
+
 open import Cubical.Foundations.Transport
 open import Cubical.Foundations.Path
 
-open import Cubical.Relation.Nullary
-
-open import Cubical.Data.Sigma
-open import Cubical.Data.Unit
-open import Cubical.Data.Empty
-open import Cubical.Data.Bool
-
-open import Cubical.HITs.PropositionalTruncation
+open import Axioms.NegativeResizing
 
 open import Util.HasUnderlyingType
 open import Util.ModalOperatorSugar
-open import Axioms.NegativeResizing
 open import Util.PartialElements
 
 open import Util.DoubleNegation
 
-private
-  variable
-    ℓ ℓ' ℓ'' : Level
-    A : Type ℓ
-
-{- ∇ is the plus construction for double negation. It follows that it restricts to
-   double negation on propositions, and that we can think of it as
-   sheafication for the double negation topology on ¬¬-separated types. -}
-
+    
+{- Implementation of 0-truncated ¬¬-sheafification using negative resizing. -}
 record ∇ (A : Type ℓ) : Type ℓ where
   field
     is-this : A → Ω¬¬
     well-defd : (a a' : A) → ⟨ is-this a ⟩ → ⟨ is-this a' ⟩ → ¬ ¬ a ≡ a'
     almost-inh : ¬ ¬ Σ A (λ a → ⟨ is-this a ⟩)
 
+{- Description of ∇ as a Σ-type -}
 ∇-as-Σ : (A : Type ℓ) →
   Iso (∇ A) ( Σ[ P ∈ (A → Ω¬¬) ] (((a b : A) → ⟨ P a ⟩ → ⟨ P b ⟩ → ¬ ¬ (a ≡ b)) ×
                             (¬ ¬ (Σ[ a ∈ A ] ⟨ P a ⟩))))
@@ -67,9 +47,11 @@ record ∇ (A : Type ℓ) : Type ℓ where
   isoFunInjective (∇-as-Σ A) x y
     (Σ≡Prop (λ a → isProp× (isPropΠ5 (λ _ _ _ _ _ → isProp⊥)) (isProp¬ _)) (funExt p))
 
+{- Lemma for showing two elements of ∇ A are equal -}
 ∇=-in : (x y : ∇ A) → ((a : A) → (⟨ ∇.is-this x a ⟩ ↔ ⟨ ∇.is-this y a ⟩)) → x ≡ y
 ∇=-in x y p = ∇=-in' x y (λ a → Ω¬¬-ext _ _ (λ z → fst (p a) z) λ z → snd (p a) z)
 
+{- Unit -}
 ∇-in : {A : Type ℓ} → A → ∇ A
 ∇.is-this    (∇-in a) b       = ¬¬resize (b ≡ a)
 ∇.well-defd  (∇-in a) b c x y = do
@@ -79,6 +61,7 @@ record ∇ (A : Type ℓ) : Type ℓ where
 ∇.almost-inh (∇-in a)         = ¬¬-in (a , (¬¬resize-in refl))
 
 instance
+  {- We can view elements of ∇ A as partial elements and so use all the notation in PartialElements -}
   open HasUnderlyingPartial
   ∇hasUnderlyingPartial : HasUnderlyingPartial {ℓ = ℓ} ∇
   is-this ∇hasUnderlyingPartial = ∇.is-this
@@ -90,7 +73,7 @@ instance
 ∇defd-prop Asep x (a , z) (a' , z') = Σ≡Prop (λ b → Ω¬¬-props _) (Asep a a' (∇.well-defd x a a' z z'))
 
 
-
+{- Definition of ¬¬-sheaf -}
 ¬¬Sheaf : (A : Type ℓ) → Type (ℓ-max ℓ (ℓ-suc ℓ'))
 ¬¬Sheaf {ℓ' = ℓ'} A = (P : hProp ℓ') → (¬ ¬ ⟨ P ⟩) → (f : ⟨ P ⟩ → A) →
                        isContr (Σ A (λ a → (p : ⟨ P ⟩) → f p ≡ a))
@@ -103,6 +86,7 @@ StableProp→¬¬Sheaf Aprop Astab P Pconn f =
 isProp¬¬Sheaf : {A : Type ℓ} → isProp (¬¬Sheaf {ℓ' = ℓ'} A)
 isProp¬¬Sheaf = isPropΠ3 (λ _ _ _ → isPropIsContr)
 
+{- 0-truncated ¬¬sheaves are separated -}
 ¬¬SheafSet→Separated : isSet A → ¬¬Sheaf A → Separated A
 ¬¬SheafSet→Separated {A = A} Aset Ash a a' p = sym q ∙ r
   where
@@ -118,18 +102,18 @@ isProp¬¬Sheaf = isPropΠ3 (λ _ _ _ → isPropIsContr)
 ¬¬SheafΣ : {A : Type ℓ} {B : A → Type ℓ'} → ¬¬Sheaf A → ((a : A) → ¬¬Sheaf {ℓ' = ℓ''} (B a)) →
            ¬¬Sheaf (Σ A B)
 ¬¬SheafΣ {A = A} {B = B} Ash Bsh P Pconn f =
-  isOfHLevelRetractFromIso 0 (compIso eq eq2) (Bsh _ P Pconn _)
+  isOfHLevelRetractFromIso 0 (compIso eq1 eq2) (Bsh _ P Pconn _)
     
   where
-    eq : Iso (Σ[ ab ∈ Σ A B ] ((z : ⟨ P ⟩) → f z ≡ ab))
+    eq1 : Iso (Σ[ ab ∈ Σ A B ] ((z : ⟨ P ⟩) → f z ≡ ab))
          (Σ (Σ[ a ∈ A ] ((z : ⟨ P ⟩) → fst (f z) ≡ a))
            (λ {(a , p) → Σ[ b ∈ B a ]
                          ((z : ⟨ P ⟩) → PathP (λ i → B (p z i)) (snd (f z)) b)}))
 
-    Iso.fun eq ((a , b) , p) = (a , (λ z i → fst (p z i))) , (b , (λ z i → snd (p z i)))
-    Iso.inv eq ((a , p) , (b , q)) = (a , b) , (λ z i → (p z i) , (q z i))
-    Iso.rightInv eq ((a , p) , (b , q)) = refl
-    Iso.leftInv eq ((a , b) , p) = refl
+    Iso.fun eq1 ((a , b) , p) = (a , (λ z i → fst (p z i))) , (b , (λ z i → snd (p z i)))
+    Iso.inv eq1 ((a , p) , (b , q)) = (a , b) , (λ z i → (p z i) , (q z i))
+    Iso.rightInv eq1 ((a , p) , (b , q)) = refl
+    Iso.leftInv eq1 ((a , b) , p) = refl
 
     ap = Ash P Pconn (fst ∘ f)
 
@@ -192,6 +176,7 @@ isSet∇ {A = A} = Separated→isSet Separated∇
 ∇-path→defd : {A : Type ℓ} (α : ∇ A) (a : A) → α ≡ ∇-in a → ⟨ ∇.is-this α a ⟩
 ∇-path→defd α a p = subst (λ α' → ⟨ ∇.is-this α' a ⟩) (sym p) (¬¬resize-in refl)
 
+{- ∇ A is a ¬¬-sheaf -}
 ∇-isSheaf : {A : Type ℓ} → ¬¬Sheaf {ℓ' = ℓ'} (∇ A)
 ∇-isSheaf {A = A} P Pconn f = (α , path) , to
   where
@@ -225,6 +210,7 @@ isSet∇ {A = A} = Separated→isSet Separated∇
 ∇injective : {A : Type ℓ} (P : hProp ℓ') → (¬ ¬ ⟨ P ⟩) → (f : ⟨ P ⟩ → ∇ A) → Σ[ α ∈ ∇ A ] ((p : ⟨ P ⟩) → f p ≡ α)
 ∇injective P p₀ f = fst (∇-isSheaf P p₀ f)
 
+{- ∇ is a modality -}
 module _ (A : Type ℓ) (B : ∇ A → Type ℓ') (Bsep : (α : ∇ A) → Separated (B α))
   (Bsh : (α : ∇ A) → ¬¬Sheaf (B α)) (b₀ : (a : A) → B (∇-in a)) where
 
@@ -266,9 +252,11 @@ module _ (A : Type ℓ) (B : ∇ A → Type ℓ') (Bsep : (α : ∇ A) → Separ
           subst B p' (b₀ a')
             ∎
 
+  {- elimination -}
   ∇-elim : (α : ∇ A) → (B α)
   ∇-elim α = fst (fst (Bsh α ((targets α) , target-unique) target-almost-inh fst))
 
+  {- computation -}
   ∇-elim-β : (a : A) → (∇-elim (∇-in a) ≡ (b₀ a))
   ∇-elim-β a = sym (snd (fst (Bsh (∇-in a) _ target-almost-inh fst)) ((b₀ a) , λ a' p → Bsep _ _ _ (¬¬-map (λ q → cong (λ r → subst B r (b₀ a')) (isSet∇ _ _ p (cong ∇-in q)) ∙ fromPathP (cong b₀ q)) (∇-in-inj p))))
 
@@ -329,6 +317,7 @@ module ∇-rec (A : Type ℓ) (B : Type ℓ') (Bsep : Separated B) (Bsh : ¬¬Sh
 
 
 instance
+  {- Since ∇ is a modal operator we can use do notation for it -}
   open ModalOperator
   ∇-bind : ∀ {ℓa ℓb} → ModalOperator ℓ-zero ℓa ℓb ∇
   bind (∇-bind) x f = ∇-rec.f _ _ Separated∇ ∇-isSheaf f x
@@ -346,14 +335,6 @@ separatedΠ sepB f g p = funExt (λ a → sepB _ _ _ (¬¬-map (λ p' → funExt
                               (λ _ → ¬¬SheafΣ ∇-isSheaf (λ _ → ¬¬SheafΠ (λ _ → ∇-isSheaf)))
                               λ {(a , b) → (∇-in a) , (λ z → subst (∇ ∘ B) (sym (sepA _ _ (¬¬resize-out (snd z)))) (∇-in b)) }
 
--- ∇preservesΣ : (A : Type ℓ) (B : A → Type ℓ') → (Σ[ α ∈ ∇ A ] ((z : α ↓) → ∇ (B (fst z)))) ≃ (∇ (Σ A B))
--- fst (∇preservesΣ A B) (α , β) = do
---   z ← ∇defd α
---   b ← β z
---   ∇-in ((fst z) , b)
-
--- equiv-proof (snd (∇preservesΣ A B)) = ∇-elim _ _ {!!} {!!} {!!}
--- Iso.fun (∇preservesΣ A B) = ∇-rec.f (Σ A B ) (Σ[ α ∈ ∇ A ] ((z : α ↓) → ∇ (B (fst z)))) (separatedΣ Separated∇ λ a → separatedΠ (λ _ → Separated∇)) (¬¬SheafΣ ∇-isSheaf λ a → ¬¬SheafΠ (λ _ → ∇-isSheaf)) λ {(a , b) → (∇-in a) , (λ z → subst (∇ ∘ B) {!!} (∇-in b))}
 
 ∇2 : ∇ Bool ≃ Ω¬¬
 ∇2 = isoToEquiv (iso f g f-g g-f)

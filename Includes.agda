@@ -28,4 +28,5 @@ open import Cubical.HITs.Nullification public renaming (rec to nullRec ; elim to
 
 variable
   ℓ ℓ' ℓ'' : Level
+  ℓa ℓb ℓa' ℓb' : Level
   A B X : Type ℓ

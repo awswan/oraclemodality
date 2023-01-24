@@ -9,11 +9,12 @@ open import Util.LexNull
 
 module ParallelSearch where
 
+{- Lemma V.4 -}
 parallelSearch : (X : ℕ → Type ℓ) (Y : ℕ → Type ℓ') → ((n : ℕ) → ◯⟨ χ ⟩ (Dec (X n))) →
   ((n : ℕ) → ◯⟨ χ ⟩ (Dec (Y n))) → ¬ ¬ ((Σ[ n ∈ ℕ ] X n) ⊎ (Σ[ n ∈ ℕ ] Y n)) →
   ◯⟨ χ ⟩ ((Σ[ n ∈ ℕ ] X n) ⊎ (Σ[ n ∈ ℕ ] Y n))
 parallelSearch {χ = χ} X Y decX decY z = do
-    (n , xory) ← locate χ XY almostXY XYdec
+    (n , xory) ← search χ XY almostXY XYdec
     ∣ map (λ x → (n , x)) (λ y → (n , y)) xory ∣
   where
     XY : ℕ → Type _
@@ -30,6 +31,7 @@ parallelSearch {χ = χ} X Y decX decY z = do
         where yes yyes → ∣ yes (inr yyes) ∣
       ∣ no (⊎rec xno yno) ∣
 
+{- Lemma along similar lines to Lemmas V.5/V.6 -}
 distinguish : {A : Type ℓa} {B : Type ℓb} (χ : Oracle A B) → (Separated B) →
   (Discrete X) → (f g : ℕ → ◯⟨ χ ⟩ X) → ¬ (f ≡ g) → (h : ℕ → ◯⟨ χ ⟩ X) →
   ◯⟨ χ ⟩ ((¬ h ≡ f) ⊎ (¬ h ≡ g))
@@ -39,6 +41,7 @@ distinguish {ℓa = ℓa} {ℓb = ℓb} {X = X} χ Bsep decX f g f≠g h = do
                      λ w → f≠g (almost w)
   ∣ map (λ {(n , p) q → p (funExt⁻ q n)}) (λ {(n , p) q → p (funExt⁻ q n)}) z ∣
   where
+    -- Since X is discrete, so is ◯⟨ χ ⟩ X. Uses the fact that ◯⟨ χ ⟩ is lex.
     disc◯ : (x y : ◯⟨ χ ⟩ X) → (◯⟨ χ ⟩ (Dec (x ≡ y)))
     disc◯ = nullElim (λ _ → isNullΠ (λ _ → isNull-Null (oDefd χ)))
                      (λ x → nullElim (λ _ → isNull-Null (oDefd χ ))

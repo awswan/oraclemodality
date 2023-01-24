@@ -1,4 +1,4 @@
-module Util.ModalOperatorInstances.PropTruncation where
+module Util.PropTruncationModalInstance where
 
 open import Cubical.Core.Everything
 open import Cubical.HITs.PropositionalTruncation public

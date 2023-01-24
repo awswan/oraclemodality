@@ -30,6 +30,7 @@ postulate
   ¬resize-out : (A : Type ℓ) → [ ¬resize A ] → ¬ A
   ¬resize-rtr : (P : Ω¬¬) → ¬resize(¬ [ P ]) ≡ P
 
+{- We derive properties that allow us to use Ω¬¬ as a classifier for ¬¬-stable props -}
 Ω¬¬-stab : (P : Ω¬¬) → Stable [ P ]
 Ω¬¬-stab P x = subst [_] (¬resize-rtr P) (¬resize-in (¬ [ P ]) x)
 
