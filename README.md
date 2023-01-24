@@ -7,7 +7,7 @@ This is the Agda formalisation to accompany the paper *Oracle modalities*.
 The main directory contains the following files:
   * `Includes.agda` Imports modules from the cubical library that are used multiple times
   * `DoubleNegationSheaves.agda` Implementation of 0-truncated double negation sheafification using the classifier for double negation stable propositions and various results about it
-  * `OracleModalities.agda` Main results about oracle modalities, including their definition, proof of relativised Markov's principle and its applications, definition of Turing degrees
+  * `OracleModality.agda` Main results about oracle modalities, including their definition, proof of relativised Markov's principle and its applications, definition of Turing degrees
   * `ParallelSearch.agda` parallel unbounded search using relativised Markov's principle
   * `RelativisedCT.agda` coding function used for relativised Church's thesis
 
