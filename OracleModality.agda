@@ -14,7 +14,6 @@ open import Axioms.NegativeResizing
 open import Axioms.MarkovInduction
 open import DoubleNegationSheaves
 
--- TODO: See if making this a record lets us make more variables implicit
 Oracle : (A : Type ℓa) (B : Type ℓb) → Type (ℓ-max ℓa ℓb)
 Oracle A B = A → ∇ B
 
@@ -22,14 +21,13 @@ oDefd : (χ : Oracle A B) → A → Type _ -- NB: χ is the Greek letter \chi
 oDefd χ a = χ a ↓
 
 module OM (χ : Oracle A B) {ℓ : Level} where
-  domain : A → Type _ -- TODO: delete
-  domain a = χ a ↓
+  {- Nullification is in particular a modality -}
+  open Modality (NullModality {ℓ = ℓ} (oDefd χ)) public
 
-  open Modality (NullModality {ℓ = ℓ} domain) public
-
+{- Definition of oracle modality -}
 ◯⟨_⟩ : {A : Type ℓa} {B : Type ℓb} (χ : Oracle A B) {ℓ : Level} →
        Type ℓ → Type (ℓ-max ℓ (ℓ-max ℓa ℓb))
-◯⟨ χ ⟩ {ℓ = ℓ} = Null domain
+◯⟨ χ ⟩ {ℓ = ℓ} = Null (oDefd χ)
   where
     open OM χ {ℓ = ℓ}
 
@@ -96,7 +94,7 @@ module _ (χ : Oracle A B) where
                     ◯⟨ χ ⟩ (Dec (X n))) → ◯⟨ χ ⟩ (Σ ℕ (λ n → X n × ((m : ℕ) → m < n → ¬ (X m))))
   search-first X exists dec = search-unique X' unique (λ w → exists (λ (n , v) → convert-ex w n v)) dec'
     where
-      X' : ℕ → Type _ -- TODO: Simplify using functions from MarkovInduction
+      X' : ℕ → Type _
       X' n = X n × ((m : ℕ) → m < n → ¬ (X m)) -- n is the first witness for X
 
       convert-ex : ¬ (Σ ℕ X') → (n : ℕ) → ¬ (X n)
