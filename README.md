@@ -20,8 +20,7 @@ The main directory contains the following files:
 
 `Util/` Anything used in the formalisation that isn't specifically mentioned in the paper or isn't new
   * `ModalOperatorSugar.agda` load the bind function required for [syntactic sugar](https://agda.readthedocs.io/en/v2.6.2.2/language/syntactic-sugar.html) via [instance resolution](https://agda.readthedocs.io/en/v2.6.2.2/language/instance-arguments.html). Allows us to use `do` notation for anything implementing the `ModalOperator` type
-  * `ModalOperatorInstances/` Two basic examples modal operators that we load via instance resolution
-	  - `PropositionalTruncation.agda` Propositional truncation implements `ModalOperator`
+  * `PropositionalTruncationModalOperator.agda` Propositional truncation implements `ModalOperator`
   * `DoubleNegation.agda` Lemmas about double negation including implementation of `ModalOperator`
   * `HasUnderlyingType.agda` Utility function for getting the underlying type of some structure via instance resolution
   * `LexNull.agda` Proof that nullification of a family of propositions is lex
