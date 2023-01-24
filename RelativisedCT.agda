@@ -6,7 +6,6 @@ open import Cubical.Functions.Surjection
 
 open import Axioms.NegativeResizing
 open import Axioms.ChurchsThesis
-open import Axioms.NegativeCountableChoice
 open import Axioms.StableSubcountableChoice
 
 open import Util.PartialElements
