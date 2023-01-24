@@ -1,6 +1,5 @@
 module OracleModality where
 
-
 open import Includes
 
 open import Util.Everything
