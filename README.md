@@ -23,9 +23,11 @@ The main directory contains the following files:
   * `PropositionalTruncationModalInstance.agda` Propositional truncation implements `ModalOperator`
   * `DoubleNegation.agda` Lemmas about double negation including implementation of `ModalOperator`
   * `HasUnderlyingType.agda` Utility function for getting the underlying type of some structure via instance resolution
+  * `Nullification.agda` a couple of useful functions regarding nullification
   * `LexNull.agda` Proof that nullification of a family of propositions is lex
   * `PartialElements.agda` Implementation of partial elements, including notation for any modal operator whose elements can be viewed as partial elements.
   * `StablePartial.agda` Partial elements with double negation stable domain
+  * `Nat.agda` Minor utility function on the naturals
   * `Everything.agda` Packages commonly used utility functions into a single import
 
 
