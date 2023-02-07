@@ -5,6 +5,7 @@ open import Cubical.Core.Everything
 open import Cubical.Relation.Nullary
 
 open import Cubical.Data.Sigma
+open import Cubical.Data.Sum
 
 open import Util.ModalOperatorSugar
 
@@ -30,3 +31,6 @@ instance
   where
     noA : ¬ A
     noA a = z (yes a)
+
+¬¬LEM : (P : Type ℓ) → ¬ ¬ (P ⊎ (¬ P))
+¬¬LEM P z = z (inr (λ p → z (inl p)))

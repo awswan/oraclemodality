@@ -144,21 +144,12 @@ module _ (χ : Oracle A B) where
 variable
   χ χ' χ'' : Oracle A B
 
-¬¬Sheaf→Null : {A : Type ℓ} {B : Type ℓ'} {X : Type ℓ''} {χ : Oracle A B} → (Separated B) → (¬¬Sheaf X) → isNull (λ a → (χ a) ↓) X
-¬¬Sheaf→Null {A = A} {X = X} {χ = χ} Bsep Xsh a = fromIsEquiv const (record { equiv-proof = λ f → isOfHLevelRetractFromIso 0 (fibequiv f) (Xsh (P a) (∇.almost-inh (χ a)) f) })
-  where
-    P : (a : A) → hProp _
-    P a = (χ a ↓) , ∇defd-prop Bsep (χ a)
-    
-    fibequiv : (f : χ a ↓ → X) → Iso (fiber const f) (Σ[ x ∈ X ] ((z : ⟨ P a ⟩) → f z ≡ x))
-    Iso.fun (fibequiv f) (x , u) = x , λ z i → u (~ i) z
-    Iso.inv (fibequiv f) (x , p) = x , funExt (λ z → sym (p z))
-    Iso.rightInv (fibequiv f) (x , p) = refl
-    Iso.leftInv (fibequiv f) (x , u) = refl
+¬¬Sheaf→Null : {A : Type ℓ} {B : Type ℓ'} {X : Type ℓ''} {χ : Oracle A B} → (Separated B) → (¬¬Sheaf X) → isNull (oDefd χ) X
+¬¬Sheaf→Null {A = A} {X = X} {χ = χ} Bsep Xsh a = Xsh ((χ a ↓) , (∇defd-prop Bsep (χ a)) , ∇.almost-inh (χ a))
 
 {- Erase all the computational information to get an element of ∇ X -}
 erase : (χ : Oracle A B) → (Separated B) → ◯⟨ χ ⟩ X → ∇ X
-erase χ Bsep = nullRec (¬¬Sheaf→Null {χ = χ} Bsep ∇-isSheaf) ∇-in
+erase χ Bsep = nullRec (¬¬Sheaf→Null {χ = χ} Bsep ∇isSheaf) ∇-in
 
 ◯→¬¬ : (χ : Oracle A B) → (Separated B) → ◯⟨ χ ⟩ X → ¬ ¬ X
 ◯→¬¬ χ Bsep z = ∇→¬¬ (erase χ Bsep z)

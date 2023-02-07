@@ -75,79 +75,25 @@ instance
 
 {- Definition of ¬¬-sheaf -}
 ¬¬Sheaf : (A : Type ℓ) → Type (ℓ-max ℓ (ℓ-suc ℓ'))
-¬¬Sheaf {ℓ' = ℓ'} A = (P : hProp ℓ') → (¬ ¬ ⟨ P ⟩) → (f : ⟨ P ⟩ → A) →
-                       isContr (Σ A (λ a → (p : ⟨ P ⟩) → f p ≡ a))
+¬¬Sheaf {ℓ' = ℓ'} = isNull {A = Σ[ P ∈ Type ℓ' ] isProp P × (¬ ¬ P)} typ
 
 StableProp→¬¬Sheaf : {A : Type ℓ} (Aprop : isProp A) → Stable A → ¬¬Sheaf {ℓ' = ℓ'} A
-StableProp→¬¬Sheaf Aprop Astab P Pconn f =
-  ((Astab (¬¬-map f Pconn)) , (λ _ → Aprop _ _)) ,
-  λ {(a , w) → Σ≡Prop (λ _ → isPropΠ (λ _ → isProp→isSet Aprop _ _)) (Aprop _ _)}
+isPathSplitEquiv.sec (StableProp→¬¬Sheaf Aprop Astab (P , (Pprop , Pconn))) =
+  (λ f → Astab λ na → Pconn (λ p → na (f p))) , λ f → funExt (λ p → Aprop _ _)
+isPathSplitEquiv.secCong (StableProp→¬¬Sheaf Aprop Astab (P , _)) a b =
+  (λ _ → Aprop _ _) , (λ p → isSet→ (isProp→isSet Aprop) (λ _ → a) (λ _ → b) _ _)
 
 isProp¬¬Sheaf : {A : Type ℓ} → isProp (¬¬Sheaf {ℓ' = ℓ'} A)
-isProp¬¬Sheaf = isPropΠ3 (λ _ _ _ → isPropIsContr)
+isProp¬¬Sheaf = isPropΠ (λ _ → isPropIsPathSplitEquiv _)
+
+¬¬SheafProp→Stable : (A : Type ℓ) → (isProp A) → (¬¬Sheaf {ℓ' = ℓ} A) → Stable A
+¬¬SheafProp→Stable A Aprop Ash nna = fst (isPathSplitEquiv.sec (Ash (A , Aprop , nna))) λ x → x
 
 {- 0-truncated ¬¬sheaves are separated -}
 ¬¬SheafSet→Separated : isSet A → ¬¬Sheaf A → Separated A
-¬¬SheafSet→Separated {A = A} Aset Ash a a' p = sym q ∙ r
-  where
-    af : (a ≡ a') → A
-    af _ = a
+¬¬SheafSet→Separated {A = A} Aset Ash a a' = ¬¬SheafProp→Stable _ (Aset a a') (isNull≡ Ash)
 
-    c : isContr (Σ A (λ b → (z : a ≡ a') → a ≡ b))
-    c = Ash ((a ≡ a') , (Aset _ _)) p af
-
-    q = cong fst (snd c (a , (λ _ → refl)))
-    r = cong fst (snd c (a' , (λ z → z)))
-
-¬¬SheafΣ : {A : Type ℓ} {B : A → Type ℓ'} → ¬¬Sheaf A → ((a : A) → ¬¬Sheaf {ℓ' = ℓ''} (B a)) →
-           ¬¬Sheaf (Σ A B)
-¬¬SheafΣ {A = A} {B = B} Ash Bsh P Pconn f =
-  isOfHLevelRetractFromIso 0 (compIso eq1 eq2) (Bsh _ P Pconn _)
-    
-  where
-    eq1 : Iso (Σ[ ab ∈ Σ A B ] ((z : ⟨ P ⟩) → f z ≡ ab))
-         (Σ (Σ[ a ∈ A ] ((z : ⟨ P ⟩) → fst (f z) ≡ a))
-           (λ {(a , p) → Σ[ b ∈ B a ]
-                         ((z : ⟨ P ⟩) → PathP (λ i → B (p z i)) (snd (f z)) b)}))
-
-    Iso.fun eq1 ((a , b) , p) = (a , (λ z i → fst (p z i))) , (b , (λ z i → snd (p z i)))
-    Iso.inv eq1 ((a , p) , (b , q)) = (a , b) , (λ z i → (p z i) , (q z i))
-    Iso.rightInv eq1 ((a , p) , (b , q)) = refl
-    Iso.leftInv eq1 ((a , b) , p) = refl
-
-    ap = Ash P Pconn (fst ∘ f)
-
-    eq2 : Iso (Σ (Σ[ a ∈ A ] ((z : ⟨ P ⟩) → fst (f z) ≡ a))
-                  (λ {(a , p) → Σ[ b ∈ B a ]
-                            ((z : ⟨ P ⟩) → PathP (λ i → B (p z i)) (snd (f z)) b)}))
-               (Σ[ b ∈ B (fst (fst ap)) ] ((z : ⟨ P ⟩) → subst B (snd (fst ap) z) (snd (f z)) ≡ b))
-    eq2 =
-      Σ (Σ[ a ∈ A ] ((z : ⟨ P ⟩) → fst (f z) ≡ a))
-                  (λ {(a , p) → Σ[ b ∈ B a ]
-                           ((z : ⟨ P ⟩) → PathP (λ i → B (p z i)) (snd (f z)) b)})
-            Iso⟨ Σ-contractFstIso ap ⟩
-      Σ[ b ∈ B (fst (fst ap)) ] ((z : ⟨ P ⟩) → PathP (λ i → B (snd (fst ap) z i))
-                         (snd (f z)) b)
-           Iso⟨ Σ-cong-iso-snd (λ b → codomainIsoDep (λ z → PathPIsoPath _ _ _)) ⟩
-      (Σ[ b ∈ B (fst (fst ap)) ] ((z : ⟨ P ⟩) → subst B (snd (fst ap) z) (snd (f z)) ≡ b))
-          ∎Iso
-
-¬¬SheafΠ : {A : Type ℓ} {B : A → Type ℓ'} → ((a : A) → ¬¬Sheaf {ℓ' = ℓ''} (B a)) → ¬¬Sheaf ((a : A) → B a)
-¬¬SheafΠ {A = A} {B = B} shB P x f = isOfHLevelRetractFromIso 0 lem3 lem2
-  where
-    lem1 : (a : A) → isContr (Σ[ b ∈ B a ] ((p : ⟨ P ⟩) → f p a ≡ b))
-    lem1 a = shB a P x λ p → f p a
-
-    lem2 : isContr ((a : A) → Σ[ b ∈ B a ] ((p : ⟨ P ⟩) → f p a ≡ b))
-    lem2 = isContrΠ lem1
-
-    lem3 : Iso (Σ ((a : A) → B a) (λ a → (p : ⟨ P ⟩) → f p ≡ a))
-                ((a : A) → Σ[ b ∈ B a ] ((p : ⟨ P ⟩) → f p a ≡ b))
-    Iso.inv lem3 g = (fst ∘ g) , (λ z → funExt (λ a → snd (g a) z))
-    Iso.fun lem3 (h , q) a = (h a) , (λ z → funExt⁻ (q z) a)
-    Iso.leftInv lem3 _ = refl
-    Iso.rightInv lem3 _ = refl
-
+{- ∇ A is always ¬¬-separated, and in particular a set -}
 Separated∇ : {A : Type ℓ} → Separated (∇ A)
 Separated∇ x y z = ∇=-in' _ _ λ a → SeparatedΩ¬¬ _ _ (¬¬-map (cong _) z)
 
@@ -176,124 +122,70 @@ isSet∇ {A = A} = Separated→isSet Separated∇
 ∇-path→defd : {A : Type ℓ} (α : ∇ A) (a : A) → α ≡ ∇-in a → ⟨ ∇.is-this α a ⟩
 ∇-path→defd α a p = subst (λ α' → ⟨ ∇.is-this α' a ⟩) (sym p) (¬¬resize-in refl)
 
-{- ∇ A is a ¬¬-sheaf -}
-∇-isSheaf : {A : Type ℓ} → ¬¬Sheaf {ℓ' = ℓ'} (∇ A)
-∇-isSheaf {A = A} P Pconn f = (α , path) , to
+{- ∇ A is always a ¬¬-sheaf -}
+∇isSheaf : {A : Type ℓ} → ¬¬Sheaf {ℓ' = ℓ'} (∇ A)
+isPathSplitEquiv.sec (∇isSheaf {A = A} (P , (Pprop , Pconn))) = sec , secpath
   where
-    α : ∇ A
-    ∇.is-this α a = ¬¬resize (Σ ⟨ P ⟩ (λ z → ⟨ ∇.is-this (f z) a ⟩))
-    ∇.well-defd α a b u v = do
-      ( p , u' ) ← ¬¬resize-out u
-      ( q , v' ) ← ¬¬resize-out v
-      let u'' = subst _ (str P p q) u'
-      ∇.well-defd (f q) a b u'' v'
-    ∇.almost-inh α = do
+    sec : (P → ∇ A) → ∇ A
+    ∇.is-this (sec f) a = ¬¬resize (Σ[ p ∈ P ] f p ↓= a)
+    ∇.well-defd (sec f) a b u v = do
+      (p , u') ← ¬¬resize-out u
+      (q , v') ← ¬¬resize-out v
+      let u'' = subst (λ z → f z ↓= a) (Pprop p q) u'
+      ∇.well-defd (f q) _ _ u'' v'
+    ∇.almost-inh (sec f ) = do
       p ← Pconn
       (a , u) ← ∇.almost-inh (f p)
       ¬¬-in (a , ¬¬resize-in (p , u))
 
-    path : (p : ⟨ P ⟩) → f p ≡ α
-    path p = ∇=-in (f p) α (λ a → ltr a , rtl a)
-      where
-        ltr : (a : A) → ⟨ ∇.is-this (f p) a ⟩ → ⟨ ∇.is-this α a ⟩
-        ltr a z = ¬¬resize-in (p , z)
+    secpath : (f : P → ∇ A) → (λ _ → sec f) ≡ f
+    secpath f = funExt λ p → Separated∇ _ _ do
+      (a , u) ← ∇.almost-inh (f p)
+      ¬¬-in (∇∩→≡ _ _ a (¬¬resize-in (p , u)) u)
 
-        rtl : (a : A) → ⟨ ∇.is-this α a ⟩ → ⟨ ∇.is-this (f p) a ⟩
-        rtl a w = Ω¬¬-stab _ (¬¬-map (λ {(q , w') → subst _ (str P q p) w'}) (¬¬resize-out w))
-
-    to : (y : Σ (∇ A) (λ a → (p : ⟨ P ⟩) → f p ≡ a)) → (α , path) ≡ y
-    to (β , u) = Σ≡Prop (λ _ → isPropΠ (λ _ → isSet∇ _ _)) h
-      where
-        h : α ≡ β
-        h = Separated∇ _ _ (¬¬-map (λ p → sym (path p) ∙ u p) Pconn)
+isPathSplitEquiv.secCong (∇isSheaf {A = A} (P , (Pprop , Pconn))) α β =
+  sec , λ p → isSetΠ (λ _ → isSet∇) _ _ _ _
+  where
+    sec : (λ _ → α) ≡ (λ _ → β) → α ≡ β
+    sec p = Separated∇ _ _ (¬¬-map (funExt⁻ p) Pconn)
 
 ∇injective : {A : Type ℓ} (P : hProp ℓ') → (¬ ¬ ⟨ P ⟩) → (f : ⟨ P ⟩ → ∇ A) → Σ[ α ∈ ∇ A ] ((p : ⟨ P ⟩) → f p ≡ α)
-∇injective P p₀ f = fst (∇-isSheaf P p₀ f)
+∇injective P p₀ f = (fst s f) , funExt⁻ (sym (snd s f))
+  where
+    s = isPathSplitEquiv.sec (∇isSheaf ((fst P) , ((snd P) , p₀)))
 
-{- ∇ is a modality -}
-module _ (A : Type ℓ) (B : ∇ A → Type ℓ') (Bsep : (α : ∇ A) → Separated (B α))
-  (Bsh : (α : ∇ A) → ¬¬Sheaf (B α)) (b₀ : (a : A) → B (∇-in a)) where
-
-  private
-    variable
-      α : ∇ A
-
-    Bset : isSet (B α)
-    Bset {α = α} = Separated→isSet (Bsep α)
-
-    targets : (α : ∇ A) → Type _
-    targets α = Σ[ b ∈ B α ] ((a : A) → (p : ∇-in a ≡ α) → subst B p (b₀ a) ≡ b)
-
-    target-unique : isProp (targets α)
-    target-unique {α = α} (b , u) (c , v) = Σ≡Prop (λ _ → isPropΠ2 (λ _ _ → Bset _ _)) (Bsep _ _ _ p)
-      where
-        p : ¬ ¬ (b ≡ c)
-        p = do
-          (a , w) ← ∇.almost-inh α
-          let q = sym (∇-defd→path _ _ w)
-          ¬¬-in (sym (u a q) ∙ v a q)
-
-    target-almost-inh : ¬ ¬ (targets α)
-    target-almost-inh {α = α} =
-      ¬¬-map (λ {(a , z) → subst B (sym (∇-defd→path _ a z))
-                                   (b₀ a) , λ a' p → Bsep _ _ _
-                                   (¬¬-map (λ r → lem a' a p _ r) (∇-in-inj (sym (∇-defd→path _ _ z) ∙ sym p)))})
-                      (∇.almost-inh α)
-      where
-        lem : (a a' : A) (p : ∇-in a ≡ α) (p' : ∇-in a' ≡ α) (r : a' ≡ a) →
-              (subst B p (b₀ a) ≡ subst B p' (b₀ a'))
-        lem a a' p p' r =
-          subst B p (b₀ a)
-            ≡⟨ cong (subst B p) (sym (substCommSlice (λ _ → A) (B ∘ ∇-in) (λ a'' _ → b₀ a'') r a)) ⟩
-          subst B p (subst B (cong ∇-in r) (b₀ a'))
-            ≡⟨ sym (substComposite B (cong ∇-in r) p (b₀ a')) ⟩
-          subst B (cong ∇-in r ∙ p) (b₀ a')
-            ≡⟨ cong (λ q → subst B q (b₀ a')) (isSet∇ _ _ _ _) ⟩
-          subst B p' (b₀ a')
-            ∎
-
-  {- elimination -}
-  ∇-elim : (α : ∇ A) → (B α)
-  ∇-elim α = fst (fst (Bsh α ((targets α) , target-unique) target-almost-inh fst))
-
-  {- computation -}
-  ∇-elim-β : (a : A) → (∇-elim (∇-in a) ≡ (b₀ a))
-  ∇-elim-β a = sym (snd (fst (Bsh (∇-in a) _ target-almost-inh fst)) ((b₀ a) , λ a' p → Bsep _ _ _ (¬¬-map (λ q → cong (λ r → subst B r (b₀ a')) (isSet∇ _ _ p (cong ∇-in q)) ∙ fromPathP (cong b₀ q)) (∇-in-inj p))))
-
-
-module ∇-rec (A : Type ℓ) (B : Type ℓ') (Bsep : Separated B) (Bsh : ¬¬Sheaf {ℓ' = ℓ-max ℓ ℓ'} B) where
-  private
+{- ∇ reflects onto ¬¬-separated ¬¬-sheaves. Note that this satisfies Definition 1.3 in [RSS]. -}
+∇reflSubuniverse : {A : Type ℓ} (B : Type ℓ') (Bsh : ¬¬Sheaf B) (Bsep : Separated B) →
+  (isPathSplitEquiv λ f → f ∘ ∇-in)
+isPathSplitEquiv.sec (∇reflSubuniverse {A = A} B Bsh Bsep) = sec , secPath
+  where
+    Bset : isSet B
     Bset = Separated→isSet Bsep
-  
-    f-with-comm : (g : A → B) → (α : ∇ A) → Σ[ b ∈ B ] ((a : A) → α ≡ ∇-in a → b ≡ g a)
-    f-with-comm g = ∇-elim A _ (λ α → λ x y z → Σ≡Prop (λ _ → isPropΠ2 (λ _ _ → Bset _ _))
-                           (Bsep _ _ (¬¬-map (cong fst) z)))
-                           shf (λ a → (g a) , (λ a' p → Bsep _ _ (¬¬-map (cong g) (∇-in-inj p))))
-      where
-        shf : (α : ∇ A) → ¬¬Sheaf (Σ[ b ∈ B ] ((a : A) → α ≡ ∇-in a → b ≡ g a))
-        shf α =
-          ¬¬SheafΣ Bsh
-                   (λ b → StableProp→¬¬Sheaf (isPropΠ2 (λ _ _ → Bset _ _))
-                          (λ z a p → Bsep _ _ (λ w → z (λ u → w (u a p)))))
 
-  f : (A → B) → (∇ A → B)
-  f g = fst ∘ (f-with-comm g)
+    secParts : (f : A → B) → (α : ∇ A) → _
+    secParts f α = isPathSplitEquiv.sec (Bsh ((Σ[ b ∈ B ] ((z : α ↓) → (f (fst z) ≡ b))) ,
+             (λ {(b , u) (c , v) →
+               Σ≡Prop (λ _ → isPropΠ (λ _ → Bset _ _))
+                             (Bsep _ _ (¬¬-map (λ z → sym (u z) ∙ v z) (∇.almost-inh α)))}) ,
+             ¬¬-map (λ {(a , u) → (f a) , (λ {(b , v) → Bsep _ _ (¬¬-map (cong f) (∇.well-defd α _ _ v u))})}) (∇.almost-inh α)))
 
-  comm : (g : A → B) → (a : A) → (f g (∇-in a) ≡ g a)
-  comm g a = snd (f-with-comm g (∇-in a)) a refl
+    sec : (A → B) → (∇ A → B)
+    sec f α = fst (secParts f α) fst
 
-  unique : (g : A → B) → (f' : ∇ A → B) → (comm' : (a : A) → (f' (∇-in a)) ≡ g a) →
-           (α : ∇ A) → (f' α ≡ f g α)
-  unique g f' comm' = ∇-elim A (λ α → f' α ≡ f g α) (λ _ _ _ _ → Bset _ _ _ _)
-                             (λ α → StableProp→¬¬Sheaf (Bset _ _) (Bsep _ _))
-                             λ a → comm' a ∙ sym (comm g a)
+    secPath : (f : A → B) → (sec f ∘ ∇-in ≡ f)
+    secPath f = funExt (λ a → funExt⁻ (snd (secParts f (∇-in a)) fst) ((f a) , λ {(b , u) → Bsep _ _ (¬¬-map (cong f) (¬¬resize-out u))}))
 
-  equiv : (∇ A → B) ≃ (A → B)
-  fst equiv h = h ∘ ∇-in
-  equiv-proof (snd equiv) g = ((f g) , funExt (comm g)) ,
-    λ {(f' , comm') → Σ≡Prop (λ _ → isSetΠ (λ _ → Bset) _ _)
-      (sym (funExt (λ α → unique g f' (λ a i → comm' i a) α)))}
+isPathSplitEquiv.secCong (∇reflSubuniverse {A = A} B Bsh Bsep) g h = (λ p → funExt (λ α → Bsep _ _ (lemma α p))) , λ q → isSetΠ (λ _ → Bset) _ _ _ _
+  where
+    Bset : isSet B
+    Bset = Separated→isSet Bsep
 
+    lemma : (α : ∇ A) → (g ∘ ∇-in ≡ h ∘ ∇-in) → ¬ ¬ (g α ≡ h α)
+    lemma α p = do
+      (a , u) ← ∇.almost-inh α
+      ¬¬-in (cong g (∇∩→≡ _ _ _ u (¬¬resize-in refl)) ∙∙ funExt⁻ p a ∙∙ cong h (∇∩→≡ _ _ _ (¬¬resize-in refl) u))
+
+{- ∇ restricts to double negation on propositions. -}
 ∇-prop : {A : Type ℓ} (Aprop : isProp A) → ∇ A ≃ (¬ ¬ A)
 ∇-prop {A = A} Aprop = propBiimpl→Equiv ∇A-isprop (isProp¬ _) f g
   where
@@ -311,36 +203,43 @@ module ∇-rec (A : Type ℓ) (B : Type ℓ') (Bsep : Separated B) (Bsh : ¬¬Sh
     ∇A-isprop : isProp (∇ A)
     ∇A-isprop x x' = ∇=-in x x' λ a → (λ _ → lem a x') , λ _ → lem a x
 
-
-∇-map : {A : Type ℓ} {B : Type ℓ'} (f : A → B) → ∇ A → ∇ B 
-∇-map {A = A} {B = B} f = ∇-rec.f _ _ Separated∇ ∇-isSheaf (∇-in ∘ f)
-
-
 instance
   {- Since ∇ is a modal operator we can use do notation for it -}
   open ModalOperator
   ∇-bind : ∀ {ℓa ℓb} → ModalOperator ℓ-zero ℓa ℓb ∇
-  bind (∇-bind) x f = ∇-rec.f _ _ Separated∇ ∇-isSheaf f x
-
-separatedΠ : {A : Type ℓ} {B : A → Type ℓ'} → ((a : A) → Separated (B a)) → Separated ((a : A) → B a)
-separatedΠ sepB f g p = funExt (λ a → sepB _ _ _ (¬¬-map (λ p' → funExt⁻ p' a) p))
+  bind (∇-bind) x f = fst (isPathSplitEquiv.sec (∇reflSubuniverse _ ∇isSheaf Separated∇)) f x
 
 ∇defd : {A : Type ℓ} → (α : ∇ A) → (∇ (α ↓))
 ∇.is-this (∇defd α) (a , z) = ¬¬⊤
 ∇.well-defd (∇defd α) (a , u) (b , v) _ _ = ¬¬-map (Σ≡Prop (λ _ → Ω¬¬-props _)) (∇.well-defd α _ _ u v)
 ∇.almost-inh (∇defd α) = ¬¬-map (λ {(a , u) → (a , u) , (¬¬resize-in tt)}) (∇.almost-inh α)
 
-∇breakΣ : (A : Type ℓ) (B : A → Type ℓ') → (Separated A) → ∇ (Σ A B) → Σ[ α ∈ ∇ A ] ((z : α ↓) → ∇ (B (fst z)))
-∇breakΣ A B sepA = ∇-elim _ _ (λ _ → separatedΣ Separated∇ (λ _ → separatedΠ (λ _ → Separated∇)))
-                              (λ _ → ¬¬SheafΣ ∇-isSheaf (λ _ → ¬¬SheafΠ (λ _ → ∇-isSheaf)))
-                              λ {(a , b) → (∇-in a) , (λ z → subst (∇ ∘ B) (sym (sepA _ _ (¬¬resize-out (snd z)))) (∇-in b)) }
+byCases : {A : Type ℓ} (P : Type ℓ') → A → A → ∇ A
+∇.is-this (byCases P a b) c = ¬¬resize ((P → c ≡ a) × (¬ P → c ≡ b))
+∇.well-defd (byCases P a b) c d u v = do
+  u' ← ¬¬resize-out u
+  v' ← ¬¬resize-out v
+  l ← ¬¬LEM P
+  ¬¬-in (⊎rec (λ p → fst u' p ∙ sym (fst v' p)) (λ ¬p → snd u' ¬p ∙ sym (snd v' ¬p)) l)
+∇.almost-inh (byCases P a b) = do
+  l ← ¬¬LEM P
+  ¬¬-in (⊎rec (λ p → a , (¬¬resize-in ((λ _ → refl) , (λ ¬p → ⊥rec (¬p p)))))
+              (λ ¬p → b , ¬¬resize-in ((λ p → ⊥rec (¬p p)) , (λ _ → refl))) l)
 
+byCasesβ⊤ : {A : Type ℓ} (P : Type ℓ') (a b : A) → P → (byCases P a b ↓= a)
+byCasesβ⊤ P a b p = ¬¬resize-in ((λ _ → refl) , (λ ¬p → ⊥rec (¬p p)))
+
+byCasesβ⊥ : {A : Type ℓ} (P : Type ℓ') (a b : A) → ¬ P → (byCases P a b ↓= b)
+byCasesβ⊥ P a b ¬p = ¬¬resize-in ((λ p → ⊥rec (¬p p)) , (λ _ → refl))
 
 ∇2 : ∇ Bool ≃ Ω¬¬
 ∇2 = isoToEquiv (iso f g f-g g-f)
   where
     f : ∇ Bool → Ω¬¬
     f x = ∇.is-this x true
+
+    g' : Ω¬¬ → ∇ Bool
+    g' y = byCases ⟨ y ⟩ true false
 
     g : Ω¬¬ → ∇ Bool
     g y = record { is-this = it
