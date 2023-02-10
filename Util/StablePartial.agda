@@ -23,6 +23,9 @@ instance
   ∂.value (includeTotal ∂hasUnderlyingPartial a) _ = a
   totalIs ∂hasUnderlyingPartial a = ¬¬resize-in ((¬¬resize-in tt) , refl)
 
+isProp∂↓ : {A : Type ℓ} (Asep : Separated A) {α : ∂ A} → (isProp (α ↓))
+isProp∂↓ Asep {α = α} (a , u) (b , v) = Σ≡Prop (λ _ → Ω¬¬-props _) (Asep a b (partialUnique α u v))
+
 ↓→domain : {A : Type ℓ} (α : ∂ A) → (α ↓) → ⟨ ∂.domain α ⟩
 ↓→domain α (a , u) = Ω¬¬-stab _ do
   (z , _) ← ¬¬resize-out u
