@@ -74,14 +74,8 @@ module _ {S : Type ℓ → Type ℓ'} ⦃ hup : HasUnderlyingPartial {ℓ''' = �
   _↓ : S A → Type _
   _↓ α = HasUnderlyingPartial.defined hup α
 
---   defdIsProp : (Separated A) → (α : S A) → isProp (α ↓)
---   defdIsProp sA α (a , u) (b , v) = Σ≡Prop (λ a' → Ω¬¬-props _) (sA _ _ (HasUnderlyingPartial.well-defd hup α _ _ u v))
-
   _↓=↓_ : S A → S A → Type _
   α ↓=↓ β = Σ[ a ∈ A ] (α ↓= a × β ↓= a)
-
---   _≈_ : S A → S A → Type ℓ
---   α ≈ β = (a : A) → ((α ↓= a) ↔ (β ↓= a))
 
   ι : A → S A
   ι = HasUnderlyingPartial.includeTotal hup
@@ -91,37 +85,3 @@ module _ {S : Type ℓ → Type ℓ'} ⦃ hup : HasUnderlyingPartial {ℓ''' = �
 
   ιdefd : (a : A) → (ι a ↓)
   ιdefd a = HasUnderlyingPartial.isToDefined hup (ι a) a (ιIs a)
-
--- --   partialUnique : (α : S A) {a b : A} → (α ↓= a) → (α ↓= b) → ¬ ¬ a ≡ b
--- --   partialUnique α = HasUnderlyingPartial.well-defd hup α _ _
-
---   ↓=compose≡ : (α : S A) {a b : A} → (α ↓= a) → (p : a ≡ b) → (α ↓= b)
---   ↓=compose≡ α u p = subst (λ a' → α ↓= a') p u
-
---   ≡compose↓= : {α β : S A} (p : α ≡ β) {a : A} → (β ↓= a) → (α ↓= a)
---   ≡compose↓= p {a} u = subst (λ γ → γ ↓= a) (sym p) u
-
-  -- ↓=↓compose↓= : {α β : S A} {a : A} → (α ↓=↓ β) → (β ↓= a) → (α ↓= a)
-  -- ↓=↓compose↓= {α} {β} {a} (a' , (v , w)) u = Ω¬¬-stab _ (¬¬-map (λ p' → subst (λ c → α ↓= c) p' v) p)
-  --   where
-  --     p : ¬ ¬ (a' ≡ a)
-  --     p = HasUnderlyingPartial.well-defd hup β a' a w u
-
--- instance
---   open HasUnderlyingPartial
---   degenerateHasUnderlyingPartial : HasUnderlyingPartial {ℓ = ℓ} ¬¬Partial
---   is-this (degenerateHasUnderlyingPartial) = ¬¬Partial.is-this
---   well-defd (degenerateHasUnderlyingPartial) = ¬¬Partial.well-defd
---   ¬¬Partial.is-this (includeTotal degenerateHasUnderlyingPartial a) a' = ¬¬resize (a ≡ a')
---   ¬¬Partial.well-defd (includeTotal degenerateHasUnderlyingPartial a) b b' u v = do
---     p ← ¬¬resize-out u
---     q ← ¬¬resize-out v
---     ¬¬-in (sym p ∙ q)
---   totalIs (degenerateHasUnderlyingPartial) a = ¬¬resize-in refl
-
--- fromTotal : {A : Type ℓ} → A → ¬¬Partial A
--- ¬¬Partial.is-this (fromTotal a) a' = ¬¬resize (a ≡ a')
--- ¬¬Partial.well-defd (fromTotal a) b b' u v = do
---   p ← ¬¬resize-out u
---   q ← ¬¬resize-out v
---   ¬¬-in (sym p ∙ q)

@@ -17,9 +17,6 @@ HasUnderlyingPartialDomainFirst.eval ∂hasUnderlyingPartialDF α = ∂.value α
 ∂.domain (fst (HasUnderlyingPartialDomainFirst.total ∂hasUnderlyingPartialDF a)) = ¬¬⊤
 ∂.value (fst (HasUnderlyingPartialDomainFirst.total ∂hasUnderlyingPartialDF a)) _ = a
 snd (HasUnderlyingPartialDomainFirst.total ∂hasUnderlyingPartialDF a) = (¬¬resize-in tt) , refl
---  ∂.domain (includeTotal ∂hasUnderlyingPartial a) = ¬¬⊤
---  ∂.value (includeTotal ∂hasUnderlyingPartial a) _ = a
---  totalIs ∂hasUnderlyingPartial a = ¬¬resize-in ((¬¬resize-in tt) , refl)
 
 instance
   ∂hasUnderlyingPartial : HasUnderlyingPartial {ℓ = ℓ} ∂
@@ -27,14 +24,6 @@ instance
 
 isProp∂↓ : {A : Type ℓ} (Asep : Separated A) {α : ∂ A} → (isProp (α ↓))
 isProp∂↓ Asep {α = α} = Ω¬¬-props (∂.domain α)
-
--- -- ↓→domain : {A : Type ℓ} (α : ∂ A) → (α ↓) → ⟨ ∂.domain α ⟩
--- -- ↓→domain α (a , u) = Ω¬¬-stab _ do
--- --   (z , _) ← ¬¬resize-out u
--- --   ¬¬-in z
-
--- -- domain→↓ : {A : Type ℓ} (α : ∂ A) → ⟨ ∂.domain α ⟩ → (α ↓)
--- -- domain→↓ α z = (∂.value α z) , (¬¬resize-in (z , refl))
 
 instance
   open ModalOperator
