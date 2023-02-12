@@ -19,6 +19,7 @@ open import Util.Nullification
 
 open import OracleModality
 open import DoubleNegationSheaves
+open import ComputableChoice
 
 {- We need a pairing function, but don't care what it looks like, so just postulate one -}
 postulate
@@ -44,6 +45,7 @@ module _ (χ : Oracle ℕ ℕ) where
     now : haltingTime
     later : ℕ → haltingTime → haltingTime
 
+
   data Code : Type where
     returnNat : ℕ → Code
     queryOracleAndContinue : ℕ → ℕ → Code
@@ -51,9 +53,12 @@ module _ (χ : Oracle ℕ ℕ) where
   postulate
     htctbl : Iso ℕ haltingTime
     Codectbl : Iso ℕ Code
+    separatedHaltingTime : Separated haltingTime
 
   ℕ→Code : ℕ → Code
   ℕ→Code = Iso.fun Codectbl
+  Code→ℕ : Code → ℕ
+  Code→ℕ = Iso.inv Codectbl
 
   ℕ→HT : ℕ → haltingTime
   ℕ→HT = Iso.fun htctbl
@@ -70,6 +75,25 @@ module _ (χ : Oracle ℕ ℕ) where
   decodeAtDom' (returnNat n) (later k t) = ⊥
   decodeAtDom' (queryOracleAndContinue n e) (later k t) =
     (w : χ n ↓) → Σ[ z ∈ isJust (φ₀ e (fst w) k) ] decodeAtDom' (ℕ→Code (fromJust _ z)) t
+
+  isPropDecodeAtDom : {c : Code} {t : haltingTime} → isProp (decodeAtDom' c t)
+  isPropDecodeAtDom {returnNat n} {now} = isPropUnit
+  isPropDecodeAtDom {returnNat n} {later k t} = isProp⊥
+  isPropDecodeAtDom {queryOracleAndContinue n e} {now} = isProp⊥
+  isPropDecodeAtDom {queryOracleAndContinue n e} {later k t} = isPropΠ (λ _ → isPropΣ isPropIsJust (λ _ → isPropDecodeAtDom))
+
+  haltingTimeUnique : {c : Code} (t t' : haltingTime) (d : decodeAtDom' c t) (d' : decodeAtDom' c t') → t ≡ t'
+  haltingTimeUnique {returnNat x} now now d d' = refl
+  haltingTimeUnique {returnNat x₁} now (later x t') d d' = ⊥rec d'
+  haltingTimeUnique {queryOracleAndContinue n e} now (later k t') d d' = ⊥rec d
+  haltingTimeUnique {queryOracleAndContinue n e} (later k t) (later k' t') d d' = separatedHaltingTime _ _ do
+    z ← ∇.almost-inh (χ n)
+    let kPath = φ₀-haltsOnce _ _ _ _ (fst (d z)) (fst (d' z))
+    ¬¬-in (cong₂ later kPath (haltingTimeUnique t t' (transport (cong₂ (λ k ij → decodeAtDom' (ℕ→Code (fromJust (φ₀ e (fst z) k) ij)) t) kPath (isProp→PathP (λ _ → isPropIsJust) _ _)) (snd (d z))) (snd (d' z))))
+
+-- Goal: decodeAtDom'
+--       (Iso.fun Codectbl (fromJust (φ₀ e (fst z) k') (fst (d' z)))) t
+
 
   decodeAtDomDec : (e : ℕ) (t : haltingTime) → ◯⟨ χ ⟩ (Dec (decodeAtDom e t))
   decodeAtDomDec e now = ∣ discreteℕ _ _ ∣
@@ -106,8 +130,8 @@ module _ (χ : Oracle ℕ ℕ) where
   decodeAt' (queryOracleAndContinue n e) (later k t) d =
     hub n (λ w → decodeAt' (ℕ→Code (fromJust _ (fst (d w)))) t (snd (d w)))
 
-  decodeDom : ℕ → Type
-  decodeDom e = ¬ ¬ (Σ[ k ∈ haltingTime ] (decodeAtDom e k))
+  decodeDom' : Code → Type
+  decodeDom' e = ¬ ¬ (Σ[ k ∈ haltingTime ] (decodeAtDom' e k))
 
   computeHaltingTime : (c : Code) → ¬ ¬ (Σ[ k ∈ haltingTime ] decodeAtDom' c k) →
     ◯⟨ χ ⟩ (Σ[ k ∈ haltingTime ] decodeAtDom' c k)
@@ -118,9 +142,17 @@ module _ (χ : Oracle ℕ ℕ) where
         (λ x → p (λ (t , d) → x ((Iso.inv htctbl t) , (subst (decodeAtDom' c) (sym (Iso.rightInv htctbl t)) d))))
         λ n → decodeAtDomDec' c (ℕ→HT n)
 
+  decodeWithPath : (e : Code) → ⟨ ¬¬resize (Σ[ k ∈ haltingTime ] decodeAtDom' e k) ⟩ → Σ[ z ∈ ◯⟨ χ ⟩ ℕ ] ((k : haltingTime) → (w : decodeAtDom' e k) → z ≡ decodeAt' e k w)
+  decodeWithPath e w = nullRec (isNullΣ (isNull-Null (oDefd χ)) (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull≡ (isNull-Null (oDefd χ)))))) (λ x → x) fromOracle
+    where
+      fromOracle : ◯⟨ χ ⟩ (Σ[ z ∈ ◯⟨ χ ⟩ ℕ ] ((k : haltingTime) → (w : decodeAtDom' e k) → z ≡ decodeAt' e k w))
+      fromOracle = do
+        (k , d) ← computeHaltingTime e (¬¬resize-out w)
+        ∣ (decodeAt' e k d) , (λ k' d' → cong₂ (decodeAt' e) (haltingTimeUnique _ _ d d') (isProp→PathP (λ _ → isPropDecodeAtDom) _ _)) ∣
+
   decode' : Code → ∂ (◯⟨ χ ⟩ ℕ)
   ∂.domain (decode' c) = ¬¬resize (Σ[ k ∈ haltingTime ] decodeAtDom' c k)
-  ∂.value (decode' c) d = (computeHaltingTime c (¬¬resize-out d)) >>= λ {(k , d) → decodeAt' c k d}
+  ∂.value (decode' c) d = fst (decodeWithPath c d)
 
 
   decode : ℕ → ∂ (◯⟨ χ ⟩ ℕ)
@@ -145,70 +177,132 @@ module _ (χ : Oracle ℕ ℕ) where
 
   private
     fibreData : (z : ◯⟨ χ ⟩ ℕ) → Type
-    fibreData z = (Σ[ e ∈ ℕ ] ¬ ¬ (Σ[ t ∈ haltingTime ]  Σ[ d ∈ decodeAtDom e t ] decodeAt e t d ≡ z))
+    fibreData z = (Σ[ e ∈ ℕ ] ¬ ¬ (Σ[ t ∈ haltingTime ]  Σ[ d ∈ decodeAtDom' (ℕ→Code e) t ] decodeAt' (ℕ→Code e) t d ≡ z))
     fibreData' : (z : ◯⟨ χ ⟩ ℕ) → Type
     fibreData' z = (Σ[ e ∈ Code ] ¬ ¬ (Σ[ t ∈ haltingTime ]  Σ[ d ∈ decodeAtDom' e t ] decodeAt' e t d ≡ z))
 
-  -- ECT'' : (X : ℕ → Code → Type) → (f : (n : ℕ) → ∂ ∥ Σ[ c ∈ Code ] X n c ∥₁) →
-  --   ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (f n ↓) → Σ[ k ∈ ℕ ] Σ[ z ∈ isJust (φ₀ e n k) ] X n (ℕ→Code (fromJust _ z))) ∥₁
-  -- ECT'' X f = do
-  --   g ← sscc (λ n → ∂.domain (f n)) (λ n d → Σ[ c ∈ Code ] X n c)
-  --               (λ n d → ∂.value (f n) d)
-  --   (e , z) ← ECT λ n → record { domain = ∂.domain (f n) ; value = λ d → Iso.inv Codectbl (fst (g n d)) }
-  --   ∣ e , (λ n w → {!!}) ∣₁
-
-  decodeSurj'' : (z : ◯⟨ χ ⟩ ℕ) → ∥ fibreData' z ∥₁
-  decodeSurj'' = NullPropElim (oDefd χ) (λ z → ∥ fibreData' z ∥₁ , isPropPropTrunc)
-    (λ n → ∣ (returnNat n) , (¬¬-in (now , (tt , refl))) ∣₁)
-    step
+  decodeSurj₀ : (z : ◯⟨ χ ⟩ ℕ) → ∥ fibreData' z ∥₁
+  decodeSurj₀ = NullPropElim (oDefd χ) (λ z → ∥ fibreData' z ∥₁ , isPropPropTrunc)
+    (λ n → ∣ returnNat n , (¬¬-in (now , tt , refl)) ∣₁) step
     where
       step : (n : ℕ) (f : χ n ↓ → ◯⟨ χ ⟩ ℕ) → ((w : χ n ↓) → ∥ fibreData' (f w) ∥₁) →
              ∥ fibreData' (hub n f) ∥₁
       step n f ih = do
-        esWithPrf ← sscc (λ m → ∇.is-this (χ n) m ) (λ m z → fibreData' (f (m , z)))
-                         (λ m z → ih (m , z))
-        (e , eWorks) ← ECT'' (λ m e' → (χ n ↓= m) → {!!}) {!!}
-        {!!}
-
-
-  decodeSurj' : (z : ◯⟨ χ ⟩ ℕ) → ∥ fibreData' z ∥₁
-  decodeSurj' = NullPropElim (oDefd χ) (λ z → ∥ fibreData' z ∥₁ , isPropPropTrunc)
-    (λ n → ∣ (returnNat n) , (¬¬-in (now , (tt , refl))) ∣₁)
-    step
-    where
-      step : (n : ℕ) (f : χ n ↓ → ◯⟨ χ ⟩ ℕ) → ((w : χ n ↓) → ∥ fibreData' (f w) ∥₁) →
-             ∥ fibreData' (hub n f) ∥₁
-      step n f ih = do
-        esWithPrf ← sscc (λ m → ∇.is-this (χ n) m ) (λ m z → fibreData' (f (m , z)))
-                         (λ m z → ih (m , z))
-        (e , eWorks) ← ECT' λ m → record { domain = ∇.is-this (χ n) m
-                                           ; value = λ z → Iso.inv Codectbl (fst (esWithPrf m z)) }
+        (e , eWorks) ← compChoice (λ m → ∇.is-this (χ n ) m) (λ m d e → ¬ ¬ (Σ[ t ∈ haltingTime ]  Σ[ d' ∈ decodeAtDom' (ℕ→Code e) t ] decodeAt' (ℕ→Code e) t d' ≡ f (m , d)))
+                  λ m d → ih (m , d) >>= λ z →
+                    ∣ (Code→ℕ (fst z)) , ¬¬-map (λ {(t , p) → t ,
+                      subst (λ c → Σ[ t' ∈ decodeAtDom' c t ] decodeAt' c t t' ≡ f (m , d)) (sym (Iso.rightInv Codectbl (fst z))) p}) (snd z) ∣₁
         let w = do
           (m , u) ← ∇.almost-inh (χ n)
-          let ((k , z) , q) = eWorks m ((Iso.inv Codectbl (fst (esWithPrf m u))) , ¬¬resize-in (u , refl))
-          (t , (d , p)) ← snd (esWithPrf m u)
-          ¬¬-in (later k t , (λ v → {!!} , {!!}) , (cong (hub n) (funExt (λ v' → {!!}))))
+          let ((k , w) , v) = eWorks m u
+          (t , (d' , p)) ← v
+          let adjust = λ mu' → subst (λ mu' → Σ[ z ∈ isJust (φ₀ e (fst mu') (fst (fst (eWorks m u)))) ] decodeAtDom' (ℕ→Code (fromJust _ z)) t) (∇defd-prop separatedℕ (χ n) (m , u) mu') (w , d')
+          ¬¬-in (later k t , adjust , cong (hub n) (funExt λ mu' → lemma e mu' (m , u) k t _ _ _ _ ∙∙ p ∙∙ cong f (∇defd-prop separatedℕ (χ n) _ _)))
         ∣ (queryOracleAndContinue n e) , w ∣₁
+        where
+          lemma : (e : ℕ) (mu mu' : χ n ↓) (k : ℕ) (t : haltingTime) (z : isJust (φ₀ e (fst mu) k)) (z' : isJust (φ₀ e (fst mu') k))
+            (w : decodeAtDom' (ℕ→Code (fromJust (φ₀ e (fst mu) k) z)) t) (w' : decodeAtDom' (ℕ→Code (fromJust (φ₀ e (fst mu') k) z')) t) →
+            decodeAt' (ℕ→Code (fromJust (φ₀ e (fst mu) k) z)) t w ≡ decodeAt' (ℕ→Code (fromJust (φ₀ e (fst mu') k) z')) t w'
+          lemma e mu mu' k t z z' w w' i = decodeAt' (ℕ→Code (fromJust (φ₀ e (fst (muP i)) k) (zP i))) t (wP i)
+            where
+              muP : mu ≡ mu'
+              muP = ∇defd-prop separatedℕ (χ n) mu mu'
 
-  decodeSurj : (z : ◯⟨ χ ⟩ ℕ) → ∥ fibreData z ∥₁
-  decodeSurj = NullPropElim (oDefd χ) (λ z → ∥ fibreData z ∥₁ , isPropPropTrunc )
-               (λ n → ∣ (pair 0 n) , ¬¬-in (now , ((pairβ₀ 0 n) , cong ∣_∣ (pairβ₁ 0 n))) ∣₁)
-               step
-    where
-      step : (n : ℕ) (f : χ n ↓ → ◯⟨ χ ⟩ ℕ) → ((w : χ n ↓) → ∥ fibreData (f w) ∥₁) →
-             ∥ fibreData (hub n f) ∥₁
+              zP : PathP (λ i → isJust (φ₀ e (fst (muP i)) k)) z z'
+              zP = isProp→PathP (λ _ → isPropIsJust) _ _
 
-      step n f ih = do
-        esWithPf ← sscc (λ m → ∇.is-this (χ n) m) (λ m z → fibreData (f (m , z)))
-                        λ m z → ih (m , z)
-        (e , eWorks) ← ECT' (λ m → record { domain = ∇.is-this (χ n) m
-                                           ; value = λ z → fst (esWithPf m z) })
-        let w = do
-          (m , u) ← ∇.almost-inh (χ n)
-          let ((k , v) , p) = eWorks m ((fst (esWithPf m u)) , ¬¬resize-in (u , refl))
-          (t , (d , q)) ← snd (esWithPf m u)
-          ¬¬-in ((later k t) , ((n , +-comm n 1 ∙ sym (pairβ₀ _ _)) , λ w' → {!!}) , cong (hub n) (funExt (λ w' → {!!})))
-        ∣ (pair (suc n) e) , w ∣₁
+              wP : PathP (λ i → decodeAtDom' (ℕ→Code (fromJust (φ₀ e (fst (muP i)) k) (zP i))) t) w w'
+              wP = isProp→PathP (λ _ → isPropDecodeAtDom) _ _
+
+  decodeSurj : (z : ◯⟨ χ ⟩ ℕ) → ∥ Σ[ e ∈ Code ] decode' e ↓= z ∥₁
+  decodeSurj z = do
+    (e , w) ← decodeSurj₀ z
+    let resizedDom = ¬¬resize-in-from¬¬ (¬¬-map (λ {(k , t , _) → (k , t)}) w)
+    let p = do
+      (t , d , q) ← w
+      ¬¬-in (snd (decodeWithPath e resizedDom) t d ∙ q)
+    ∣ e , resizedDom , separated◯⟨⟩ χ separatedℕ separatedℕ _ _ p ∣₁
+    
+
+-- Σ-syntax (isJust (φ₀ e (fst mu') (fst (fst (eWorks m u)))))
+--       (λ z →
+--          decodeAtDom'
+--          (ℕ→Code (fromJust (φ₀ e (fst mu') (fst (fst (eWorks m u)))) z)) t)
+
+-- Goal: decodeAt'
+--       (ℕ→Code
+--        (fromJust (φ₀ e (fst mu') (fst (fst (eWorks m u))))
+--         (fst
+--          (?0 (χ = χ) (n = n) (f = f) (ih = ih) (e = e) (eWorks = eWorks)
+--           (m = m) (u = u) (t = t) (d' = d') (p = p) (mu' = mu')))))
+--       t
+--       (snd
+--        (?0 (χ = χ) (n = n) (f = f) (ih = ih) (e = e) (eWorks = eWorks)
+--         (m = m) (u = u) (t = t) (d' = d') (p = p) (mu' = mu')))
+--       ≡ f mu'
+
+
+-- Goal: decodeAt'
+--       (ℕ→Code
+--        (fromJust (φ₀ e (fst mu') k)
+--         (fst
+--          (subst
+
+-- Σ-syntax (isJust (φ₀ e (fst mu') k))
+--       (λ z₁ → decodeAtDom' (ℕ→Code (fromJust (φ₀ e (fst mu') k) z₁)) t)
+    
+  -- decodeSurj'' : (z : ◯⟨ χ ⟩ ℕ) → ∥ fibreData' z ∥₁
+  -- decodeSurj'' = NullPropElim (oDefd χ) (λ z → ∥ fibreData' z ∥₁ , isPropPropTrunc)
+  --   (λ n → ∣ (returnNat n) , (¬¬-in (now , (tt , refl))) ∣₁)
+  --   step
+  --   where
+  --     step : (n : ℕ) (f : χ n ↓ → ◯⟨ χ ⟩ ℕ) → ((w : χ n ↓) → ∥ fibreData' (f w) ∥₁) →
+  --            ∥ fibreData' (hub n f) ∥₁
+  --     step n f ih = do
+  --       esWithPrf ← sscc (λ m → ∇.is-this (χ n) m ) (λ m z → fibreData' (f (m , z)))
+  --                        (λ m z → ih (m , z))
+  --       (e , eWorks) ← ECT'' (λ m e' → (χ n ↓= m) → {!!}) {!!}
+  --       {!!}
+
+
+  -- decodeSurj' : (z : ◯⟨ χ ⟩ ℕ) → ∥ fibreData' z ∥₁
+  -- decodeSurj' = NullPropElim (oDefd χ) (λ z → ∥ fibreData' z ∥₁ , isPropPropTrunc)
+  --   (λ n → ∣ (returnNat n) , (¬¬-in (now , (tt , refl))) ∣₁)
+  --   step
+  --   where
+  --     step : (n : ℕ) (f : χ n ↓ → ◯⟨ χ ⟩ ℕ) → ((w : χ n ↓) → ∥ fibreData' (f w) ∥₁) →
+  --            ∥ fibreData' (hub n f) ∥₁
+  --     step n f ih = do
+  --       esWithPrf ← sscc (λ m → ∇.is-this (χ n) m ) (λ m z → fibreData' (f (m , z)))
+  --                        (λ m z → ih (m , z))
+  --       (e , eWorks) ← ECT' λ m → record { domain = ∇.is-this (χ n) m
+  --                                          ; value = λ z → Iso.inv Codectbl (fst (esWithPrf m z)) }
+  --       let w = do
+  --         (m , u) ← ∇.almost-inh (χ n)
+  --         let ((k , z) , q) = eWorks m ((Iso.inv Codectbl (fst (esWithPrf m u))) , ¬¬resize-in (u , refl))
+  --         (t , (d , p)) ← snd (esWithPrf m u)
+  --         ¬¬-in (later k t , (λ v → {!!} , {!!}) , (cong (hub n) (funExt (λ v' → {!!}))))
+  --       ∣ (queryOracleAndContinue n e) , w ∣₁
+
+  -- decodeSurj : (z : ◯⟨ χ ⟩ ℕ) → ∥ fibreData z ∥₁
+  -- decodeSurj = NullPropElim (oDefd χ) (λ z → ∥ fibreData z ∥₁ , isPropPropTrunc )
+  --              (λ n → ∣ (pair 0 n) , ¬¬-in (now , ((pairβ₀ 0 n) , cong ∣_∣ (pairβ₁ 0 n))) ∣₁)
+  --              step
+  --   where
+  --     step : (n : ℕ) (f : χ n ↓ → ◯⟨ χ ⟩ ℕ) → ((w : χ n ↓) → ∥ fibreData (f w) ∥₁) →
+  --            ∥ fibreData (hub n f) ∥₁
+
+  --     step n f ih = do
+  --       esWithPf ← sscc (λ m → ∇.is-this (χ n) m) (λ m z → fibreData (f (m , z)))
+  --                       λ m z → ih (m , z)
+  --       (e , eWorks) ← ECT' (λ m → record { domain = ∇.is-this (χ n) m
+  --                                          ; value = λ z → fst (esWithPf m z) })
+  --       let w = do
+  --         (m , u) ← ∇.almost-inh (χ n)
+  --         let ((k , v) , p) = eWorks m ((fst (esWithPf m u)) , ¬¬resize-in (u , refl))
+  --         (t , (d , q)) ← snd (esWithPf m u)
+  --         ¬¬-in ((later k t) , ((n , +-comm n 1 ∙ sym (pairβ₀ _ _)) , λ w' → {!!}) , cong (hub n) (funExt (λ w' → {!!})))
+  --       ∣ (pair (suc n) e) , w ∣₁
 
 --   {- domain of the decode function referred to as s' in Section VI -}
 --   decodeDom : ℕ → ℕ → Type

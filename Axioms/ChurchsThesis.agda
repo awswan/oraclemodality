@@ -61,12 +61,14 @@ postulate
 ∂.domain (φ e n) = ¬¬resize (φ-domain e n)
 ∂.value (φ e n) z = φ-fromDomain e n (φ-domainStable (¬¬resize-out z))
 
+φ-domainIndependent : (e n : ℕ) → (d : φ-domain e n) → (φ e n ↓= (φ-fromDomain e n d))
+φ-domainIndependent e n d = (¬¬resize-in d) , (cong (φ-fromDomain e n) (φ-isPropDomain _ _))
 
-φ-domainEquiv : (e n : ℕ) → (φ e n ↓ ≃ φ-domain e n)
-φ-domainEquiv e n = propBiimpl→Equiv (isProp∂↓ separatedℕ) (φ-isPropDomain)
-  (λ {(m , w) → φ-domainStable (¬¬resize-out w >>= (¬¬resize-out ∘ fst))})
-  λ {(k , z) → (fromJust (φ₀ e n k) z) ,
-        (¬¬resize-in ((¬¬resize-in ((k , z))) , cong (φ-fromDomain e n) (φ-isPropDomain _ _)))}
+-- φ-domainEquiv : (e n : ℕ) → (φ e n ↓ ≃ φ-domain e n)
+-- φ-domainEquiv e n = propBiimpl→Equiv (isProp∂↓ separatedℕ) (φ-isPropDomain)
+--   (λ {(m , w) → φ-domainStable (¬¬resize-out w >>= (¬¬resize-out ∘ fst))})
+--   λ {(k , z) → (fromJust (φ₀ e n k) z) ,
+--         (¬¬resize-in ((¬¬resize-in ((k , z))) , cong (φ-fromDomain e n) (φ-isPropDomain _ _)))}
 
 -- φ : ℕ → ℕ → ∂ ℕ
 -- ∂.domain (φ e n) = ¬¬resize (φ-domain e n)
@@ -98,74 +100,74 @@ postulate
 --         ¬¬-in (sym (snd u') ∙∙ cong (λ z → ∂.value (φ e n) z) (Ω¬¬-props _ (fst u') (fst v')) ∙∙ snd v')
 
 postulate
-  ECT : (f : ℕ → ∂ ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (z : f n ↓) → φ e n ↓= (fst z)) ∥₁
+  ECT : (f : ℕ → ∂ ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (z : f n ↓) → φ e n ↓= (get (f n) z)) ∥₁
 --  ECT' : (f : ℕ → ∂ ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (z : f n ↓) → φ e n ↓= ∂.value (f n) (Ω¬¬-stab (∂.domain (f n)) (¬¬-map (λ {(s , p) → s}) (¬¬resize-out (snd z))))) ∥₁
 
-ECT' : (f : ℕ → ∂ ℕ) →
-  ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (z : f n ↓) → Σ[ d ∈ φ-domain e n ] φ-fromDomain e n d ≡ fst z) ∥₁
+-- ECT' : (f : ℕ → ∂ ℕ) →
+--   ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (z : f n ↓) → Σ[ d ∈ φ-domain e n ] φ-fromDomain e n d ≡ fst z) ∥₁
 
-ECT' f = ECT f >>= λ {(e , w) → ∣ e , (λ n z → lemma e w n z) ∣₁}
-  where
-    lemma : (e : ℕ) (w : (n : ℕ) → (z : f n ↓) → φ e n ↓= fst z) (n : ℕ) (z : f n ↓) →
-      Σ[ d ∈ φ-domain e n ] φ-fromDomain e n d ≡ fst z
-    lemma e w n z = d , p
-      where
-        w0 : φ e n ↓= fst z
-        w0 = w n z
+-- ECT' f = ECT f >>= λ {(e , w) → ∣ e , (λ n z → lemma e w n z) ∣₁}
+--   where
+--     lemma : (e : ℕ) (w : (n : ℕ) → (z : f n ↓) → φ e n ↓= fst z) (n : ℕ) (z : f n ↓) →
+--       Σ[ d ∈ φ-domain e n ] φ-fromDomain e n d ≡ fst z
+--     lemma e w n z = d , p
+--       where
+--         w0 : φ e n ↓= fst z
+--         w0 = w n z
       
-        d : φ-domain e n
-        d = φ-domainStable do (¬¬resize-out w0 >>= (¬¬resize-out ∘ fst))
+--         d : φ-domain e n
+--         d = φ-domainStable do (¬¬resize-out w0 >>= (¬¬resize-out ∘ fst))
 
-        p : φ-fromDomain e n d ≡ fst z
-        p = separatedℕ _ _ do
-          (u , q) ← ¬¬resize-out w0
-          ¬¬-in (cong (φ-fromDomain e n) (φ-isPropDomain _ _) ∙ q)
+--         p : φ-fromDomain e n d ≡ fst z
+--         p = separatedℕ _ _ do
+--           (u , q) ← ¬¬resize-out w0
+--           ¬¬-in (cong (φ-fromDomain e n) (φ-isPropDomain _ _) ∙ q)
         
-ECT'' : (X : ℕ → ℕ → Type) (f : (n : ℕ) → ∂ (Σ[ m ∈ ℕ ] X n m)) →
-  ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (f n ↓) → Σ[ d ∈ φ-domain e n ] (X n (φ-fromDomain e n d))) ∥₁
-ECT'' X f = do
-  (e , g) ← ECT f'
-  ∣ e , (λ n z → lemma e n z (g n (proj↓ n z))) ∣₁
-  where
-    lemma : (e n : ℕ) → (z : f n ↓) → φ e n ↓= fst (fst z) → Σ[ d ∈ φ-domain e n ] (X n (φ-fromDomain e n d))
-    lemma e n z u = φdom , subst (X n) path x
-      where
-        fdom : ⟨ ∂.domain (f n) ⟩
-        fdom = ↓→domain (f n) z
+-- ECT'' : (X : ℕ → ℕ → Type) (f : (n : ℕ) → ∂ (Σ[ m ∈ ℕ ] X n m)) →
+--   ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (f n ↓) → Σ[ d ∈ φ-domain e n ] (X n (φ-fromDomain e n d))) ∥₁
+-- ECT'' X f = do
+--   (e , g) ← ECT f'
+--   ∣ e , (λ n z → lemma e n z (g n (proj↓ n z))) ∣₁
+--   where
+--     lemma : (e n : ℕ) → (z : f n ↓) → φ e n ↓= fst (fst z) → Σ[ d ∈ φ-domain e n ] (X n (φ-fromDomain e n d))
+--     lemma e n z u = φdom , subst (X n) path x
+--       where
+--         fdom : ⟨ ∂.domain (f n) ⟩
+--         fdom = ↓→domain (f n) z
 
-        φdom : φ-domain e n
-        φdom = φ-domainStable do
-          u' ← ¬¬resize-out u
-          ¬¬resize-out (fst u')
+--         φdom : φ-domain e n
+--         φdom = φ-domainStable do
+--           u' ← ¬¬resize-out u
+--           ¬¬resize-out (fst u')
 
-        x : X n (fst (∂.value (f n) fdom))
-        x = snd (∂.value (f n) fdom)
+--         x : X n (fst (∂.value (f n) fdom))
+--         x = snd (∂.value (f n) fdom)
 
-        path : fst (∂.value (f n) fdom) ≡ φ-fromDomain e n φdom
-        path = separatedℕ _ _ do
-          (fdom' , p) ← ¬¬resize-out (snd z)
-          (w , q) ← ¬¬resize-out u
-          φdom' ← ¬¬resize-out w
-          ¬¬-in (
-            fst (∂.value (f n) fdom)
-              ≡⟨ cong (fst ∘ (∂.value (f n))) (Ω¬¬-props _ _ _) ⟩
-            fst (∂.value (f n) fdom')
-              ≡⟨ cong fst p ⟩
-            fst (fst z)
-              ≡⟨ sym q ⟩
-            φ-fromDomain e n _
-              ≡⟨ cong (φ-fromDomain e n) (φ-isPropDomain _ _) ⟩
-            φ-fromDomain e n φdom
-              ∎)
+--         path : fst (∂.value (f n) fdom) ≡ φ-fromDomain e n φdom
+--         path = separatedℕ _ _ do
+--           (fdom' , p) ← ¬¬resize-out (snd z)
+--           (w , q) ← ¬¬resize-out u
+--           φdom' ← ¬¬resize-out w
+--           ¬¬-in (
+--             fst (∂.value (f n) fdom)
+--               ≡⟨ cong (fst ∘ (∂.value (f n))) (Ω¬¬-props _ _ _) ⟩
+--             fst (∂.value (f n) fdom')
+--               ≡⟨ cong fst p ⟩
+--             fst (fst z)
+--               ≡⟨ sym q ⟩
+--             φ-fromDomain e n _
+--               ≡⟨ cong (φ-fromDomain e n) (φ-isPropDomain _ _) ⟩
+--             φ-fromDomain e n φdom
+--               ∎)
 
-    f' : ℕ → ∂ ℕ
-    ∂.domain (f' n) = ∂.domain (f n)
-    ∂.value (f' n) z = fst (∂.value (f n) z)
+--     f' : ℕ → ∂ ℕ
+--     ∂.domain (f' n) = ∂.domain (f n)
+--     ∂.value (f' n) z = fst (∂.value (f n) z)
 
-    proj↓ : (n : ℕ) → f n ↓ → f' n ↓
-    proj↓ n (mx , w) = fst mx , Ω¬¬-stab _ do
-      (z , p) ← ¬¬resize-out w
-      ¬¬-in (¬¬resize-in (z , (cong fst p)))
+--     proj↓ : (n : ℕ) → f n ↓ → f' n ↓
+--     proj↓ n (mx , w) = fst mx , Ω¬¬-stab _ do
+--       (z , p) ← ¬¬resize-out w
+--       ¬¬-in (¬¬resize-in (z , (cong fst p)))
 
 CT : (f : ℕ → ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → φ e n ↓= f n) ∥₁
 CT f = do

@@ -60,14 +60,16 @@ record ∇ (A : Type ℓ) : Type ℓ where
              ¬¬-in (is-b ∙ sym is-c)
 ∇.almost-inh (∇-in a)         = ¬¬-in (a , (¬¬resize-in refl))
 
+{- We can view elements of ∇ A as partial elements and so use all the notation in PartialElements -}
+∇hasUnderlyingPartialVF : HasUnderlyingPartialValueFirst {ℓ = ℓ} ∇
+HasUnderlyingPartialValueFirst.is-this ∇hasUnderlyingPartialVF α a = ⟨ ∇.is-this α a ⟩
+--  well-defd ∇hasUnderlyingPartialVF = ∇.well-defd
+HasUnderlyingPartialValueFirst.includeTotal ∇hasUnderlyingPartialVF = ∇-in
+HasUnderlyingPartialValueFirst.totalIs ∇hasUnderlyingPartialVF a = ¬¬resize-in refl
+
 instance
-  {- We can view elements of ∇ A as partial elements and so use all the notation in PartialElements -}
-  open HasUnderlyingPartial
   ∇hasUnderlyingPartial : HasUnderlyingPartial {ℓ = ℓ} ∇
-  is-this ∇hasUnderlyingPartial = ∇.is-this
-  well-defd ∇hasUnderlyingPartial = ∇.well-defd
-  includeTotal ∇hasUnderlyingPartial = ∇-in
-  totalIs ∇hasUnderlyingPartial a = ¬¬resize-in refl
+  ∇hasUnderlyingPartial = HasUnderlyingPartialFromValue ∇hasUnderlyingPartialVF
 
 ∇defd-prop : {A : Type ℓ} → (Separated A) → (x : ∇ A) → isProp (x ↓)
 ∇defd-prop Asep x (a , z) (a' , z') = Σ≡Prop (λ b → Ω¬¬-props _) (Asep a a' (∇.well-defd x a a' z z'))
