@@ -38,3 +38,25 @@ instance
       βdom = Ω¬¬-stab _ do
         (αdom' , βdom') ← ¬¬resize-out u
         ¬¬-in (subst (λ αdom'' → ⟨ ∂.domain (f (∂.value α αdom'')) ⟩) (Ω¬¬-props _ αdom' αdom) βdom')
+
+∂bindDesc : {A : Type ℓa} {B : Type ℓb} (α : ∂ A) (β : A → ∂ B)
+  (dα : ⟨ ∂.domain α ⟩) (dβ : ⟨ ∂.domain (β (∂.value α dα)) ⟩) → (α >>= β) ↓= ∂.value (β (∂.value α dα)) dβ
+∂bindDesc α β dα dβ = (¬¬resize-in (dα , dβ)) , λ i → ∂.value (β (∂.value α (αpath i)))
+  (βpath i)
+  where
+    u : ⟨ ∂.domain (α >>= β) ⟩
+    u = ¬¬resize-in (dα , dβ)
+  
+    dα' : ⟨ ∂.domain α ⟩
+    dα' = Ω¬¬-stab _ (¬¬-map fst (¬¬resize-out u))
+
+    αpath : dα' ≡ dα
+    αpath = Ω¬¬-props _ _ _
+
+    dβ' : ⟨ ∂.domain (β (∂.value α dα')) ⟩
+    dβ' = Ω¬¬-stab _ do
+        (αdom' , βdom') ← ¬¬resize-out u
+        ¬¬-in (subst (λ αdom'' → ⟨ ∂.domain (β (∂.value α αdom'')) ⟩) (Ω¬¬-props _ αdom' dα') βdom')
+
+    βpath : PathP (λ i → ⟨ ∂.domain (β (∂.value α (αpath i))) ⟩) dβ' dβ
+    βpath = isProp→PathP (λ i → Ω¬¬-props _) _ _

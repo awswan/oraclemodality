@@ -1,7 +1,7 @@
 module Util.PropTruncationModalInstance where
 
 open import Cubical.Core.Everything
-open import Cubical.HITs.PropositionalTruncation public
+open import Cubical.HITs.PropositionalTruncation public renaming (map to truncMap)
 
 open import Util.ModalOperatorSugar
 
