@@ -224,11 +224,10 @@ module _ (χ : Oracle ℕ ℕ) where
   diag : ℕ → ∇ ℕ
   diag e = byCases (ψ e e ↓= ∣ 0 ∣) 1 0
 
-  diagNonComputable : (f : ℕ → ◯⟨ χ ⟩ ℕ) → diag ≡ erase χ separatedℕ ∘ f → ⊥
-  diagNonComputable f p = rec isProp⊥ (λ x → x) do
+  diagNonComputable₀ : (f : ℕ → ◯⟨ χ ⟩ ℕ) → diag ≡ erase χ separatedℕ ∘ f → ⊥
+  diagNonComputable₀ f p = rec isProp⊥ (λ x → x) do
     (e , h) ← relativisedCT f
-    let (d , p) = h e
-    ∣ {!!} ∣₁
+    ∣ contr e (h e) ∣₁
     where
       ifzero : (e : ℕ) → (z : ψ e e ↓= f e) →
         (∂.value (ψ e e) (fst z) ≡ ∣ 0 ∣) → ⊥
@@ -243,8 +242,8 @@ module _ (χ : Oracle ℕ ℕ) where
           isZ : diag e ↓= 0
           isZ = subst (λ x → x ↓= 0) (sym p') (¬¬resize-in refl)
 
-      ifnzero : (e : ℕ) → (z : ψ e e ↓= f e) → ⊥
-      ifnzero e z = {!!}
+      contr : (e : ℕ) → (z : ψ e e ↓= f e) → ⊥
+      contr e z = q (fst isZ') (snd isZ')
         where
           q : (w : ⟨ ∂.domain (ψ e e) ⟩) → (∂.value (ψ e e) w ≡ ∣ 0 ∣) → ⊥
           q w u = ifzero e z (cong (∂.value (ψ e e)) (Ω¬¬-props _ _ _) ∙ u)
@@ -253,7 +252,18 @@ module _ (χ : Oracle ℕ ℕ) where
           isZ = byCasesβ⊥ (ψ e e ↓= ∣ 0 ∣) 1 0 λ r → q (fst r) (snd r)
 
           isZ' : ψ e e ↓= ∣ 0 ∣
-          isZ' = (fst z) , (snd z ∙∙ {!funExt⁻!} ∙∙ {!!})
+          isZ' = (fst z) , (
+            ∂.value (ψ e e) (fst z)
+              ≡⟨ snd z ⟩
+            f e
+              ≡⟨ eraseInj χ separatedℕ separatedℕ (sym (funExt⁻ p e) ∙ ∇-defd→path (diag e) 0 isZ) ⟩
+            ∣ 0 ∣
+              ∎
+            )
 
-          isOne : diag e ↓= 1
-          isOne = byCasesβ⊤ (ψ e e ↓= ∣ 0 ∣) 1 0 {!!}
+  diagNonComputable : ¬ (diag ≤T χ)
+  diagNonComputable (Tred red) = diagNonComputable₀ (fst ∘ mWithPath) (funExt (λ n → snd (mWithPath n)))
+    where
+      mWithPath : (n : ℕ) → Σ[ m ∈ ◯⟨ χ ⟩ ℕ ] (diag n ≡ erase χ separatedℕ m)
+      mWithPath n = nullRec (isNullΣ (isNull-Null (oDefd χ)) (λ _ → isNull≡ (¬¬Sheaf→Null {χ = χ} separatedℕ ∇isSheaf)))
+                          (λ (m , p) → ∣ m ∣ , ∇-defd→path (diag n) m p) (red n)

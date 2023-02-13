@@ -157,6 +157,12 @@ erase χ Bsep = nullRec (¬¬Sheaf→Null {χ = χ} Bsep ∇isSheaf) ∇-in
 recallErase : (χ : Oracle A B) → (sB : Separated B) → {X : Type ℓ} → (x : ◯⟨ χ ⟩ X) → ◯⟨ χ ⟩(erase χ sB x ↓)
 recallErase χ sB = nullElim (λ x → isNull-Null (λ a → χ a ↓)) λ x → ∣ x , (¬¬resize-in refl) ∣
 
+eraseInj : (χ : Oracle A B) → (sB : Separated B) (sX : Separated X) → {w z : ◯⟨ χ ⟩ X} → (erase χ sB w ≡ erase χ sB z) → (w ≡ z)
+eraseInj {X = X} χ sB sX {w} {z} =
+  nullElim {Y = λ w → (z : ◯⟨ χ ⟩ X) → erase χ sB w ≡ erase χ sB z → w ≡ z}
+    (λ w → isNullΠ (λ _ → isNullΠ (λ p → isNull≡ (isNull-Null (oDefd χ)))))
+    (λ w₀ → nullElim (λ z → isNullΠ (λ _ → isNull≡ (isNull-Null (oDefd χ)))) (λ z₀ p → cong ∣_∣ (sX _ _ (∇-in-inj p)))) w z
+
 variable
   A' B' : Type ℓ'
 
