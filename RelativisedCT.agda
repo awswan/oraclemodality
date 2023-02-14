@@ -16,52 +16,12 @@ open import Util.HasUnderlyingType
 open import Util.PropTruncationModalInstance
 open import Util.LexNull
 open import Util.Nullification
+open import Util.Encodings
 
 open import OracleModality
 open import DoubleNegationSheaves
 
-{- We need a pairing function, but don't care what it looks like, so just postulate one -}
-postulate
-  ℕPairIso : Iso (ℕ × ℕ) ℕ
-
-p₀ : ℕ → ℕ
-p₀ n = fst (Iso.inv ℕPairIso n)
-
-p₁ : ℕ → ℕ
-p₁ n = snd (Iso.inv ℕPairIso n)
-
-pair : ℕ → ℕ → ℕ
-pair n m = Iso.fun ℕPairIso (n , m)
-
-pairβ₀ : (x y : ℕ) → (p₀ (pair x y) ≡ x)
-pairβ₀ x y = cong fst (Iso.leftInv ℕPairIso (x , y))
-
-pairβ₁ : (x y : ℕ) → (p₁ (pair x y) ≡ y)
-pairβ₁ x y = cong snd (Iso.leftInv ℕPairIso (x , y))
-
 module _ (χ : Oracle ℕ ℕ) where
-  data haltingTime : Type where
-    now : haltingTime
-    later : ℕ → haltingTime → haltingTime
-
-
-  data Code : Type where
-    returnNat : ℕ → Code
-    queryOracleAndContinue : ℕ → ℕ → Code
-
-  postulate
-    htctbl : Iso ℕ haltingTime
-    Codectbl : Iso ℕ Code
-    separatedHaltingTime : Separated haltingTime
-
-  ℕ→Code : ℕ → Code
-  ℕ→Code = Iso.fun Codectbl
-  Code→ℕ : Code → ℕ
-  Code→ℕ = Iso.inv Codectbl
-
-  ℕ→HT : ℕ → haltingTime
-  ℕ→HT = Iso.fun htctbl
-
   decodeAtDom : Code → haltingTime → Type
   decodeAtDom (returnNat x) now = Unit
   decodeAtDom (queryOracleAndContinue _ _) now = ⊥
@@ -122,7 +82,7 @@ module _ (χ : Oracle ℕ ℕ) where
     where
       natVersion : ◯⟨ χ ⟩ (Σ[ n ∈ ℕ ] decodeAtDom c (ℕ→HT n))
       natVersion = search χ (λ n → decodeAtDom c (ℕ→HT n))
-        (λ x → p (λ (t , d) → x ((Iso.inv htctbl t) , (subst (decodeAtDom c) (sym (Iso.rightInv htctbl t)) d))))
+        (λ x → p (λ (t , d) → x ((fst haltingTimeCtbl t) , (subst (decodeAtDom c) (sym (retEq haltingTimeCtbl t)) d))))
         λ n → decodeAtDomDec c (ℕ→HT n)
 
   decodeWithPath : (e : Code) → ⟨ ¬¬resize (Σ[ k ∈ haltingTime ] decodeAtDom e k) ⟩ → Σ[ z ∈ ◯⟨ χ ⟩ ℕ ] ((k : haltingTime) → (w : decodeAtDom e k) → z ≡ decodeAt e k w)
@@ -148,7 +108,7 @@ module _ (χ : Oracle ℕ ℕ) where
         (e , eWorks) ← compChoice (λ m → ∇.is-this (χ n ) m) (λ m d e → ¬ ¬ (Σ[ t ∈ haltingTime ]  Σ[ d' ∈ decodeAtDom (ℕ→Code e) t ] decodeAt (ℕ→Code e) t d' ≡ f (m , d)))
                   λ m d → ih (m , d) >>= λ z →
                     ∣ (Code→ℕ (fst z)) , ¬¬-map (λ {(t , p) → t ,
-                      subst (λ c → Σ[ t' ∈ decodeAtDom c t ] decodeAt c t t' ≡ f (m , d)) (sym (Iso.rightInv Codectbl (fst z))) p}) (snd z) ∣₁
+                      subst (λ c → Σ[ t' ∈ decodeAtDom c t ] decodeAt c t t' ≡ f (m , d)) (sym (retEq CodeCtbl (fst z))) p}) (snd z) ∣₁
         let w = do
           (m , u) ← ∇.almost-inh (χ n)
           let ((k , w) , v) = eWorks m u
@@ -195,7 +155,7 @@ module _ (χ : Oracle ℕ ℕ) where
     (e , g) ← compChoice (λ n → ∂.domain (f n))
                          (λ n z e → decode (ℕ→Code e) ↓= ∂.value (f n) z)
                          λ n z → decodeSurj (∂.value (f n) z) >>=
-                           λ {(c , u) → ∣ (Code→ℕ c) , (subst (λ c → decode c ↓= ∂.value (f n) z) (sym (Iso.rightInv Codectbl c)) u) ∣₁}
+                           λ {(c , u) → ∣ (Code→ℕ c) , (subst (λ c → decode c ↓= ∂.value (f n) z) (sym (retEq CodeCtbl c)) u) ∣₁}
     ∣ e , (λ n z → (fst (lemma2 e n z (g n z))) ,
              (snd (lemma2 e n z (g n z)) ∙∙ cong₂ (λ x y → ∂.value (decode (ℕ→Code (φ-fromDomain e n x))) y) (φ-isPropDomain _ _) (isProp→PathP (λ _ → Ω¬¬-props _) _ _) ∙∙ snd (snd (g n z)))) ∣₁
     where

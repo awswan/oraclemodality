@@ -20,7 +20,7 @@ open import Cubical.Data.Sigma public
 open import Cubical.Data.Nat public renaming (elim to ℕelim)
 open import Cubical.Data.Nat.Order public
 open import Cubical.Data.Fin public renaming (elim to FinElim)
-open import Cubical.Data.Sum public renaming (rec to ⊎rec ; elim to ⊎elim)
+open import Cubical.Data.Sum public renaming (rec to ⊎rec ; elim to ⊎elim ; map to ⊎map)
 open import Cubical.Data.Bool public hiding (_≤_ ; _≥_ ; isProp≤) renaming (_≟_ to discreteBool)
 open import Cubical.Data.Maybe public renaming (rec to maybeRec ; elim to maybeElim)
 

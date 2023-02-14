@@ -1,4 +1,4 @@
-open import Includes hiding (map)
+open import Includes
 
 open import Cubical.HITs.PropositionalTruncation
 
