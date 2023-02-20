@@ -255,3 +255,10 @@ separated◯⟨⟩ χ sepB sepX =
   λ x → nullElim (λ _ → isNullΠ (λ _ → isNull≡ (isNull-Null (oDefd χ))))
                  (λ y p → cong ∣_∣ (sepX _ _ (p >>= λ p' →
                    ◯→¬¬ χ sepB (∣∣-inj (λ a → (oDefd χ a) , (∇defd-prop sepB (χ a))) _ _ p'))))
+
+map⟨_⟩ : (χ : Oracle A B) {X : Type ℓ} {Y : Type ℓ'} → (g : X → Y) → ◯⟨ χ ⟩ X → ◯⟨ χ ⟩ Y
+map⟨ χ ⟩ g ∣ x ∣ = ∣ g x ∣
+map⟨ χ ⟩ g (hub α f) = hub α λ z → map⟨ χ ⟩ g (f z)
+map⟨ χ ⟩ g (spoke α f s i) = spoke α (λ z → map⟨ χ ⟩ g (f z)) s i
+map⟨ χ ⟩ g (≡hub p i) = ≡hub (λ z i → map⟨ χ ⟩ g (p z i)) i
+map⟨ χ ⟩ g (≡spoke p s i i₁) = ≡spoke (λ z i → map⟨ χ ⟩ g (p z i)) s i i₁

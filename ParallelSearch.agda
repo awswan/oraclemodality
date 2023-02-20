@@ -1,7 +1,7 @@
 open import OracleModality
 
 open import Includes
-open import Util.Everything hiding (map)
+open import Util.Everything
 open import Util.PartialElements
 open import DoubleNegationSheaves
 
@@ -15,7 +15,7 @@ parallelSearch : (X : ℕ → Type ℓ) (Y : ℕ → Type ℓ') → ((n : ℕ) �
   ◯⟨ χ ⟩ ((Σ[ n ∈ ℕ ] X n) ⊎ (Σ[ n ∈ ℕ ] Y n))
 parallelSearch {χ = χ} X Y decX decY z = do
     (n , xory) ← search χ XY almostXY XYdec
-    ∣ map (λ x → (n , x)) (λ y → (n , y)) xory ∣
+    ∣ ⊎map (λ x → (n , x)) (λ y → (n , y)) xory ∣
   where
     XY : ℕ → Type _
     XY n = (X n) ⊎ (Y n)
@@ -39,7 +39,7 @@ distinguish : {A : Type ℓa} {B : Type ℓb} (χ : Oracle A B) → (Separated B
 distinguish {ℓa = ℓa} {ℓb = ℓb} {X = X} χ Bsep decX f g f≠g h = do
   z ← parallelSearch {χ = χ} (λ n → ¬ (h n ≡ f n)) (λ n → ¬ (h n ≡ g n)) (decf f) (decf g)
                      λ w → f≠g (almost w)
-  ∣ map (λ {(n , p) q → p (funExt⁻ q n)}) (λ {(n , p) q → p (funExt⁻ q n)}) z ∣
+  ∣ ⊎map (λ {(n , p) q → p (funExt⁻ q n)}) (λ {(n , p) q → p (funExt⁻ q n)}) z ∣
   where
     -- Since X is discrete, so is ◯⟨ χ ⟩ X. Uses the fact that ◯⟨ χ ⟩ is lex.
     disc◯ : (x y : ◯⟨ χ ⟩ X) → (◯⟨ χ ⟩ (Dec (x ≡ y)))

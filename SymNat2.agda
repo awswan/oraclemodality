@@ -23,7 +23,7 @@ open import Axioms.ChurchsThesis
 open import OracleModality
 open import DoubleNegationSheaves
 open import Axioms.NegativeResizing
-open import PartialElements
+open import Util.PartialElements
 open import Util.LexNull
 open import Util.Sigma
 
