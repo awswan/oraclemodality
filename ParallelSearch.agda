@@ -3,6 +3,7 @@ open import OracleModality
 open import Includes
 open import Util.Everything
 open import Util.PartialElements
+open import Util.Nullification
 open import DoubleNegationSheaves
 
 open import Util.LexNull
@@ -64,3 +65,22 @@ distinguish {ℓa = ℓa} {ℓb = ℓb} {X = X} χ Bsep decX f g f≠g h = do
 
     decf : (f' : ℕ → ◯⟨ χ ⟩ X) → (n : ℕ) → ◯⟨ χ ⟩ (Dec (¬ h n ≡ f' n))
     decf f' n = disc◯ (h n) (f' n) >>= decRec (λ p → ∣ no (¬¬-in p) ∣) (λ np → ∣ yes np ∣)
+
+distinguish' : (χ : Oracle A B) → (Separated B) → (f g h k : ℕ → ◯⟨ χ ⟩ ℕ) → ¬ ((f ≡ g) × (h ≡ k)) → ◯⟨ χ ⟩ ((¬ (f ≡ g)) ⊎ (¬ (h ≡ k)))
+distinguish' χ sepB f g h k ne = lemma >>= λ {(n , inl np) → ∣ inl (λ p → np (funExt⁻ p n)) ∣ ; (n , inr np) → ∣ inr (λ p → np (funExt⁻ p n)) ∣}
+  where
+    sepχℕ : Separated (◯⟨ χ ⟩ ℕ)
+    sepχℕ = separatedNull (λ a → (χ a ↓) , (∇defd-prop sepB (χ a))) (λ a → ∇.almost-inh (χ a)) separatedℕ
+
+    decχℕ : (μ ν : ◯⟨ χ ⟩ ℕ) → ◯⟨ χ ⟩ (Dec (μ ≡ ν))
+    decχℕ = discreteNull ((λ a → (χ a ↓) , (∇defd-prop sepB (χ a)))) (λ a → ∇.almost-inh (χ a)) discreteℕ
+  
+    lemma : ◯⟨ χ ⟩ (Σ[ n ∈ ℕ ] ((¬ (f n ≡ g n)) ⊎ (¬ (h n ≡ k n))))
+    lemma = search χ  (λ n → (¬ (f n ≡ g n)) ⊎ (¬ (h n ≡ k n)))
+                      (λ z → ne ((funExt (λ n → sepχℕ _ _ (λ p → z (n , (inl p))))) , (funExt (λ n → sepχℕ _ _ (λ p → z (n , (inr p)))))))
+                      λ n → do
+                        yes p ← (decχℕ (f n ) (g n))
+                          where no ¬p → ∣ yes (inl ¬p) ∣
+                        yes q ← (decχℕ (h n) (k n))
+                          where no ¬q → ∣ yes (inr ¬q) ∣
+                        ∣ no (λ {(inl ¬p) → ¬p p ; (inr ¬q) → ¬q q}) ∣

@@ -5,6 +5,7 @@ open import Cubical.Functions.Embedding
 open import Cubical.Foundations.Transport
 open import Cubical.Foundations.GroupoidLaws
 open import Cubical.Data.Int
+open import Cubical.Data.Bool
 
 open import Cubical.Homotopy.Loopspace
 open import Cubical.Foundations.Pointed
@@ -22,8 +23,12 @@ open import Util.ModalOperatorSugar
 open import Util.PartialElements
 open import Util.DoubleNegation
 open import Util.LexNull
+open import Util.Nullification
+open import Util.Misc2
+open import Util.Encodings
 
 open import OracleModality
+open import ParallelSearch
 
 module HomotopyGroup where
 
@@ -78,11 +83,44 @@ conjugateLemma X A q B p =
 
 ℤ∗ = Maybe ℤ
 
-postulate
-  ℤCtbl : Iso ℕ ℤ
+ℕ→ℤ = fst ℤCtbl
+ℤ→ℕ = invEq ℤCtbl
 
-ℕ→ℤ = Iso.fun ℤCtbl
-ℤ→ℕ = Iso.inv ℤCtbl
+private
+  ℤB = ℤ∗ × Bool
+
+
+ℤBCtbl : ℕ ≃ (ℤ∗ × Bool)
+ℤBCtbl =
+  ℕ
+    ≃⟨ invEquiv oddEvenEquiv ⟩
+  ℕ ⊎ ℕ
+    ≃⟨ ⊎-equiv (isoToEquiv (invIso ℕ+Iso)) (isoToEquiv (invIso ℕ+Iso)) ⟩
+  (Unit ⊎ ℕ) ⊎ (Unit ⊎ ℕ)
+    ≃⟨ ⊎-equiv (⊎-equiv (idEquiv _) ℤCtbl) (⊎-equiv (idEquiv _) ℤCtbl) ⟩
+  (Unit ⊎ ℤ) ⊎ (Unit ⊎ ℤ)
+    ≃⟨ ⊎-equiv Maybe≃SumUnit Maybe≃SumUnit ⟩
+  ℤ∗ ⊎ ℤ∗
+    ≃⟨ isoToEquiv rearrange ⟩
+  ℤ∗ × Bool
+    ■
+  where
+    Maybe≃SumUnit = isoToEquiv (invIso (iso Maybe→SumUnit SumUnit→Maybe SumUnit→Maybe→SumUnit Maybe→SumUnit→Maybe))
+      where
+        open SumUnit
+    
+    rearrange : Iso (ℤ∗ ⊎ ℤ∗) (ℤ∗ × Bool)
+    Iso.fun rearrange (inl n) = n , false
+    Iso.fun rearrange (inr n) = n , true
+    Iso.inv rearrange (n , false) = inl n
+    Iso.inv rearrange (n , true) = inr n
+    Iso.leftInv rearrange (inl n) = refl
+    Iso.leftInv rearrange (inr n) = refl
+    Iso.rightInv rearrange (n , false) = refl
+    Iso.rightInv rearrange (n , true) = refl
+
+ℕ→ℤ∗B : ℕ → ℤ∗ × Bool
+ℕ→ℤ∗B = fst ℤBCtbl
 
 τ : ℤ → ℤ∗ → ℤ∗
 τ n nothing = just n
@@ -100,16 +138,46 @@ postulate
 ... | (yes q) = ⊥rec (¬p q)
 ... | (no ¬q) = refl
 
+
+module _ (χ : Oracle ℕ Bool) where
+  G→EquivEquiv : (◯⟨ χ ⟩ ℤ∗ × ◯⟨ χ ⟩ Bool ≡ ◯⟨ χ ⟩ ℤ∗ × ◯⟨ χ ⟩ Bool) ≃ (Σ[ f ∈ (ℤ∗ × Bool → ◯⟨ χ ⟩ (ℤ∗ × Bool)) ] isEquiv (nullRec (isNull-Null (oDefd χ)) f))
+  G→EquivEquiv =
+               (◯⟨ χ ⟩ ℤ∗ × ◯⟨ χ ⟩ Bool) ≡ (◯⟨ χ ⟩ ℤ∗ × ◯⟨ χ ⟩ Bool)
+                 ≃⟨ univalence ⟩
+               ◯⟨ χ ⟩ ℤ∗ × ◯⟨ χ ⟩ Bool ≃ ◯⟨ χ ⟩ ℤ∗ × ◯⟨ χ ⟩ Bool
+                 ≃⟨ equivComp (invEquiv (nullΣEquiv (oDefd χ))) (invEquiv (nullΣEquiv (oDefd χ))) ⟩
+               ◯⟨ χ ⟩ (ℤ∗ × Bool) ≃ ◯⟨ χ ⟩ (ℤ∗ × Bool)
+                 ≃⟨ idEquiv _ ⟩
+               Σ[ f ∈ (◯⟨ χ ⟩ (ℤ∗ × Bool) → ◯⟨ χ ⟩ (ℤ∗ × Bool)) ] isEquiv f
+                 ≃⟨ invEquiv (Σ-cong-equiv-fst (invEquiv (NullRecEquiv (isNull-Null _)))) ⟩
+               Σ[ f ∈ (ℤ∗ × Bool → ◯⟨ χ ⟩ (ℤ∗ × Bool)) ] isEquiv (nullRec (isNull-Null (oDefd χ)) f)
+                 ■
+
+  G→Fun : (◯⟨ χ ⟩ ℤ∗ × ◯⟨ χ ⟩ Bool ≡ ◯⟨ χ ⟩ ℤ∗ × ◯⟨ χ ⟩ Bool) → (ℤ∗ × Bool) → ◯⟨ χ ⟩ (ℤ∗ × Bool)
+  G→Fun g zb = fst (fst G→EquivEquiv g) zb
+
+  G→FunInj : (g h : (◯⟨ χ ⟩ ℤ∗ × ◯⟨ χ ⟩ Bool ≡ ◯⟨ χ ⟩ ℤ∗ × ◯⟨ χ ⟩ Bool)) → (G→Fun g ≡ G→Fun h) → (g ≡ h)
+  G→FunInj g h p = isEmbedding→Inj (isEquiv→isEmbedding (snd G→EquivEquiv)) g h (Σ≡Prop (λ _ → isPropIsEquiv _) p)
+
+
 module _ (χ χ' : Oracle ℕ Bool) where
+  distinguishℤB : (f g h k : ℤB → ◯⟨ χ' ⟩ ℤB) → ¬ ((f ≡ g) × (h ≡ k)) → ◯⟨ χ' ⟩ ((¬ (f ≡ g)) ⊎ (¬ (h ≡ k)))
+  distinguishℤB = subst (λ N → (f g h k : N → ◯⟨ χ' ⟩ N) → ¬ ((f ≡ g) × (h ≡ k)) → ◯⟨ χ' ⟩ ((¬ (f ≡ g)) ⊎ (¬ (h ≡ k)))) (ua ℤBCtbl) (distinguish' χ' separatedBool)
 
   G = ⟨ Ω (Type , (D (F (◯⟨ χ ⟩ ℤ∗) (λ _ → ◯⟨ χ ⟩ Bool)))) ⟩
   G' = ⟨ Ω (Type , (D (F (◯⟨ χ' ⟩ ℤ∗) (λ _ → ◯⟨ χ' ⟩ Bool)))) ⟩
+
+  G'→Fun = G→Fun χ'
+  G'→FunInj = G→FunInj χ'
 
   χℤ : ℤ → ∇ Bool
   χℤ n = χ (ℤ→ℕ n)
 
   separatedG : Separated G
-  separatedG p p' = {!!}
+  separatedG = inj→Separated (fst ∘ fst (G→EquivEquiv χ)) (λ p q r → isEmbedding→Inj (isEquiv→isEmbedding (snd (G→EquivEquiv χ))) _ _ (Σ≡Prop (λ _ → isPropIsEquiv _) r)) (separatedΠ λ _ → separatedNull (λ n → χ n ↓ , ∇defd-prop separatedBool (χ n)) (λ n → ∇.almost-inh (χ n)) (separatedΣ (separatedMaybe (Discrete→Separated discreteℤ)) λ _ → separatedBool))
+
+  separatedG' : Separated G'
+  separatedG' = inj→Separated (fst ∘ fst (G→EquivEquiv χ')) (λ p q r → isEmbedding→Inj (isEquiv→isEmbedding (snd (G→EquivEquiv χ'))) _ _ (Σ≡Prop (λ _ → isPropIsEquiv _) r)) (separatedΠ λ _ → separatedNull (λ n → χ' n ↓ , ∇defd-prop separatedBool (χ' n)) (λ n → ∇.almost-inh (χ' n)) (separatedΣ (separatedMaybe (Discrete→Separated discreteℤ)) λ _ → separatedBool))
 
   ∇dComp : {X : Pointed ℓ} → ∇ ⟨ Ω X ⟩ → ∇ ⟨ Ω X ⟩ → ∇ ⟨ Ω X ⟩ → ∇ ⟨ Ω X ⟩
   ∇.is-this (∇dComp {X = X} α β γ) s =
@@ -132,14 +200,14 @@ module _ (χ χ' : Oracle ℕ Bool) where
   χPaths⊤ (just n) = ⊕≡⟨⟩ χ (hub (ℤ→ℕ n) λ z → ∣ fst z ∣)
 
   χPaths⊤' : ◯⟨ χ ⟩ ℤ∗ → (◯⟨ χ ⟩ Bool ≡ ◯⟨ χ ⟩ Bool)
-  χPaths⊤' z = cong fst (nullRec (isNull≡ (Type◯-Null (λ n → (χ n ↓) , (∇defd-prop (Discrete→Separated discreteBool) (χ n))))) (λ n → Σ≡Prop (λ _ → isPropΠ (λ _ → isPropIsPathSplitEquiv _)) {u = (◯⟨ χ ⟩ Bool) , (isNull-Null _)} {v = ◯⟨ χ ⟩ Bool , isNull-Null _} (χPaths⊤ n)) z)
+  χPaths⊤' z = cong fst (nullRec (isNull≡ (Type◯-Null (λ n → (χ n ↓) , (∇defd-prop separatedBool (χ n))))) (λ n → Σ≡Prop (λ _ → isPropΠ (λ _ → isPropIsPathSplitEquiv _)) {u = (◯⟨ χ ⟩ Bool) , (isNull-Null _)} {v = ◯⟨ χ ⟩ Bool , isNull-Null _} (χPaths⊤ n)) z)
 
   χPaths⊥ : ℤ∗ → (◯⟨ χ ⟩ Bool ≡ ◯⟨ χ ⟩ Bool)
   χPaths⊥ nothing = ⊕≡⟨⟩ χ ∣ false ∣
   χPaths⊥ (just n) = ⊕≡⟨⟩ χ (hub (ℤ→ℕ n) λ z → ∣ fst z ∣)
 
   χPaths⊥' : ◯⟨ χ ⟩ ℤ∗ → (◯⟨ χ ⟩ Bool ≡ ◯⟨ χ ⟩ Bool)
-  χPaths⊥' z = cong fst (nullRec (isNull≡ (Type◯-Null (λ n → (χ n ↓) , (∇defd-prop (Discrete→Separated discreteBool) (χ n))))) (λ n → Σ≡Prop (λ _ → isPropΠ (λ _ → isPropIsPathSplitEquiv _)) {u = (◯⟨ χ ⟩ Bool) , (isNull-Null _)} {v = ◯⟨ χ ⟩ Bool , isNull-Null _} (χPaths⊥ n)) z)
+  χPaths⊥' z = cong fst (nullRec (isNull≡ (Type◯-Null (λ n → (χ n ↓) , (∇defd-prop separatedBool (χ n))))) (λ n → Σ≡Prop (λ _ → isPropΠ (λ _ → isPropIsPathSplitEquiv _)) {u = (◯⟨ χ ⟩ Bool) , (isNull-Null _)} {v = ◯⟨ χ ⟩ Bool , isNull-Null _} (χPaths⊥ n)) z)
 
 
   module _ (n : ℤ) where
@@ -183,6 +251,30 @@ module _ (χ χ' : Oracle ℕ Bool) where
     χPaths≡Lemma⊤ : ¬ (χPaths⊤' ∘ (transport τχ≡) ≡ χPaths⊤') → χℤ n ↓= false
     χPaths≡Lemma⊤ np = Ω¬¬-stab _ (λ nu → np (χPaths≡Lemma⊤₂ (Ω¬¬-stab _ (λ nv → ∇.almost-inh (χℤ n) (λ {(false , u) → nu u ; (true , v) → nv v})))))
 
+    χPaths≡Converse⊤ : (χPaths⊤' ∘ (transport τχ≡) ≡ χPaths⊤') → χℤ n ↓= true
+    χPaths≡Converse⊤ p = Ω¬¬-stab _ (¬¬-map (λ z → subst (λ b → χℤ n ↓= b) (s z) (snd z)) (∇.almost-inh (χℤ n)))
+      where
+        q : χPaths⊤ (just n) ≡ χPaths⊤ nothing
+        q =
+          χPaths⊤ (just n)
+            ≡⟨⟩
+          χPaths⊤' ∣ just n ∣
+            ≡⟨⟩
+          χPaths⊤' (τχ ∣ nothing ∣)
+            ≡⟨⟩
+          χPaths⊤' (transport τχ≡ ∣ nothing ∣)
+            ≡⟨ funExt⁻ p ∣ nothing ∣ ⟩
+          χPaths⊤' ∣ nothing ∣
+            ≡⟨⟩
+          χPaths⊤ nothing
+            ∎
+
+        r : (hub (ℤ→ℕ n) λ z → ∣ fst z ∣) ≡ ∣ true ∣
+        r = ⊕≡Inj⟨⟩ χ _ _ q
+
+        s : (z : χ (ℤ→ℕ n) ↓) → fst z ≡ true
+        s z = separatedBool _ _ (∇→¬¬ (erase χ separatedBool (∣∣-inj (λ m → (oDefd χ m) , (∇defd-prop separatedBool (χ m))) _ _ (sym (spoke _ (λ z → ∣ fst z ∣) z) ∙ r))))
+
     χPaths≡Lemma⊥₀ : χℤ n ↓= false → (m : Maybe ℤ) → ((χPaths⊥ (τ n m)) ≡ χPaths⊥ m)
     χPaths≡Lemma⊥₀ u nothing = cong (⊕≡⟨⟩ χ) (spoke (ℤ→ℕ n) _ (false , u))
     χPaths≡Lemma⊥₀ u (just m) with (discreteℤ n m)
@@ -208,7 +300,29 @@ module _ (χ χ' : Oracle ℕ Bool) where
     χPaths≡Lemma⊥ : ¬ (χPaths⊥' ∘ (transport τχ≡) ≡ χPaths⊥') → χℤ n ↓= true
     χPaths≡Lemma⊥ np = Ω¬¬-stab _ (λ nu → np (χPaths≡Lemma⊥₂ (Ω¬¬-stab _ (λ nv → ∇.almost-inh (χℤ n) (λ {(true , u) → nu u ; (false , v) → nv v})))))
 
+    χPaths≡Converse⊥ : (χPaths⊥' ∘ (transport τχ≡) ≡ χPaths⊥') → χℤ n ↓= false
+    χPaths≡Converse⊥ p = Ω¬¬-stab _ (¬¬-map (λ z → subst (λ b → χℤ n ↓= b) (s z) (snd z)) (∇.almost-inh (χℤ n)))
+      where
+        q : χPaths⊥ (just n) ≡ χPaths⊥ nothing
+        q =
+          χPaths⊥ (just n)
+            ≡⟨⟩
+          χPaths⊥' ∣ just n ∣
+            ≡⟨⟩
+          χPaths⊥' (τχ ∣ nothing ∣)
+            ≡⟨⟩
+          χPaths⊥' (transport τχ≡ ∣ nothing ∣)
+            ≡⟨ funExt⁻ p ∣ nothing ∣ ⟩
+          χPaths⊥' ∣ nothing ∣
+            ≡⟨⟩
+          χPaths⊥ nothing
+            ∎
 
+        r : (hub (ℤ→ℕ n) λ z → ∣ fst z ∣) ≡ ∣ false ∣
+        r = ⊕≡Inj⟨⟩ χ _ _ q
+
+        s : (z : χ (ℤ→ℕ n) ↓) → fst z ≡ false
+        s z = separatedBool _ _ (∇→¬¬ (erase χ separatedBool (∣∣-inj (λ m → (oDefd χ m) , (∇defd-prop separatedBool (χ m))) _ _ (sym (spoke _ (λ z → ∣ fst z ∣) z) ∙ r))))
 
   module _ (θ : ∇ G → ∇ G') (isEquivθ : isEquiv θ)
     (preservesComp : (α β γ : ∇ G) → θ (∇dComp α β γ) ≡ ∇dComp (θ α) (θ β) (θ γ)) where
@@ -228,4 +342,19 @@ module _ (χ χ' : Oracle ℕ Bool) where
                           (θ (∇-in (cong (D ∘ F (◯⟨ χ ⟩ ℤ∗)) (funExt (χPaths⊤' ∘ transport (τχ≡ n))))) ↓) →
                           (θ (∇-in (cong (D ∘ F (◯⟨ χ ⟩ ℤ∗)) (funExt χPaths⊥'))) ↓) →
                           (θ (∇-in (cong (D ∘ F (◯⟨ χ ⟩ ℤ∗)) (funExt (χPaths⊥' ∘ transport (τχ≡ n))))) ↓) → ◯⟨ χ' ⟩ (χℤ n ↓)
-    χPathDefd n = {!!}
+    χPathDefd n (top , ut) (toptau , utt) (bot , bt) (bottau , btt) = map⟨ χ' ⟩ (⊎rec (λ p → false , (χPaths≡Lemma⊤ n (λ q → p (lemma⊤2 (sym q))))) (λ p → true , (χPaths≡Lemma⊥ n (λ q → p (lemma⊥2 (sym q)))))) cases
+      where
+        lemma⊤ : top ≡ toptau → (χPaths⊤' ≡ χPaths⊤' ∘ transport (τχ≡ n))
+        lemma⊤ p = getPath _ _ (∇∩→≡ _ _ _ (subst _ p ut) utt)
+
+        lemma⊤2 : (χPaths⊤' ≡ χPaths⊤' ∘ transport (τχ≡ n)) → top ≡ toptau
+        lemma⊤2 p = separatedG' top toptau (∇.well-defd (θ (∇-in (cong (D ∘ F (◯⟨ χ ⟩ ℤ∗)) (funExt (χPaths⊤' ∘ transport (τχ≡ n)))))) top toptau (subst (λ f → θ (∇-in (cong (D ∘ F (◯⟨ χ ⟩ ℤ∗)) (funExt f))) ↓= top) p ut) utt)
+
+        lemma⊥ : bot ≡ bottau → (χPaths⊥' ≡ χPaths⊥' ∘ transport (τχ≡ n))
+        lemma⊥ p = getPath _ _ (∇∩→≡ _ _ _ (subst _ p bt) btt)
+
+        lemma⊥2 : (χPaths⊥' ≡ χPaths⊥' ∘ transport (τχ≡ n)) → bot ≡ bottau
+        lemma⊥2 p = separatedG' bot bottau (∇.well-defd (θ (∇-in (cong (D ∘ F (◯⟨ χ ⟩ ℤ∗)) (funExt (χPaths⊥' ∘ transport (τχ≡ n)))))) bot bottau (subst (λ f → θ (∇-in (cong (D ∘ F (◯⟨ χ ⟩ ℤ∗)) (funExt f))) ↓= bot) p bt) btt)
+
+        cases : ◯⟨ χ' ⟩ ((¬ (top ≡ toptau)) ⊎ (¬ (bot ≡ bottau)))
+        cases = map⟨ χ' ⟩ (⊎map (λ p q → p (cong G'→Fun q)) λ p q → p (cong G'→Fun q)) (distinguishℤB (G'→Fun top) (G'→Fun toptau) (G'→Fun bot) (G'→Fun bottau) λ (p , q) → ∇.almost-inh (χ (ℤ→ℕ n)) (λ {(true , r) → ∇.well-defd (χℤ n) true false r (χPaths≡Converse⊥ n (sym (lemma⊥ (G'→FunInj _ _ q)))) true≢false ; (false , r) → ∇.well-defd (χℤ n) true false (χPaths≡Converse⊤ n (sym (lemma⊤ (G'→FunInj _ _ p)))) r true≢false}))

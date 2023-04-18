@@ -6,6 +6,7 @@ open import Cubical.Relation.Nullary
 
 open import Cubical.Data.Sigma
 open import Cubical.Data.Sum
+open import Cubical.Data.Empty
 
 open import Util.ModalOperatorSugar
 
@@ -25,6 +26,12 @@ A ↔ B = (A → B) × (B → A)
 instance
   ¬¬-modal : {ℓa ℓb : Level} → ModalOperator ℓ-zero ℓa ℓb (λ {ℓ} A → ¬ ¬ A)
   ¬¬-modal = record { bind = λ nna f nb → nna (λ a → f a nb) }
+
+¬¬¬→¬ : (A : Type ℓ) → ¬ (¬ (¬ A)) → ¬ A
+¬¬¬→¬ A w = λ a → w (¬¬-in a)
+
+¬¬⊥→⊥ : ¬ (¬ ⊥) → ⊥
+¬¬⊥→⊥ x = x (λ y → y)
 
 ¬¬Dec : (A : Type ℓ) → ¬ ¬ (Dec A)
 ¬¬Dec A z = z (no noA)

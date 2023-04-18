@@ -135,3 +135,14 @@ module _ {ℓa ℓs ℓ} {A : Type ℓa} (S : A → hProp ℓs) where
   nullPreservesLevel (suc (suc n)) l = nullElim (λ _ → isNullΠ (λ _ → isOfHLevelNull _ (isNull≡ (isNull-Null _))))
     (λ x → nullElim (λ _ → isOfHLevelNull _ (isNull≡ (isNull-Null _))) (λ y → isOfHLevelRetract (suc n)
       (λ p → fst (∣∣≡Retract x y) p) (λ z → ∣∣cong x y z) (λ p → snd (∣∣≡Retract x y) p) (nullPreservesLevel (suc n) (l x y))))
+
+  module _ (dense : (a : A) → ¬ ¬ ⟨ S a ⟩) where
+    discreteNull : {X : Type ℓ} → (Discrete X) → (x y : Null (fst ∘ S) X) → Null (fst ∘ S) (Dec (x ≡ y))
+    discreteNull Xdisc = nullElim (λ _ → isNullΠ (λ _ → isNull-Null _))
+      (λ x → nullElim (λ _ → isNull-Null _) (λ y → decRec (λ p → ∣ yes (cong ∣_∣ p) ∣)
+                         (λ ¬p → ∣ no (λ p → nullRec (isNull⊥ (fst ∘ S) dense) ¬p (∣∣-inj x y p)) ∣) (Xdisc x y)))
+
+    separatedNull : {X : Type ℓ} → (Separated X) → Separated (Null (fst ∘ S) X)
+    separatedNull sepX = nullElim (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull≡ (isNull-Null _))))
+                         λ x → nullElim (λ _ → isNullΠ (λ _ → isNull≡ (isNull-Null _)))
+                         (λ y nnp → cong ∣_∣ (sepX _ _ (λ np → nnp (λ p → nullRec (isNull⊥ (fst ∘ S) dense) np (∣∣-inj _ _ p)))))

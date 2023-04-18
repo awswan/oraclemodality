@@ -3,6 +3,7 @@ open import Cubical.Data.Nat.IsEven
 open import Cubical.Data.Vec
 open import Cubical.Data.Sum
 open import Cubical.Functions.Embedding
+open import Cubical.Data.Int hiding (_+_ ; _·_ ; isEven ; isOdd)
 
 open import Util.DoubleNegation
 
@@ -302,4 +303,23 @@ Code→ℕ = fst CodeCtbl
 HT→ℕ : haltingTime → ℕ
 HT→ℕ = fst haltingTimeCtbl
 
+
+ℤCtbl : ℕ ≃ ℤ
+ℤCtbl =
+  ℕ
+    ≃⟨ invEquiv oddEvenEquiv ⟩
+  ℕ ⊎ ℕ
+    ≃⟨ isoToEquiv rearrange ⟩
+  ℤ
+    ■
+  where
+    rearrange : Iso (ℕ ⊎ ℕ) ℤ
+    Iso.fun rearrange (inl n) = pos n
+    Iso.fun rearrange (inr n) = negsuc n
+    Iso.inv rearrange (pos n) = inl n
+    Iso.inv rearrange (negsuc n) = inr n
+    Iso.leftInv rearrange (inl _) = refl
+    Iso.leftInv rearrange (inr _) = refl
+    Iso.rightInv rearrange (pos n) = refl
+    Iso.rightInv rearrange (negsuc n) = refl
 

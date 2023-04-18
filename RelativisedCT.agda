@@ -3,6 +3,7 @@ module RelativisedCT where
 open import Includes
 
 open import Cubical.Functions.Surjection
+open import Cubical.Data.List
 
 open import Axioms.NegativeResizing
 open import Axioms.ChurchsThesis
@@ -85,13 +86,14 @@ module _ (χ : Oracle ℕ ℕ) where
         (λ x → p (λ (t , d) → x ((fst haltingTimeCtbl t) , (subst (decodeAtDom c) (sym (retEq haltingTimeCtbl t)) d))))
         λ n → decodeAtDomDec c (ℕ→HT n)
 
-  decodeWithPath : (e : Code) → ⟨ ¬¬resize (Σ[ k ∈ haltingTime ] decodeAtDom e k) ⟩ → Σ[ z ∈ ◯⟨ χ ⟩ ℕ ] ((k : haltingTime) → (w : decodeAtDom e k) → z ≡ decodeAt e k w)
-  decodeWithPath e w = nullRec (isNullΣ (isNull-Null (oDefd χ)) (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull≡ (isNull-Null (oDefd χ)))))) (λ x → x) fromOracle
-    where
-      fromOracle : ◯⟨ χ ⟩ (Σ[ z ∈ ◯⟨ χ ⟩ ℕ ] ((k : haltingTime) → (w : decodeAtDom e k) → z ≡ decodeAt e k w))
-      fromOracle = do
-        (k , d) ← computeHaltingTime e (¬¬resize-out w)
-        ∣ (decodeAt e k d) , (λ k' d' → cong₂ (decodeAt e) (haltingTimeUnique _ _ d d') (isProp→PathP (λ _ → isPropDecodeAtDom) _ _)) ∣
+  abstract -- otherwise type checking seems to get stuck
+    decodeWithPath : (e : Code) → ⟨ ¬¬resize (Σ[ k ∈ haltingTime ] decodeAtDom e k) ⟩ → Σ[ z ∈ ◯⟨ χ ⟩ ℕ ] ((k : haltingTime) → (w : decodeAtDom e k) → z ≡ decodeAt e k w)
+    decodeWithPath e w = nullRec (isNullΣ (isNull-Null (oDefd χ)) (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull≡ (isNull-Null (oDefd χ)))))) (λ x → x) fromOracle
+      where
+        fromOracle : ◯⟨ χ ⟩ (Σ[ z ∈ ◯⟨ χ ⟩ ℕ ] ((k : haltingTime) → (w : decodeAtDom e k) → z ≡ decodeAt e k w))
+        fromOracle = do
+          (k , d) ← computeHaltingTime e (¬¬resize-out w)
+          ∣ (decodeAt e k d) , (λ k' d' → cong₂ (decodeAt e) (haltingTimeUnique _ _ d d') (isProp→PathP (λ _ → isPropDecodeAtDom) _ _)) ∣
 
   private
     fibreData' : (z : ◯⟨ χ ⟩ ℕ) → Type
@@ -132,13 +134,12 @@ module _ (χ : Oracle ℕ ℕ) where
               wP : PathP (λ i → decodeAtDom (ℕ→Code (fromJust (φ₀ e (fst (muP i)) k) (zP i))) t) w w'
               wP = isProp→PathP (λ _ → isPropDecodeAtDom) _ _
 
-  abstract -- otherwise type checking seems to get stuck
-    decode : Code → ∂ (◯⟨ χ ⟩ ℕ)
-    ∂.domain (decode c) = ¬¬resize (Σ[ k ∈ haltingTime ] decodeAtDom c k)
-    ∂.value (decode c) d = fst (decodeWithPath c d)
+  decode : Code → ∂ (◯⟨ χ ⟩ ℕ)
+  ∂.domain (decode c) = ¬¬resize (Σ[ k ∈ haltingTime ] decodeAtDom c k)
+  ∂.value (decode c) d = fst (decodeWithPath c d)
 
-    decodeSurj : (z : ◯⟨ χ ⟩ ℕ) → ∥ Σ[ e ∈ Code ] decode e ↓= z ∥₁
-    decodeSurj z = do
+  decodeSurj : (z : ◯⟨ χ ⟩ ℕ) → ∥ Σ[ e ∈ Code ] decode e ↓= z ∥₁
+  decodeSurj z = do
       (e , w) ← decodeSurj₀ z
       let resizedDom = ¬¬resize-in-from¬¬ (¬¬-map (λ {(k , t , _) → (k , t)}) w)
       let p = do

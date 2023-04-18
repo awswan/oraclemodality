@@ -67,8 +67,21 @@ postulate
 postulate
   ECT : (f : ℕ → ∂ ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (z : f n ↓) → φ e n ↓= (get (f n) z)) ∥₁
 
+-- ECT' : 
+
 CT : (f : ℕ → ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → φ e n ↓= f n) ∥₁
 CT f = do
   (e , p) ← ECT (ι ∘ f)
   ∣ e , (λ n → p n (ιdefd (f n))) ∣₁
 
+totalComputable : Type
+totalComputable = Σ[ e ∈ ℕ ] ((n : ℕ) → φ e n ↓)
+
+evalTC : totalComputable → ℕ → ℕ
+evalTC tc n = ∂.value (φ (fst tc) n) (snd tc n)
+
+CT' : (X : ℕ → ℕ → Type ℓ) → (f : (n : ℕ) → Σ[ m ∈ ℕ ] X n m) →
+  ∥ Σ[ e ∈ totalComputable ] ((n : ℕ) → X n (evalTC e n)) ∥₁
+CT' X f = do
+  (e , p) ← CT (λ n → fst (f n))
+  ∣ (e , (λ n → fst (p n))) , (λ n → subst (X n) (sym (snd (p n))) (snd (f n))) ∣₁

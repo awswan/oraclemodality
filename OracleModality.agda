@@ -4,6 +4,7 @@ open import Includes
 
 open import Util.Everything
 open import Util.LexNull
+open import Util.Nullification
 
 open import Cubical.Modalities.Modality
 
@@ -30,12 +31,6 @@ module OM (χ : Oracle A B) {ℓ : Level} where
   where
     open OM χ {ℓ = ℓ}
 
-instance
-  open ModalOperator
-  Null-bind : ∀ {A : Type ℓa} {S : A → Type ℓb} {ℓc ℓd : Level} →
-              ModalOperator (ℓ-max ℓa ℓb) ℓc ℓd (Null S)
-  bind (Null-bind {S = S}) a g = nullRec (isNull-Null S) g a
-    -- Nullification.rec is more flexible than ◯-rec in allowing differing universe levels
 
 module _ (χ : Oracle A B) where
   open OM χ
@@ -135,11 +130,8 @@ module _ (χ : Oracle A B) where
   evalWithPath : (x : ◯⟨ χ ⟩ X) → ◯⟨ χ ⟩ (Σ[ x' ∈ X ] (x ≡ ∣ x' ∣))
   evalWithPath = nullElim (λ _ → isNull-Null _) λ x → ∣ x , refl ∣
 
-  isNull⊥ : isNull (oDefd χ) ⊥
-  isPathSplitEquiv.sec (isNull⊥ a) = (∇.almost-inh (χ a)) , (λ b → funExt (λ _ → isProp⊥ _ _))
-
   extract⊥ : ◯⟨ χ ⟩ ⊥ → ⊥
-  extract⊥ = nullRec isNull⊥ (λ x → x)
+  extract⊥ = nullRec (isNull⊥ (oDefd χ) λ a → ∇.almost-inh (χ a)) (λ x → x)
 
 variable
   χ χ' χ'' : Oracle A B
