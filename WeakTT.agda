@@ -81,12 +81,6 @@ wtt'→wtt χ χ' wtt' n = suc (Lmax l) , λ g → f (LmaxAllFin→allList _ l g
     l = fst (wtt' n)
     f = snd (wtt' n)
 
-postulate
-  FinBoolCtbl : ℕ ≃ (Σ[ n ∈ ℕ ] ((Fin n) → Bool))
-
-ℕ→FB = fst FinBoolCtbl
-FB→ℕ = invEq FinBoolCtbl
-
 ℕ→Bool : ℕ → Bool
 ℕ→Bool zero = false
 ℕ→Bool (suc n) = true
@@ -99,64 +93,28 @@ Bool→ℕ→Bool : (b : Bool) → ℕ→Bool (Bool→ℕ b) ≡ b
 Bool→ℕ→Bool false = refl
 Bool→ℕ→Bool true = refl
 
-ℕ→FB' : (n : ℕ) → ℕ → ((Fin n) → Bool)
-ℕ→FB' zero m k = ⊥rec (¬-<-zero (snd k))
-ℕ→FB' (suc n) m = ℕ→Bool ∘ FN
+ℕ→FB : (n : ℕ) → ℕ → ((Fin n) → Bool)
+ℕ→FB zero m k = ⊥rec (¬-<-zero (snd k))
+ℕ→FB (suc n) m = ℕ→Bool ∘ FN
   where
     FN = invEq (ℕTupleEquiv n) m
 
-FB→ℕ' : (n : ℕ) → ((Fin n) → Bool) → ℕ
-FB→ℕ' zero f = zero
-FB→ℕ' (suc n) f = (fst (ℕTupleEquiv n) (Bool→ℕ ∘ f))
+FB→ℕ : (n : ℕ) → ((Fin n) → Bool) → ℕ
+FB→ℕ zero f = zero
+FB→ℕ (suc n) f = (fst (ℕTupleEquiv n) (Bool→ℕ ∘ f))
 
-FBℕSec : (n : ℕ) → (f : (Fin n) → Bool) → ℕ→FB' n (FB→ℕ' n f) ≡ f
+FBℕSec : (n : ℕ) → (f : (Fin n) → Bool) → ℕ→FB n (FB→ℕ n f) ≡ f
 FBℕSec zero f = funExt (λ k → ⊥rec (¬-<-zero (snd k)))
 FBℕSec (suc n) f = funExt (λ k → cong ℕ→Bool (funExt⁻ (retEq (ℕTupleEquiv n) (Bool→ℕ ∘ f)) k) ∙ Bool→ℕ→Bool (f k))
 
 codesHead : (χ : Oracle ℕ Bool) (n m : ℕ) → Type
-codesHead χ n m =
-  let
-    n' = fst (ℕ→FB m)
-    f = snd (ℕ→FB m)
-  in
-  (n' ≡ n) × ((k : Fin n') → χ (fst k) ↓= f k)
-
-codesHead' : (χ : Oracle ℕ Bool) (n m : ℕ) → Type
-codesHead' χ n m = (k : Fin n) → χ (fst k) ↓= ℕ→FB' n m k
+codesHead χ n m = (k : Fin n) → χ (fst k) ↓= ℕ→FB n m k
 
 decodeHead : (χ : Oracle ℕ Bool) (n m : ℕ) (ch : codesHead χ n m) → (k : Fin n) → χ (fst k) ↓
-decodeHead χ n m ch = subst (λ n → (k : Fin n) → χ (fst k) ↓) (fst ch)
-  λ k → (snd (ℕ→FB m) k) , (snd ch k)
-
-decodeHead' : (χ : Oracle ℕ Bool) (n m : ℕ) (ch : codesHead' χ n m) → (k : Fin n) → χ (fst k) ↓
-decodeHead' χ n m ch k = (ℕ→FB' n m k) , (ch k)
-
--- headCodeUnique : (χ : Oracle ℕ Bool) (n : ℕ) → isProp (Σ[ m ∈ ℕ ] codesHead χ n m)
--- headCodeUnique χ n = inh→isContr→isProp λ (m , ch) → defd→ic (decodeHead χ n m ch)
---   where
---     defd→ic : ((k : Fin n) → χ (fst k) ↓) → isContr (Σ[ m ∈ ℕ ] codesHead χ n m)
---     defd→ic f = isOfHLevelRespectEquiv 0
---       (invEquiv (Σ-cong-equiv-fst
---         {B = λ s → (fst s ≡ n) × ((k : Fin (fst s)) → χ (fst k) ↓= snd s k)} FinBoolCtbl))
---       (((n , (λ k → fst (f k))) , (refl , (λ k → snd (f k)))) ,
---            λ ((n' , f') , (p , q)) → Σ≡Prop (λ _ → isProp× (isSetℕ _ _) (isPropΠ (λ _ → Ω¬¬-props _))) (ΣPathP ((sym p) ,
---              toPathP (funExt (λ k → Discrete→Separated discreteBool _ _ (∇.well-defd (χ (fst k)) _ _ (snd (f (subst Fin p k))) (q k)))))))
-
--- headCodeUnique' : (χ : Oracle ℕ Bool) (n : ℕ) → isProp (Σ[ m ∈ ℕ ] codesHead' χ n m)
--- headCodeUnique' χ n = inh→isContr→isProp (λ (m , ch) → defd→ic (decodeHead' χ n m ch))
---   where
---     defd→ic : ((k : Fin (suc n)) → χ (fst k) ↓) → isContr (Σ[ m ∈ ℕ ] codesHead' χ n m)
---     defd→ic f = ((FB→ℕ' n (fst ∘ f)) , (λ k → subst (λ b → χ (fst k) ↓= b) (sym (funExt⁻ (FBℕSec n _) k)) (snd (f k)))) ,
---       (λ (m , g) → Σ≡Prop {!!} {!!})
-
--- χ (fst k) ↓= ℕ→FB' n (FB→ℕ' n (λ x → fst (f x))) k
+decodeHead χ n m ch k = (ℕ→FB n m k) , (ch k)
 
 codesHeadStable : (χ : Oracle ℕ Bool) (n m : ℕ) → Stable (codesHead χ n m)
-codesHeadStable χ n m p = (separatedℕ _ _ (¬¬-map fst p)) ,
-  λ k → Ω¬¬-stab _ (¬¬-map (λ p' → snd p' k) p)
-
-codesHeadStable' : (χ : Oracle ℕ Bool) (n m : ℕ) → Stable (codesHead' χ n m)
-codesHeadStable' χ n m p k = Ω¬¬-stab _ (¬¬-map (λ p' → p' k) p)
+codesHeadStable χ n m p k = Ω¬¬-stab _ (¬¬-map (λ p' → p' k) p)
 
 ⟨_,_⟩ : ℕ → ℕ → ℕ
 ⟨ n , m ⟩ = fst ℕPairEquiv (n , m)
@@ -180,30 +138,16 @@ wttWitness χ χ' =
     ((n m : ℕ) → codesHead χ' (evalTC e0 n) m →
       Σ[ u ∈ φ e1 ⟨ n , m ⟩ ↓ ] (χ n ↓= ℕ→Bool (∂.value (φ e1 ⟨ n , m ⟩) u)))
 
-wttWitness' : (χ χ' : Oracle ℕ Bool)  → Type
-wttWitness' χ χ' =
-  Σ[ (e0 , e1) ∈ totalComputable × ℕ ]
-    ((n m : ℕ) → codesHead' χ' (evalTC e0 n) m →
-      Σ[ u ∈ φ e1 ⟨ n , m ⟩ ↓ ] (χ n ↓= ℕ→Bool (∂.value (φ e1 ⟨ n , m ⟩) u)))
 
 wttIsWitnessAt : (χ χ' : Oracle ℕ Bool) (e0 : ℕ) (e1 : ℕ) (n : ℕ) → Type
 wttIsWitnessAt χ χ' e0 e1 n =
   Σ[ v ∈ φ e0 n ↓ ] ((m : ℕ) → codesHead χ' (get (φ e0 n) v) m →
     Σ[ u ∈ φ e1 ⟨ n , m ⟩ ↓ ] (χ n ↓= ℕ→Bool (get (φ e1 ⟨ n , m ⟩) u)))
 
-wttIsWitnessAt' : (χ χ' : Oracle ℕ Bool) (e0 : ℕ) (e1 : ℕ) (n : ℕ) → Type
-wttIsWitnessAt' χ χ' e0 e1 n =
-  Σ[ v ∈ φ e0 n ↓ ] ((m : ℕ) → codesHead' χ' (get (φ e0 n) v) m →
-    Σ[ u ∈ φ e1 ⟨ n , m ⟩ ↓ ] (χ n ↓= ℕ→Bool (get (φ e1 ⟨ n , m ⟩) u)))
 
 wttWitness→at : (χ χ' : Oracle ℕ Bool) → (wtt : wttWitness χ χ') → (n : ℕ) →
   wttIsWitnessAt χ χ' (fst (fst (fst wtt))) (snd (fst wtt)) n
 wttWitness→at χ χ' ((e0 , e1) , u) n = snd e0 n ,
-  λ m ch → u n m ch
-
-wttWitness→at' : (χ χ' : Oracle ℕ Bool) → (wtt : wttWitness' χ χ') → (n : ℕ) →
-  wttIsWitnessAt' χ χ' (fst (fst (fst wtt))) (snd (fst wtt)) n
-wttWitness→at' χ χ' ((e0 , e1) , u) n = snd e0 n ,
   λ m ch → u n m ch
 
 ECT2' : (dom : ℕ → ℕ → Type ℓ) → ((n₀ n₁ : ℕ) → Stable (dom n₀ n₁)) → ((n₀ n₁ : ℕ) → isProp (dom n₀ n₁)) →
@@ -235,21 +179,8 @@ ECT2' dom stabDom propDom X x = do
         q = snd (p ⟨ n₀ , n₁ ⟩ fdefd) ∙ (λ i → fst (x (pβ₀ n₀ n₁ i) (pβ₁ n₀ n₁ i)
           (isProp→PathP (λ i → propDom (pβ₀ n₀ n₁ i) (pβ₁ n₀ n₁ i)) (stabDom (p₀ ⟨ n₀ , n₁ ⟩) (p₁ ⟨ n₀ , n₁ ⟩) (¬¬resize-out fdefd)) w i)))
 
-wttWitness→wtt : (χ χ' : Oracle ℕ Bool) → wttWitness χ χ' → χ ≤wtt χ'
-wttWitness→wtt χ χ' wtt n = (evalTC e0 n) , red
-  where
-    e0 = fst (fst wtt)
-    e1 = snd (fst wtt)
 
-    red : (z : (k : Fin (evalTC e0 n)) → χ' (fst k) ↓) → χ n ↓
-    red z = ℕ→Bool (∂.value (φ e1 ⟨ n , m ⟩) (fst l)) , snd l
-      where
-        m = FB→ℕ ((evalTC e0 n) , λ k → fst (z k))
-        p = (secEq FinBoolCtbl ((evalTC e0 n) , λ k → fst (z k)))
-        l = snd wtt n m (cong fst p , subst (λ u → (k : Fin (fst u)) → χ' (fst k) ↓= snd u k) (sym p)
-                      λ k → snd (z k))
-
-wttWitness→wtt' : (χ χ' : Oracle ℕ Bool) → wttWitness' χ χ' → χ ≤wtt χ'
+wttWitness→wtt' : (χ χ' : Oracle ℕ Bool) → wttWitness χ χ' → χ ≤wtt χ'
 wttWitness→wtt' χ χ' wtt n = (evalTC e0 n) , red
   where
     e0 = fst (fst wtt)
@@ -258,25 +189,18 @@ wttWitness→wtt' χ χ' wtt n = (evalTC e0 n) , red
     red : (z : (k : Fin (evalTC e0 n)) → χ' (fst k) ↓) → χ n ↓
     red z = ℕ→Bool (∂.value (φ e1 ⟨ n , m ⟩) (fst l)) , snd l
       where
-        m = FB→ℕ' (evalTC e0 n) λ k → fst (z k)
+        m = FB→ℕ (evalTC e0 n) λ k → fst (z k)
         p = (FBℕSec (evalTC e0 n) λ k → fst (z k))
         l = snd wtt n m (λ k → subst (λ u → χ' (fst k) ↓= u) (sym (funExt⁻ p k)) (snd (z k)))
+
+
 
 wtt→wttWitness : (χ χ' : Oracle ℕ Bool) → χ ≤wtt χ' → ∥ wttWitness χ χ' ∥₁
 wtt→wttWitness χ χ' wtt = do
   (e0 , z) ← CT' (λ n m → (((k : Fin m) → χ' (fst k) ↓) → χ n ↓)) wtt
-  (e1 , w) ← ECT2' (λ n m → codesHead χ' (evalTC e0 n) m) (λ _ _ → codesHeadStable χ' _ _) (λ _ _ → isPropΣ (isSetℕ _ _) λ _ → isPropΠ (λ _ → Ω¬¬-props _))
+  (e1 , w) ← ECT2' (λ n m → codesHead χ' (evalTC e0 n) m) (λ _ _ → codesHeadStable χ' _ _) (λ _ _ → isPropΠ (λ _ → Ω¬¬-props _))
     (λ n m l → χ n ↓= ℕ→Bool l) λ n m u → (Bool→ℕ (fst (z n (decodeHead χ' (evalTC e0 n) m u)))) ,
     subst (λ v → χ n ↓= v) (sym (Bool→ℕ→Bool _)) (snd (z n (decodeHead χ' (evalTC e0 n) m u)))
-  ∣ (e0 , e1) , w ∣₁
-
-
-wtt→wttWitness' : (χ χ' : Oracle ℕ Bool) → χ ≤wtt χ' → ∥ wttWitness' χ χ' ∥₁
-wtt→wttWitness' χ χ' wtt = do
-  (e0 , z) ← CT' (λ n m → (((k : Fin m) → χ' (fst k) ↓) → χ n ↓)) wtt
-  (e1 , w) ← ECT2' (λ n m → codesHead' χ' (evalTC e0 n) m) (λ _ _ → codesHeadStable' χ' _ _) (λ _ _ → isPropΠ (λ _ → Ω¬¬-props _))
-    (λ n m l → χ n ↓= ℕ→Bool l) λ n m u → (Bool→ℕ (fst (z n (decodeHead' χ' (evalTC e0 n) m u)))) ,
-    subst (λ v → χ n ↓= v) (sym (Bool→ℕ→Bool _)) (snd (z n (decodeHead' χ' (evalTC e0 n) m u)))
   ∣ (e0 , e1) , w ∣₁
 
 κ : ℕ → ∇ Bool
@@ -293,6 +217,7 @@ decideHaltingProb e n = do
   z ← query κ ⟨ e , n ⟩
   ∣ decodeκ e n z ∣
 
+
 diagWTT : (n : ℕ) →
   ◯⟨ κ ⟩ (Σ[ b ∈ Bool ]  ((χ : Oracle ℕ Bool) → (χ n ↓= b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n))
 diagWTT n = do
@@ -302,76 +227,39 @@ diagWTT n = do
     where no u → ∣ false , (λ _ _ v → u (fst v)) ∣
   let requests = get (φ e0 n) u
   hd ← computeHead κ requests
-  let m = FB→ℕ (requests , (λ k → fst (hd k)))
-  yes w ← decideHaltingProb e1 ⟨ n , m ⟩
-    where no w → ∣ false ,
-             (λ _ _ v → w (fst (snd v m (subst (λ u' →
-               codesHead κ (get (φ e0 n) u') m)
-                            (Ω¬¬-props _ u (fst v))
-                            (subst (λ s → (fst s ≡ requests) × (((k : Fin (fst s)) →
-                                        κ (fst k) ↓= snd s k)))
-                                   (sym (secEq FinBoolCtbl (requests , λ k → fst (hd k))))
-                                   (refl , λ k → snd (hd k))))))) ∣
-  let nb = ℕ→Bool (get (φ e1 ⟨ n , m ⟩) w)
-  ∣ (not nb) ,
-    (λ χ p v → ∇.well-defd (χ n) _ _ p
-      (snd (snd v m (subst (λ u' → codesHead κ (get (φ e0 n) u') m) (Ω¬¬-props _ u (fst v))
-        (subst (λ s → (fst s ≡ requests) × ((((k : Fin (fst s)) → κ (fst k) ↓= snd s k)))) (sym (secEq FinBoolCtbl (requests , (λ k → fst (hd k))))) (refl , (λ k → snd (hd k)))))))
-        λ q → not≢const nb (q ∙ cong ℕ→Bool (cong (get (φ e1 ⟨ n , m ⟩))
-              (Ω¬¬-props _ _ _)))) ∣
-
-diagWTT' : (n : ℕ) →
-  ◯⟨ κ ⟩ (Σ[ b ∈ Bool ]  ((χ : Oracle ℕ Bool) → (χ n ↓= b) → ¬ wttIsWitnessAt' χ κ (p₀ n) (p₁ n) n))
-diagWTT' n = do
-  let e0 = p₀ n
-  let e1 = p₁ n
-  yes u ← decideHaltingProb e0 n
-    where no u → ∣ false , (λ _ _ v → u (fst v)) ∣
-  let requests = get (φ e0 n) u
-  hd ← computeHead κ requests
-  let m = FB→ℕ' _ ((λ k → fst (hd k)))
+  let m = FB→ℕ _ ((λ k → fst (hd k)))
   yes w ← decideHaltingProb e1 ⟨ n , m ⟩
     where no w → ∣ false ,
              (λ _ _ v → w (fst (snd v m (subst ((λ u' →
-               codesHead' κ (get (φ e0 n) u') m)) (Ω¬¬-props _ u (fst v)) (subst (λ s → (((k : Fin (get (φ (p₀ n) n) u)) →
+               codesHead κ (get (φ e0 n) u') m)) (Ω¬¬-props _ u (fst v)) (subst (λ s → (((k : Fin (get (φ (p₀ n) n) u)) →
                                         κ (fst k) ↓= s k))) (sym (FBℕSec (get (φ (p₀ n) n) u) λ k → fst (hd k))) λ k → snd (hd k)))))) ∣
   let nb = ℕ→Bool (get (φ e1 ⟨ n , m ⟩) w)
   ∣ (not nb) ,
     (λ χ p v → ∇.well-defd (χ n) _ _ p
-      (snd (snd v m (subst (λ u' → codesHead' κ (get (φ e0 n) u') m) (Ω¬¬-props _ u (fst v))
+      (snd (snd v m (subst (λ u' → codesHead κ (get (φ e0 n) u') m) (Ω¬¬-props _ u (fst v))
         (subst (λ s → ((((k : Fin (get (φ e0 n) u)) → κ (fst k) ↓= s k)))) (sym (FBℕSec (get (φ e0 n) u) λ k → fst (hd k))) ((λ k → snd (hd k)))))))
         λ q → not≢const nb (q ∙ cong ℕ→Bool (cong (get (φ e1 ⟨ n , m ⟩))
               (Ω¬¬-props _ _ _)))) ∣
 
-
-
 private
   convertζ : (n : ℕ) → ◯⟨ κ ⟩ (Σ[ b ∈ Bool ]  ((χ : Oracle ℕ Bool) → (χ n ↓= b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n)) → Σ[ b ∈ ∇ Bool ] ((χ : Oracle ℕ Bool) → (χ n ≡ b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n)
-  convertζ n = nullRec (¬¬Sheaf→Null {χ = κ} separatedBool
-          (isNullΣ ∇isSheaf λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull⊥ _ (snd ∘ snd)))))) (λ (b , u) → (∇-in b) , (λ χ p z → u χ (subst (λ w → [ ∇.is-this w b ]) (sym p) (ιIs b)) z))
-
-  convertζ' : (n : ℕ) → ◯⟨ κ ⟩ (Σ[ b ∈ Bool ]  ((χ : Oracle ℕ Bool) → (χ n ↓= b) → ¬ wttIsWitnessAt' χ κ (p₀ n) (p₁ n) n)) → Σ[ b ∈ ∇ Bool ] ((χ : Oracle ℕ Bool) → (χ n ≡ b) → ¬ wttIsWitnessAt' χ κ (p₀ n) (p₁ n) n)
-  convertζ' n = nullRec (¬¬Sheaf→Null {χ = κ} separatedBool (isNullΣ ∇isSheaf (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull⊥ _ (snd ∘ snd)))))))
+  convertζ n = nullRec (¬¬Sheaf→Null {χ = κ} separatedBool (isNullΣ ∇isSheaf (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull⊥ _ (snd ∘ snd)))))))
     (λ (b , u) → (∇-in b) , (λ χ p z → u χ (subst (λ w → [ ∇.is-this w b ]) (sym p) (ιIs b)) z))
 
--- nullRec (¬¬Sheaf→Null {χ = κ} separatedBool (isNullΠ (λ _ → isNullΠ (λ _ → isNullΣ ∇isSheaf (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull⊥ _ (snd ∘ snd)))))))))
---     (λ (b , u) → {!!}) {!!}
-
-
-ζwithProof : (n : ℕ) → Σ[ b ∈ ∇ Bool ] ((χ : Oracle ℕ Bool) → (χ n ≡ b) → ¬ wttIsWitnessAt' χ κ (p₀ n) (p₁ n) n)
-ζwithProof n = convertζ' n (diagWTT' n)
+ζwithProof : (n : ℕ) → Σ[ b ∈ ∇ Bool ] ((χ : Oracle ℕ Bool) → (χ n ≡ b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n)
+ζwithProof n = convertζ n (diagWTT n)
 
 ζ : Oracle ℕ Bool
 ζ = fst ∘ ζwithProof
 
 notWTT : ¬ (ζ ≤wtt κ)
 notWTT wtt = rec isProp⊥ (λ x → x) do
-  ((e0 , e1) , z) ← wtt→wttWitness' ζ κ wtt
-  let wttat = wttWitness→at' ζ κ ((e0 , e1) , z) ⟨ fst e0 , e1 ⟩
+  ((e0 , e1) , z) ← wtt→wttWitness ζ κ wtt
+  let wttat = wttWitness→at ζ κ ((e0 , e1) , z) ⟨ fst e0 , e1 ⟩
   let d = snd (ζwithProof ⟨ fst e0 , e1 ⟩)
-  ∣ d ζ refl (subst2 (λ e0' e1' → wttIsWitnessAt' ζ κ e0' e1' ⟨ fst e0 , e1 ⟩) (sym (pβ₀ (fst e0) e1)) (sym (pβ₁ (fst e0) e1)) wttat) ∣₁
+  ∣ d ζ refl (subst2 (λ e0' e1' → wttIsWitnessAt ζ κ e0' e1' ⟨ fst e0 , e1 ⟩) (sym (pβ₀ (fst e0) e1)) (sym (pβ₁ (fst e0) e1)) wttat) ∣₁
 
 isTuring : ζ ≤T κ
 _≤T_.red isTuring n = do
-  ((b , _) , p) ← evalWithPath κ (diagWTT' n)
-  ∣ b , subst (λ s → fst (convertζ' n s) ↓= b) (sym p) (ιIs b) ∣
+  ((b , _) , p) ← evalWithPath κ (diagWTT n)
+  ∣ b , subst (λ s → fst (convertζ n s) ↓= b) (sym p) (ιIs b) ∣
