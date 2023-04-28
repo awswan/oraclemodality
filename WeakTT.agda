@@ -26,15 +26,24 @@ module WeakTT where
 _≤wtt'_ : {A : Type ℓa} {B : Type ℓb} {A' : Type ℓa'} {B' : Type ℓb'} (χ : Oracle A B) (χ' : Oracle A' B') → Type (ℓ-max (ℓ-max ℓa ℓb) (ℓ-max ℓa' ℓb'))
 _≤wtt'_ {A = A} {A' = A'} χ χ' = (a : A) → Σ[ l ∈ (List A') ] (allList (λ a' → χ' a' ↓) l → χ a ↓ )
 
-computeHead : {A : Type ℓ} (χ : ℕ → ∇ A) → (n : ℕ) → ◯[ χ ] ((m : Fin n) → χ (fst m) ↓)
-computeHead χ zero = ∣ (λ z → ⊥rec (¬-<-zero (snd z))) ∣
-computeHead χ (suc n) = do
-  ih ← computeHead χ n
-  next ← query χ n
-  ∣ (λ z → ⊎rec (λ p → ih ((fst z) , p)) (λ p → subst (λ m → χ m ↓)  (sym p) next) (<-split (snd z))) ∣
-
+{- For the special case of oracles ℕ → ∇ Bool, we have a more convenient formulation.
+   We will mostly work with this version.
+-}
 _≤wtt_ : (χ : Oracle ℕ Bool) (χ' : Oracle ℕ Bool) → Type
 _≤wtt_ χ χ' = (n : ℕ) → Σ[ m ∈ ℕ ] (((k : Fin m) → χ' (fst k) ↓) → χ n ↓)
+
+{- Proof that the two formulations agree. -}
+wtt→wtt' : (χ χ' : Oracle ℕ Bool) → χ ≤wtt χ' → χ ≤wtt' χ'
+wtt→wtt' χ χ' wtt n = range N , λ z → f (allRange→allFin _ N z)
+  where
+    N = fst (wtt n)
+    f = snd (wtt n)
+
+wtt'→wtt : (χ χ' : Oracle ℕ Bool) → χ ≤wtt' χ' → χ ≤wtt χ'
+wtt'→wtt χ χ' wtt' n = suc (Lmax l) , λ g → f (LmaxAllFin→allList _ l g)
+  where
+    l = fst (wtt' n)
+    f = snd (wtt' n)
 
 
 {- Weak truth reducibility implies Turing -}
@@ -45,41 +54,7 @@ _≤T_.red (wtt→T' sepB χ χ' wtt) n = do
   ∣ snd (wtt n) z ∣
 
 wtt→T : (χ χ' : Oracle ℕ Bool) → χ ≤wtt χ' → χ ≤T χ'
-_≤T_.red (wtt→T χ χ' wtt) n = do
-  m ← computeHead χ' (fst (wtt n))
-  ∣ snd (wtt n) m ∣
-
-range : (n : ℕ) → List ℕ
-range zero = []
-range (suc n) = n ∷ range n
-
-allRange→allFin : (X : ℕ → Type ℓ) (n : ℕ) → (allList X (range n)) → (k : Fin n) → X (fst k)
-allRange→allFin X zero z k = ⊥rec (¬-<-zero (snd k))
-allRange→allFin X (suc n) (checkList .n p .(range n) z) k =
-  ⊎rec (λ q → allRange→allFin X n z ((fst k) , q)) (λ q → subst X (sym q) p) (<-split (snd k))
-
-wtt→wtt' : (χ χ' : Oracle ℕ Bool) → χ ≤wtt χ' → χ ≤wtt' χ'
-wtt→wtt' χ χ' wtt n = range N , λ z → f (allRange→allFin _ N z)
-  where
-    N = fst (wtt n)
-    f = snd (wtt n)
-
-Lmax : List ℕ → ℕ
-Lmax [] = 0
-Lmax (x ∷ l) = max x (Lmax l)
-
-LmaxAllFin→allList : (X : ℕ → Type ℓ) (l : List ℕ) (g : (k : Fin (suc (Lmax l))) → X (fst k)) →
-  allList X l
-LmaxAllFin→allList X [] g = allNil
-LmaxAllFin→allList X (x ∷ l) g =
-  checkList x (g (x , ≤<-trans left-≤-max ≤-refl)) l
-    (LmaxAllFin→allList X l (λ k → g ((fst k) , <≤-trans (snd k) (suc-≤-suc right-≤-max))))
-
-wtt'→wtt : (χ χ' : Oracle ℕ Bool) → χ ≤wtt' χ' → χ ≤wtt χ'
-wtt'→wtt χ χ' wtt' n = suc (Lmax l) , λ g → f (LmaxAllFin→allList _ l g)
-  where
-    l = fst (wtt' n)
-    f = snd (wtt' n)
+wtt→T χ χ' wtt = wtt→T' separatedBool χ χ' (wtt→wtt' χ χ' wtt)
 
 ℕ→Bool : ℕ → Bool
 ℕ→Bool zero = false
@@ -116,22 +91,9 @@ decodeHead χ n m ch k = (ℕ→FB n m k) , (ch k)
 codesHeadStable : (χ : Oracle ℕ Bool) (n m : ℕ) → Stable (codesHead χ n m)
 codesHeadStable χ n m p k = Ω¬¬-stab _ (¬¬-map (λ p' → p' k) p)
 
-⟨_,_⟩ : ℕ → ℕ → ℕ
-⟨ n , m ⟩ = fst ℕPairEquiv (n , m)
-
-p₀ : ℕ → ℕ
-p₀ nm = fst (invEq ℕPairEquiv nm)
-
-p₁ : ℕ → ℕ
-p₁ nm = snd (invEq ℕPairEquiv nm)
-
-pβ₀ : (n m : ℕ) → (p₀ ⟨ n , m ⟩ ≡ n)
-pβ₀ n m = cong fst (retEq ℕPairEquiv (n , m))
-
-pβ₁ : (n m : ℕ) → (p₁ ⟨ n , m ⟩ ≡ m)
-pβ₁ n m = cong snd (retEq ℕPairEquiv (n , m))
-
-
+{- Computable functions witnessing the weak tt reduction. In this way we show the synthetic formulation
+   is equivalent to something more concrete, similar to classical computability theory.
+-}
 wttWitness : (χ χ' : Oracle ℕ Bool)  → Type
 wttWitness χ χ' =
   Σ[ (e0 , e1) ∈ totalComputable × ℕ ]
@@ -139,6 +101,9 @@ wttWitness χ χ' =
       Σ[ u ∈ φ e1 ⟨ n , m ⟩ ↓ ] (χ n ↓= ℕ→Bool (∂.value (φ e1 ⟨ n , m ⟩) u)))
 
 
+{- Proof that a witness works "locally." Used in a diagonal argument to show something is not wtt
+   reducible to something else.
+-}
 wttIsWitnessAt : (χ χ' : Oracle ℕ Bool) (e0 : ℕ) (e1 : ℕ) (n : ℕ) → Type
 wttIsWitnessAt χ χ' e0 e1 n =
   Σ[ v ∈ φ e0 n ↓ ] ((m : ℕ) → codesHead χ' (get (φ e0 n) v) m →
@@ -150,6 +115,7 @@ wttWitness→at : (χ χ' : Oracle ℕ Bool) → (wtt : wttWitness χ χ') → (
 wttWitness→at χ χ' ((e0 , e1) , u) n = snd e0 n ,
   λ m ch → u n m ch
 
+{- Convenient form of ECT for functions taking 2 arguments. -}
 ECT2' : (dom : ℕ → ℕ → Type ℓ) → ((n₀ n₁ : ℕ) → Stable (dom n₀ n₁)) → ((n₀ n₁ : ℕ) → isProp (dom n₀ n₁)) →
   (X : ℕ → ℕ → ℕ → Type ℓ) →
   ((n₀ n₁ : ℕ) → dom n₀ n₁ → Σ[ m ∈ ℕ ] X n₀ n₁ m) →
@@ -180,8 +146,8 @@ ECT2' dom stabDom propDom X x = do
           (isProp→PathP (λ i → propDom (pβ₀ n₀ n₁ i) (pβ₁ n₀ n₁ i)) (stabDom (p₀ ⟨ n₀ , n₁ ⟩) (p₁ ⟨ n₀ , n₁ ⟩) (¬¬resize-out fdefd)) w i)))
 
 
-wttWitness→wtt' : (χ χ' : Oracle ℕ Bool) → wttWitness χ χ' → χ ≤wtt χ'
-wttWitness→wtt' χ χ' wtt n = (evalTC e0 n) , red
+wttWitness→wtt : (χ χ' : Oracle ℕ Bool) → wttWitness χ χ' → χ ≤wtt χ'
+wttWitness→wtt χ χ' wtt n = (evalTC e0 n) , red
   where
     e0 = fst (fst wtt)
     e1 = snd (fst wtt)
@@ -203,6 +169,7 @@ wtt→wttWitness χ χ' wtt = do
     subst (λ v → χ n ↓= v) (sym (Bool→ℕ→Bool _)) (snd (z n (decodeHead χ' (evalTC e0 n) m u)))
   ∣ (e0 , e1) , w ∣₁
 
+{- Characteristic function of the halting set. -}
 κ : ℕ → ∇ Bool
 κ en = byCases (φ (p₀ en) (p₁ en) ↓) true false
 
@@ -217,6 +184,12 @@ decideHaltingProb e n = do
   z ← query κ ⟨ e , n ⟩
   ∣ decodeκ e n z ∣
 
+computeHead : {A : Type ℓ} (χ : ℕ → ∇ A) → (n : ℕ) → ◯[ χ ] ((m : Fin n) → χ (fst m) ↓)
+computeHead χ zero = ∣ (λ z → ⊥rec (¬-<-zero (snd z))) ∣
+computeHead χ (suc n) = do
+  ih ← computeHead χ n
+  next ← query χ n
+  ∣ (λ z → ⊎rec (λ p → ih ((fst z) , p)) (λ p → subst (λ m → χ m ↓)  (sym p) next) (<-split (snd z))) ∣
 
 diagWTT : (n : ℕ) →
   ◯[ κ ] (Σ[ b ∈ Bool ]  ((χ : Oracle ℕ Bool) → (χ n ↓= b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n))

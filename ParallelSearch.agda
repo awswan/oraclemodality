@@ -10,7 +10,7 @@ open import Util.LexNull
 
 module ParallelSearch where
 
-{- Lemma V.4 -}
+{- Lemma 5.4 -}
 parallelSearch : (X : ℕ → Type ℓ) (Y : ℕ → Type ℓ') → ((n : ℕ) → ◯[ χ ] (Dec (X n))) →
   ((n : ℕ) → ◯[ χ ] (Dec (Y n))) → ¬ ¬ ((Σ[ n ∈ ℕ ] X n) ⊎ (Σ[ n ∈ ℕ ] Y n)) →
   ◯[ χ ] ((Σ[ n ∈ ℕ ] X n) ⊎ (Σ[ n ∈ ℕ ] Y n))
@@ -32,7 +32,7 @@ parallelSearch {χ = χ} X Y decX decY z = do
         where yes yyes → ∣ yes (inr yyes) ∣
       ∣ no (⊎rec xno yno) ∣
 
-{- Lemma along similar lines to Lemmas V.5/V.6 -}
+{- Lemma along similar lines to Lemmas 5.5/5.6 -}
 distinguish : {A : Type ℓa} {B : Type ℓb} (χ : Oracle A B) → (Separated B) →
   (Discrete X) → (f g : ℕ → ◯[ χ ] X) → ¬ (f ≡ g) → (h : ℕ → ◯[ χ ] X) →
   ◯[ χ ] ((¬ h ≡ f) ⊎ (¬ h ≡ g))

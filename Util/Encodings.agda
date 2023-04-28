@@ -82,6 +82,22 @@ Pair▵Equiv = isoToEquiv Pair▵Iso
 ℕPairEquiv : (ℕ × ℕ) ≃ ℕ
 ℕPairEquiv = Pair▵Equiv ∙ₑ ▵Equiv
 
+⟨_,_⟩ : ℕ → ℕ → ℕ
+⟨ n , m ⟩ = fst ℕPairEquiv (n , m)
+
+p₀ : ℕ → ℕ
+p₀ nm = fst (invEq ℕPairEquiv nm)
+
+p₁ : ℕ → ℕ
+p₁ nm = snd (invEq ℕPairEquiv nm)
+
+pβ₀ : (n m : ℕ) → (p₀ ⟨ n , m ⟩ ≡ n)
+pβ₀ n m = cong fst (retEq ℕPairEquiv (n , m))
+
+pβ₁ : (n m : ℕ) → (p₁ ⟨ n , m ⟩ ≡ m)
+pβ₁ n m = cong snd (retEq ℕPairEquiv (n , m))
+
+
 module OddEvenEquivM where
   f : ℕ ⊎ ℕ → ℕ
   f (inl n) = 2 · n

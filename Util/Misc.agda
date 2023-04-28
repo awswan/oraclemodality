@@ -1,7 +1,6 @@
 open import Includes
 
 open import Util.DoubleNegation
-open import Cubical.Data.List
 open import Cubical.Data.Bool
 
 module Util.Misc2 where
@@ -22,14 +21,6 @@ separatedMaybe sepA nothing (just a) p = ⊥rec (p ¬nothing≡just)
 separatedMaybe sepA (just a) nothing p = ⊥rec (p ¬just≡nothing)
 separatedMaybe sepA (just a) (just a') p = cong just (sepA _ _ (¬¬-map (just-inj _ _) p))
 
-data allList {A : Type ℓ} (P : A → Type ℓ') : (List A) → Type (ℓ-max ℓ ℓ') where
-  allNil : allList P []
-  checkList : (a : A) → (p : P a) → (l : List A) → (q : allList P l) → allList P (a ∷ l)
-
-all→allList : {A : Type ℓ} (P : A → Type ℓ') (all : (a : A) → P a) (l : List A) →
-  allList P l
-all→allList P all [] = allNil
-all→allList P all (a ∷ l) = checkList a (all a) l (all→allList P all l)
 
 inh→isContr→isProp : (A → isContr A) → isProp A
 inh→isContr→isProp ic a a' = sym (snd (ic a) a) ∙ snd (ic a) a'
