@@ -69,6 +69,28 @@ postulate
 
 -- ECT' : 
 
+module GeneralisedECT (encA : A → ℕ) (encB : B → ℕ) (decA : ℕ → A) (decB : ℕ → B)
+  (p : (a : A) → decA (encA a) ≡ a) (q : (b : B) → decB (encB b) ≡ b)
+  where
+
+  θ : (e : ℕ) → A → ∂ B
+  ∂.domain (θ e a) = ∂.domain (φ e (encA a))
+  ∂.value (θ e a) u = decB (∂.value (φ e (encA a)) u)
+
+  GECT : (X : A → B → Type) (dom : A → Ω¬¬) (f : (a : A) → ⟨ dom a ⟩ → Σ[ b ∈ B ] X a b) →
+    ∥ Σ[ e ∈ ℕ ] ((a : A) → (d : ⟨ dom a ⟩) → Σ[ u ∈ θ e a ↓ ] X a (get (θ e a) u)) ∥₁
+  GECT X dom f = do
+    (e , z) ← ECT (λ n → record { domain = dom (decA n)
+                                  ; value = λ d → encB (fst (f (decA n) d)) })
+    ∣ e , lemma e z ∣₁
+    where
+      lemma : (e : ℕ) (z : (n : ℕ) → (d : ⟨ dom (decA n) ⟩) → φ e n ↓= encB (fst (f (decA n) d))) (a : A) (d : ⟨ dom a ⟩) → Σ[ u ∈ θ e a ↓ ] X a (get (θ e a) u)
+      lemma e z a d = (fst (z (encA a) d')) ,
+        subst (X a) ((λ i → fst (f (p a (~ i)) (dPath i))) ∙∙ sym (q _) ∙∙ cong decB (sym (snd (z (encA a) d')))) (snd (f a d))
+        where
+          dPath = subst-filler (λ a → ⟨ dom a ⟩) (sym (p a)) d
+          d' = dPath i1
+
 CT : (f : ℕ → ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → φ e n ↓= f n) ∥₁
 CT f = do
   (e , p) ← ECT (ι ∘ f)
