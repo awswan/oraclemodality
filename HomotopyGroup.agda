@@ -24,7 +24,7 @@ open import Util.PartialElements
 open import Util.DoubleNegation
 open import Util.LexNull
 open import Util.Nullification
-open import Util.Misc2
+open import Util.Misc
 open import Util.Encodings
 
 open import OracleModality

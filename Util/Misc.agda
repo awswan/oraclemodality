@@ -3,7 +3,7 @@ open import Includes
 open import Util.DoubleNegation
 open import Cubical.Data.Bool
 
-module Util.Misc2 where
+module Util.Misc where
 
 inj→Separated : {A : Type ℓ} {B : Type ℓ'} (f : A → B) → ((a a' : A) → f a ≡ f a' → a ≡ a') →
   Separated B → Separated A

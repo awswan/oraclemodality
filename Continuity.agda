@@ -10,7 +10,7 @@ open import Util.PartialElements
 open import Util.Encodings
 open import Util.ModalOperatorSugar
 open import Util.Nullification
-open import Util.Misc2
+open import Util.List
 open import Util.StablePartial
 open import Util.PropTruncationModalInstance
 open import Util.DoubleNegation

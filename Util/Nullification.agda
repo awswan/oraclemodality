@@ -6,7 +6,7 @@ open import Cubical.Data.List
 
 open import Util.HasUnderlyingType
 open import Util.ModalOperatorSugar
-open import Util.Misc2
+open import Util.List
 
 private variable
   ℓα ℓs : Level

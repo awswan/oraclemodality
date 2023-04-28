@@ -16,9 +16,10 @@ open import Util.PartialElements
 open import Util.ModalOperatorSugar
 open import Util.Nullification
 open import Util.PropTruncationModalInstance
+open import Util.List
+open import Util.Misc
 
 open import Cubical.Data.List hiding ([_])
-open import Util.Misc2
 
 module WeakTT where
 
