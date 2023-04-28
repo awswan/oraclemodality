@@ -26,7 +26,7 @@ module WeakTT where
 _≤wtt'_ : {A : Type ℓa} {B : Type ℓb} {A' : Type ℓa'} {B' : Type ℓb'} (χ : Oracle A B) (χ' : Oracle A' B') → Type (ℓ-max (ℓ-max ℓa ℓb) (ℓ-max ℓa' ℓb'))
 _≤wtt'_ {A = A} {A' = A'} χ χ' = (a : A) → Σ[ l ∈ (List A') ] (allList (λ a' → χ' a' ↓) l → χ a ↓ )
 
-computeHead : {A : Type ℓ} (χ : ℕ → ∇ A) → (n : ℕ) → ◯⟨ χ ⟩ ((m : Fin n) → χ (fst m) ↓)
+computeHead : {A : Type ℓ} (χ : ℕ → ∇ A) → (n : ℕ) → ◯[ χ ] ((m : Fin n) → χ (fst m) ↓)
 computeHead χ zero = ∣ (λ z → ⊥rec (¬-<-zero (snd z))) ∣
 computeHead χ (suc n) = do
   ih ← computeHead χ n
@@ -41,7 +41,7 @@ _≤wtt_ χ χ' = (n : ℕ) → Σ[ m ∈ ℕ ] (((k : Fin m) → χ' (fst k) �
 wtt→T' : {A : Type ℓa} {B : Type ℓb} {A' : Type ℓa'} {B' : Type ℓb'} (sepB : Separated B)
   (χ : Oracle A B) (χ' : Oracle A' B') → χ ≤wtt' χ' → χ ≤T χ'
 _≤T_.red (wtt→T' sepB χ χ' wtt) n = do
-  z ← nullList (oDefd χ') (λ m → χ' m ↓) (fst (wtt n)) (all→allList (λ m → ◯⟨ χ' ⟩ (χ' m ↓)) (λ m → query χ' m) (fst (wtt n)))
+  z ← nullList (oDefd χ') (λ m → χ' m ↓) (fst (wtt n)) (all→allList (λ m → ◯[ χ' ] (χ' m ↓)) (λ m → query χ' m) (fst (wtt n)))
   ∣ snd (wtt n) z ∣
 
 wtt→T : (χ χ' : Oracle ℕ Bool) → χ ≤wtt χ' → χ ≤T χ'
@@ -212,14 +212,14 @@ decodeκ e n (true , z) = yes (¬¬resize-in-from¬¬
   (λ w → ∇.well-defd (κ ⟨ e , n ⟩) false true
                      (byCasesβ⊥ _ _ _ λ u → ¬¬resize-out u (λ v → w (subst2 φ-domain (pβ₀ e n) (pβ₁ e n) v))) z false≢true))
 
-decideHaltingProb : (e n : ℕ) → ◯⟨ κ ⟩ (Dec (φ e n ↓))
+decideHaltingProb : (e n : ℕ) → ◯[ κ ] (Dec (φ e n ↓))
 decideHaltingProb e n = do
   z ← query κ ⟨ e , n ⟩
   ∣ decodeκ e n z ∣
 
 
 diagWTT : (n : ℕ) →
-  ◯⟨ κ ⟩ (Σ[ b ∈ Bool ]  ((χ : Oracle ℕ Bool) → (χ n ↓= b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n))
+  ◯[ κ ] (Σ[ b ∈ Bool ]  ((χ : Oracle ℕ Bool) → (χ n ↓= b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n))
 diagWTT n = do
   let e0 = p₀ n
   let e1 = p₁ n
@@ -242,7 +242,7 @@ diagWTT n = do
               (Ω¬¬-props _ _ _)))) ∣
 
 private
-  convertζ : (n : ℕ) → ◯⟨ κ ⟩ (Σ[ b ∈ Bool ]  ((χ : Oracle ℕ Bool) → (χ n ↓= b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n)) → Σ[ b ∈ ∇ Bool ] ((χ : Oracle ℕ Bool) → (χ n ≡ b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n)
+  convertζ : (n : ℕ) → ◯[ κ ] (Σ[ b ∈ Bool ]  ((χ : Oracle ℕ Bool) → (χ n ↓= b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n)) → Σ[ b ∈ ∇ Bool ] ((χ : Oracle ℕ Bool) → (χ n ≡ b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n)
   convertζ n = nullRec (¬¬Sheaf→Null {χ = κ} separatedBool (isNullΣ ∇isSheaf (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull⊥ _ (snd ∘ snd)))))))
     (λ (b , u) → (∇-in b) , (λ χ p z → u χ (subst (λ w → [ ∇.is-this w b ]) (sym p) (ιIs b)) z))
 

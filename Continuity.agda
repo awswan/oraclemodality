@@ -22,7 +22,7 @@ module Continuity where
 
 module _ (χ : Oracle ℕ ℕ) where
   decodeAt→Modulus : (e : Code) (t : haltingTime) → (z : decodeAtDom χ e t) →
-    ◯⟨ χ ⟩ (Σ[ f ∈ List ℕ ] ((χ' : Oracle ℕ ℕ) → allList (λ n → χ n ≡ χ' n) f → Σ[ w ∈ decodeAtDom χ' e t ] erase χ separatedℕ (decodeAt χ e t z) ≡ erase χ' separatedℕ (decodeAt χ' e t w)))
+    ◯[ χ ] (Σ[ f ∈ List ℕ ] ((χ' : Oracle ℕ ℕ) → allList (λ n → χ n ≡ χ' n) f → Σ[ w ∈ decodeAtDom χ' e t ] erase χ separatedℕ (decodeAt χ e t z) ≡ erase χ' separatedℕ (decodeAt χ' e t w)))
   decodeAt→Modulus (returnNat n) now z = ∣ [] , (λ χ' _ → tt , refl) ∣
   decodeAt→Modulus (queryOracleAndContinue n e) (later k t) z = do
     x ← query χ n
@@ -58,7 +58,7 @@ module _ (χ : Oracle ℕ ℕ) where
             genDecodeAtDomFiller : PathP (λ i → decodeAtDom χ' (ℕ→Code (fromJust (φ₀ e (r i) k) (genIsJustFiller i))) t) (fst (ih χ' q)) genDecodeAtDom
             genDecodeAtDomFiller = transport-filler ((λ i → decodeAtDom χ' (ℕ→Code (fromJust (φ₀ e (r i) k) (genIsJustFiller i))) t)) ((fst (ih χ' q)))
 
-  localContinuity : (z : ◯⟨ χ ⟩ ℕ) → ∥ Σ[ c ∈ Code ] ◯⟨ χ ⟩ (Σ[ l ∈ List ℕ ] ((χ' : Oracle ℕ ℕ) → (allList (λ n → χ n ≡ χ' n) l) → Σ[ u ∈ decode χ' c ↓ ] erase χ separatedℕ z ≡ erase χ' separatedℕ (∂.value (decode χ' c) u))) ∥₁
+  localContinuity : (z : ◯[ χ ] ℕ) → ∥ Σ[ c ∈ Code ] ◯[ χ ] (Σ[ l ∈ List ℕ ] ((χ' : Oracle ℕ ℕ) → (allList (λ n → χ n ≡ χ' n) l) → Σ[ u ∈ decode χ' c ↓ ] erase χ separatedℕ z ≡ erase χ' separatedℕ (∂.value (decode χ' c) u))) ∥₁
   localContinuity z = do
     (e , w) ← decodeSurj χ z
     let mod' = do

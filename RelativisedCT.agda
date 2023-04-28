@@ -45,7 +45,7 @@ module _ (χ : Oracle ℕ ℕ) where
     let kPath = φ₀-haltsOnce _ _ _ _ (fst (d z)) (fst (d' z))
     ¬¬-in (cong₂ later kPath (haltingTimeUnique t t' (transport (cong₂ (λ k ij → decodeAtDom (ℕ→Code (fromJust (φ₀ e (fst z) k) ij)) t) kPath (isProp→PathP (λ _ → isPropIsJust) _ _)) (snd (d z))) (snd (d' z))))
 
-  decodeAtDomDec : (c : Code) (t : haltingTime) → ◯⟨ χ ⟩ (Dec (decodeAtDom c t))
+  decodeAtDomDec : (c : Code) (t : haltingTime) → ◯[ χ ] (Dec (decodeAtDom c t))
   decodeAtDomDec (returnNat n) now = ∣ yes tt ∣
   decodeAtDomDec (returnNat n) (later k t) = ∣ no (λ x → x) ∣
   decodeAtDomDec (queryOracleAndContinue n e) now = ∣ no (λ x → x) ∣
@@ -59,7 +59,7 @@ module _ (χ : Oracle ℕ ℕ) where
       (λ z₁ → decodeAtDom (ℕ→Code (fromJust (φ₀ e (fst w') k) z₁)) t))
          (∇defd-prop separatedℕ (χ n) w w') (z , p)) ∣
 
-  decodeAt : (c : Code) (t : haltingTime) → (decodeAtDom c t) → ◯⟨ χ ⟩ ℕ
+  decodeAt : (c : Code) (t : haltingTime) → (decodeAtDom c t) → ◯[ χ ] ℕ
   decodeAt (returnNat n) now d = ∣ n ∣
   decodeAt (queryOracleAndContinue n e) (later k t) d =
     hub n (λ w → decodeAt (ℕ→Code (fromJust _ (fst (d w)))) t (snd (d w)))
@@ -78,33 +78,33 @@ module _ (χ : Oracle ℕ ℕ) where
   decodeDom e = ¬ ¬ (Σ[ k ∈ haltingTime ] (decodeAtDom e k))
 
   computeHaltingTime : (c : Code) → ¬ ¬ (Σ[ k ∈ haltingTime ] decodeAtDom c k) →
-    ◯⟨ χ ⟩ (Σ[ k ∈ haltingTime ] decodeAtDom c k)
+    ◯[ χ ] (Σ[ k ∈ haltingTime ] decodeAtDom c k)
   computeHaltingTime c p = natVersion >>= λ {(n , d) → ∣ (ℕ→HT n) , d ∣}
     where
-      natVersion : ◯⟨ χ ⟩ (Σ[ n ∈ ℕ ] decodeAtDom c (ℕ→HT n))
+      natVersion : ◯[ χ ] (Σ[ n ∈ ℕ ] decodeAtDom c (ℕ→HT n))
       natVersion = search χ (λ n → decodeAtDom c (ℕ→HT n))
         (λ x → p (λ (t , d) → x ((fst haltingTimeCtbl t) , (subst (decodeAtDom c) (sym (retEq haltingTimeCtbl t)) d))))
         λ n → decodeAtDomDec c (ℕ→HT n)
 
   abstract -- otherwise type checking seems to get stuck
-    decodeWithPath : (e : Code) → ⟨ ¬¬resize (Σ[ k ∈ haltingTime ] decodeAtDom e k) ⟩ → Σ[ z ∈ ◯⟨ χ ⟩ ℕ ] ((k : haltingTime) → (w : decodeAtDom e k) → z ≡ decodeAt e k w)
+    decodeWithPath : (e : Code) → ⟨ ¬¬resize (Σ[ k ∈ haltingTime ] decodeAtDom e k) ⟩ → Σ[ z ∈ ◯[ χ ] ℕ ] ((k : haltingTime) → (w : decodeAtDom e k) → z ≡ decodeAt e k w)
     decodeWithPath e w = nullRec (isNullΣ (isNull-Null (oDefd χ)) (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull≡ (isNull-Null (oDefd χ)))))) (λ x → x) fromOracle
       where
-        fromOracle : ◯⟨ χ ⟩ (Σ[ z ∈ ◯⟨ χ ⟩ ℕ ] ((k : haltingTime) → (w : decodeAtDom e k) → z ≡ decodeAt e k w))
+        fromOracle : ◯[ χ ] (Σ[ z ∈ ◯[ χ ] ℕ ] ((k : haltingTime) → (w : decodeAtDom e k) → z ≡ decodeAt e k w))
         fromOracle = do
           (k , d) ← computeHaltingTime e (¬¬resize-out w)
           ∣ (decodeAt e k d) , (λ k' d' → cong₂ (decodeAt e) (haltingTimeUnique _ _ d d') (isProp→PathP (λ _ → isPropDecodeAtDom) _ _)) ∣
 
   private
-    fibreData' : (z : ◯⟨ χ ⟩ ℕ) → Type
+    fibreData' : (z : ◯[ χ ] ℕ) → Type
     fibreData' z = (Σ[ e ∈ Code ] ¬ ¬ (Σ[ t ∈ haltingTime ]  Σ[ d ∈ decodeAtDom e t ] decodeAt e t d ≡ z))
 
 
-  decodeSurj₀ : (z : ◯⟨ χ ⟩ ℕ) → ∥ fibreData' z ∥₁
+  decodeSurj₀ : (z : ◯[ χ ] ℕ) → ∥ fibreData' z ∥₁
   decodeSurj₀ = NullPropElim (oDefd χ) (λ z → ∥ fibreData' z ∥₁ , isPropPropTrunc)
     (λ n → ∣ returnNat n , (¬¬-in (now , tt , refl)) ∣₁) step
     where
-      step : (n : ℕ) (f : χ n ↓ → ◯⟨ χ ⟩ ℕ) → ((w : χ n ↓) → ∥ fibreData' (f w) ∥₁) →
+      step : (n : ℕ) (f : χ n ↓ → ◯[ χ ] ℕ) → ((w : χ n ↓) → ∥ fibreData' (f w) ∥₁) →
              ∥ fibreData' (hub n f) ∥₁
       step n f ih = do
         (e , eWorks) ← compChoice (λ m → ∇.is-this (χ n ) m) (λ m d e → ¬ ¬ (Σ[ t ∈ haltingTime ]  Σ[ d' ∈ decodeAtDom (ℕ→Code e) t ] decodeAt (ℕ→Code e) t d' ≡ f (m , d)))
@@ -134,23 +134,23 @@ module _ (χ : Oracle ℕ ℕ) where
               wP : PathP (λ i → decodeAtDom (ℕ→Code (fromJust (φ₀ e (fst (muP i)) k) (zP i))) t) w w'
               wP = isProp→PathP (λ _ → isPropDecodeAtDom) _ _
 
-  decode : Code → ∂ (◯⟨ χ ⟩ ℕ)
+  decode : Code → ∂ (◯[ χ ] ℕ)
   ∂.domain (decode c) = ¬¬resize (Σ[ k ∈ haltingTime ] decodeAtDom c k)
   ∂.value (decode c) d = fst (decodeWithPath c d)
 
-  decodeSurj : (z : ◯⟨ χ ⟩ ℕ) → ∥ Σ[ e ∈ Code ] decode e ↓= z ∥₁
+  decodeSurj : (z : ◯[ χ ] ℕ) → ∥ Σ[ e ∈ Code ] decode e ↓= z ∥₁
   decodeSurj z = do
       (e , w) ← decodeSurj₀ z
       let resizedDom = ¬¬resize-in-from¬¬ (¬¬-map (λ {(k , t , _) → (k , t)}) w)
       let p = do
         (t , d , q) ← w
         ¬¬-in (snd (decodeWithPath e resizedDom) t d ∙ q)
-      ∣ e , resizedDom , separated◯⟨⟩ χ separatedℕ separatedℕ _ _ p ∣₁
+      ∣ e , resizedDom , separated◯[] χ separatedℕ separatedℕ _ _ p ∣₁
 
-  ψ : ℕ → ℕ → ∂ (◯⟨ χ ⟩ ℕ)
+  ψ : ℕ → ℕ → ∂ (◯[ χ ] ℕ)
   ψ e n = φ e n >>= (decode ∘ ℕ→Code)
 
-  relativisedECT : (f : ℕ → ∂ (◯⟨ χ ⟩ ℕ)) →
+  relativisedECT : (f : ℕ → ∂ (◯[ χ ] ℕ)) →
     ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (z : f n ↓) → ψ e n ↓= ∂.value (f n) z) ∥₁
   relativisedECT f = do
     (e , g) ← compChoice (λ n → ∂.domain (f n))
@@ -173,7 +173,7 @@ module _ (χ : Oracle ℕ ℕ) where
       lemma2 e n z gnz = ∂bindDesc (φ e n) (decode ∘ ℕ→Code) (¬¬resize-in (fst gnz))
                                       (lemma e n z (fst gnz) (fst (snd gnz)))
 
-  relativisedCT : (f : ℕ → ◯⟨ χ ⟩ ℕ) →
+  relativisedCT : (f : ℕ → ◯[ χ ] ℕ) →
     ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → ψ e n ↓= f n) ∥₁
   relativisedCT f = do
     (e , h) ← relativisedECT (λ n → ι (f n))
@@ -185,7 +185,7 @@ module _ (χ : Oracle ℕ ℕ) where
   diag : ℕ → ∇ ℕ
   diag e = byCases (ψ e e ↓= ∣ 0 ∣) 1 0
 
-  diagNonComputable₀ : (f : ℕ → ◯⟨ χ ⟩ ℕ) → diag ≡ erase χ separatedℕ ∘ f → ⊥
+  diagNonComputable₀ : (f : ℕ → ◯[ χ ] ℕ) → diag ≡ erase χ separatedℕ ∘ f → ⊥
   diagNonComputable₀ f p = rec isProp⊥ (λ x → x) do
     (e , h) ← relativisedCT f
     ∣ contr e (h e) ∣₁
@@ -225,6 +225,6 @@ module _ (χ : Oracle ℕ ℕ) where
   diagNonComputable : ¬ (diag ≤T χ)
   diagNonComputable (Tred red) = diagNonComputable₀ (fst ∘ mWithPath) (funExt (λ n → snd (mWithPath n)))
     where
-      mWithPath : (n : ℕ) → Σ[ m ∈ ◯⟨ χ ⟩ ℕ ] (diag n ≡ erase χ separatedℕ m)
+      mWithPath : (n : ℕ) → Σ[ m ∈ ◯[ χ ] ℕ ] (diag n ≡ erase χ separatedℕ m)
       mWithPath n = nullRec (isNullΣ (isNull-Null (oDefd χ)) (λ _ → isNull≡ (¬¬Sheaf→Null {χ = χ} separatedℕ ∇isSheaf)))
                           (λ (m , p) → ∣ m ∣ , ∇-defd→path (diag n) m p) (red n)
