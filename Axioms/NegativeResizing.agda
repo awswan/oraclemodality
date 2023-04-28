@@ -45,6 +45,9 @@ postulate
 ¬¬resize-in : {A : Type ℓ} → A → [ ¬¬resize A ]
 ¬¬resize-in a = ¬resize-in _ (¬¬-in a)
 
+¬¬resize-in-from¬¬ : {A : Type ℓ} → ¬ ¬ A → [ ¬¬resize A ]
+¬¬resize-in-from¬¬ p = Ω¬¬-stab (¬¬resize _) (¬¬-map ¬¬resize-in p)
+
 ¬¬resize-out : {A : Type ℓ} → [ ¬¬resize A ] → ¬ ¬ A
 ¬¬resize-out x = ¬resize-out _ x
 

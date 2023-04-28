@@ -11,25 +11,19 @@ record ∂ (A : Type ℓ) : Type ℓ where
     domain : Ω¬¬
     value : ⟨ domain ⟩ → A
 
+∂hasUnderlyingPartialDF : HasUnderlyingPartialDomainFirst {ℓ = ℓ} ∂
+HasUnderlyingPartialDomainFirst.domain ∂hasUnderlyingPartialDF α = ⟨ ∂.domain α ⟩
+HasUnderlyingPartialDomainFirst.eval ∂hasUnderlyingPartialDF α = ∂.value α
+∂.domain (fst (HasUnderlyingPartialDomainFirst.total ∂hasUnderlyingPartialDF a)) = ¬¬⊤
+∂.value (fst (HasUnderlyingPartialDomainFirst.total ∂hasUnderlyingPartialDF a)) _ = a
+snd (HasUnderlyingPartialDomainFirst.total ∂hasUnderlyingPartialDF a) = (¬¬resize-in tt) , refl
+
 instance
-  open HasUnderlyingPartial
   ∂hasUnderlyingPartial : HasUnderlyingPartial {ℓ = ℓ} ∂
-  is-this ∂hasUnderlyingPartial α a = ¬¬resize (Σ[ z ∈ ⟨ ∂.domain α ⟩ ] (∂.value α z ≡ a))
-  well-defd ∂hasUnderlyingPartial α a b u v = do
-    (z , p) ← ¬¬resize-out u
-    (w , q) ← ¬¬resize-out v
-    ¬¬-in (sym p ∙∙ cong (∂.value α) (Ω¬¬-props _ _ _) ∙∙ q)
-  ∂.domain (includeTotal ∂hasUnderlyingPartial a) = ¬¬⊤
-  ∂.value (includeTotal ∂hasUnderlyingPartial a) _ = a
-  totalIs ∂hasUnderlyingPartial a = ¬¬resize-in ((¬¬resize-in tt) , refl)
+  ∂hasUnderlyingPartial = HasUnderlyingPartialFromDomain ∂hasUnderlyingPartialDF
 
-↓→domain : {A : Type ℓ} (α : ∂ A) → (α ↓) → ⟨ ∂.domain α ⟩
-↓→domain α (a , u) = Ω¬¬-stab _ do
-  (z , _) ← ¬¬resize-out u
-  ¬¬-in z
-
-domain→↓ : {A : Type ℓ} (α : ∂ A) → ⟨ ∂.domain α ⟩ → (α ↓)
-domain→↓ α z = (∂.value α z) , (¬¬resize-in (z , refl))
+isProp∂↓ : {A : Type ℓ} (Asep : Separated A) {α : ∂ A} → (isProp (α ↓))
+isProp∂↓ Asep {α = α} = Ω¬¬-props (∂.domain α)
 
 instance
   open ModalOperator
@@ -44,3 +38,25 @@ instance
       βdom = Ω¬¬-stab _ do
         (αdom' , βdom') ← ¬¬resize-out u
         ¬¬-in (subst (λ αdom'' → ⟨ ∂.domain (f (∂.value α αdom'')) ⟩) (Ω¬¬-props _ αdom' αdom) βdom')
+
+∂bindDesc : {A : Type ℓa} {B : Type ℓb} (α : ∂ A) (β : A → ∂ B)
+  (dα : ⟨ ∂.domain α ⟩) (dβ : ⟨ ∂.domain (β (∂.value α dα)) ⟩) → (α >>= β) ↓= ∂.value (β (∂.value α dα)) dβ
+∂bindDesc α β dα dβ = (¬¬resize-in (dα , dβ)) , λ i → ∂.value (β (∂.value α (αpath i)))
+  (βpath i)
+  where
+    u : ⟨ ∂.domain (α >>= β) ⟩
+    u = ¬¬resize-in (dα , dβ)
+  
+    dα' : ⟨ ∂.domain α ⟩
+    dα' = Ω¬¬-stab _ (¬¬-map fst (¬¬resize-out u))
+
+    αpath : dα' ≡ dα
+    αpath = Ω¬¬-props _ _ _
+
+    dβ' : ⟨ ∂.domain (β (∂.value α dα')) ⟩
+    dβ' = Ω¬¬-stab _ do
+        (αdom' , βdom') ← ¬¬resize-out u
+        ¬¬-in (subst (λ αdom'' → ⟨ ∂.domain (β (∂.value α αdom'')) ⟩) (Ω¬¬-props _ αdom' dα') βdom')
+
+    βpath : PathP (λ i → ⟨ ∂.domain (β (∂.value α (αpath i))) ⟩) dβ' dβ
+    βpath = isProp→PathP (λ i → Ω¬¬-props _) _ _

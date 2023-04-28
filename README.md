@@ -1,6 +1,6 @@
 # Oracle Modalities
 
-This is the Agda formalisation to accompany the paper *Oracle modalities*.
+This is the Agda formalisation to accompany the paper A.W. Swan, *Oracle modalities*.
 
 ## Directory layout
 
@@ -10,6 +10,8 @@ The main directory contains the following files:
   * `OracleModality.agda` Main results about oracle modalities, including their definition, proof of relativised Markov's principle and its applications, definition of Turing degrees
   * `ParallelSearch.agda` parallel unbounded search using relativised Markov's principle
   * `RelativisedCT.agda` coding function used for relativised Church's thesis
+  * `WeakTT.agda` a formulation of weak truth table reducibility and proof that Turing reducibility is strictly weaker
+  * `Continuity.agda` a local continuity principle for Turing reducibility
 
 `Axioms/` This directory contains files postulating the main axioms that we will be using together with some basic results using the axioms.
 
@@ -28,9 +30,11 @@ The main directory contains the following files:
   * `PartialElements.agda` Implementation of partial elements, including notation for any modal operator whose elements can be viewed as partial elements.
   * `StablePartial.agda` Partial elements with double negation stable domain
   * `Nat.agda` Minor utility function on the naturals
+  * `List.agda` Utility for universal quantifiers over lists
+  * `Misc.agda` Miscellaneous utility functions
   * `Everything.agda` Packages commonly used utility functions into a single import
 
 
 ## Installation
 
-We use cubical mode Agda and the cubical Agda library. We need version v0.4 of the [cubical library](https://github.com/agda/cubical), which is currently the most recent release. I recommend version 2.6.2.2 of [Agda](https://agda.readthedocs.io/en/v2.6.2.2/). I have tested it on that version and it is recommended for v0.4 of the library. The library needs to be in the Agda search path, as described at https://agda.readthedocs.io/en/v2.6.2.2/tools/package-system.html.
+We use cubical mode Agda and the cubical Agda library. We need version v0.5 of the [cubical library](https://github.com/agda/cubical) (currently in development, available on github). We need version 2.6.3 of [Agda](https://agda.readthedocs.io/en/v2.6.3/). The library needs to be in the Agda search path, as described at https://agda.readthedocs.io/en/v2.6.3/tools/package-system.html.

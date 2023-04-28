@@ -4,6 +4,7 @@ open import Includes
 
 open import Util.Everything
 open import Util.LexNull
+open import Util.Nullification
 
 open import Cubical.Modalities.Modality
 
@@ -24,18 +25,12 @@ module OM (χ : Oracle A B) {ℓ : Level} where
   open Modality (NullModality {ℓ = ℓ} (oDefd χ)) public
 
 {- Definition of oracle modality -}
-◯⟨_⟩ : {A : Type ℓa} {B : Type ℓb} (χ : Oracle A B) {ℓ : Level} →
+◯[_] : {A : Type ℓa} {B : Type ℓb} (χ : Oracle A B) {ℓ : Level} →
        Type ℓ → Type (ℓ-max ℓ (ℓ-max ℓa ℓb))
-◯⟨ χ ⟩ {ℓ = ℓ} = Null (oDefd χ)
+◯[ χ ] {ℓ = ℓ} = Null (oDefd χ)
   where
     open OM χ {ℓ = ℓ}
 
-instance
-  open ModalOperator
-  Null-bind : ∀ {A : Type ℓa} {S : A → Type ℓb} {ℓc ℓd : Level} →
-              ModalOperator (ℓ-max ℓa ℓb) ℓc ℓd (Null S)
-  bind (Null-bind {S = S}) a g = nullRec (isNull-Null S) g a
-    -- Nullification.rec is more flexible than ◯-rec in allowing differing universe levels
 
 module _ (χ : Oracle A B) where
   open OM χ
@@ -43,9 +38,9 @@ module _ (χ : Oracle A B) where
   private
     _is_ = ∇.is-this {A = ℕ}
     mp-inst : ∇ ℕ → Type _
-    mp-inst N = ((n : ℕ) → ◯⟨ χ ⟩ (Dec ⟨ N is n ⟩)) → ◯⟨ χ ⟩ (N ↓)
+    mp-inst N = ((n : ℕ) → ◯[ χ ] (Dec ⟨ N is n ⟩)) → ◯[ χ ] (N ↓)
 
-  -- Key lemma for relativised Markov's principle. See first part of proof of Theorem III.21
+  -- Key lemma for relativised Markov's principle. See first part of proof of Theorem 3.27
   rel-markov : (N : ∇ ℕ) → mp-inst N
   rel-markov = markov-ind mp-inst step
     where
@@ -58,7 +53,7 @@ module _ (χ : Oracle A B) where
         n₀ ← ih (Pred.M N ¬p) (Pred.is-suc N ¬p) (convert-dec ¬p)
         ∣ ((suc (fst n₀)) , snd n₀) ∣
         where
-          convert-dec : (¬p : ¬ ⟨ N is 0 ⟩) (n : ℕ) → ◯⟨ χ ⟩ (Dec ⟨ (Pred.M N ¬p) is n ⟩)
+          convert-dec : (¬p : ¬ ⟨ N is 0 ⟩) (n : ℕ) → ◯[ χ ] (Dec ⟨ (Pred.M N ¬p) is n ⟩)
           convert-dec ¬p n = do
             yes p ← dec (suc n)
               where no ¬p' → ∣ no (λ z → ¬p' (Pred.is-suc N ¬p n z)) ∣
@@ -66,7 +61,7 @@ module _ (χ : Oracle A B) where
 
   -- We first show relativised Markov's principle for the special case where X n is true exactly once
   search-unique : (X : ℕ → Type ℓ) (is-unique : (n m : ℕ) → (X n) → (X m) → n ≡ m)
-    (exists : ¬ ¬ (Σ ℕ X)) → (dec : (n : ℕ) → ◯⟨ χ ⟩ (Dec (X n))) → ◯⟨ χ ⟩ (Σ ℕ X)
+    (exists : ¬ ¬ (Σ ℕ X)) → (dec : (n : ℕ) → ◯[ χ ] (Dec (X n))) → ◯[ χ ] (Σ ℕ X)
   search-unique X is-unique exists dec = do
     (n , z) ← rel-markov N dec'
     yes p ← dec n
@@ -81,7 +76,7 @@ module _ (χ : Oracle A B) where
         ¬¬-in (is-unique n m x' y')
       ∇.almost-inh N = ¬¬-map (λ {(n , x) → (n , ¬¬resize-in x)}) exists
 
-      dec' : (n : ℕ) → ◯⟨ χ ⟩ (Dec ⟨ ∇.is-this N n ⟩)
+      dec' : (n : ℕ) → ◯[ χ ] (Dec ⟨ ∇.is-this N n ⟩)
       dec' n = do
         (no ¬p) ← dec n
           where (yes p) → ∣ yes (¬¬resize-in p) ∣
@@ -90,7 +85,7 @@ module _ (χ : Oracle A B) where
   {- We derive the full version of relativised Markov's principle by finding the first n such that
      X(n), which is unique. -}
   search-first : (X : ℕ → Type ℓ) (exists : ¬ ¬ (Σ ℕ X)) → (dec : (n : ℕ) →
-                    ◯⟨ χ ⟩ (Dec (X n))) → ◯⟨ χ ⟩ (Σ ℕ (λ n → X n × ((m : ℕ) → m < n → ¬ (X m))))
+                    ◯[ χ ] (Dec (X n))) → ◯[ χ ] (Σ ℕ (λ n → X n × ((m : ℕ) → m < n → ¬ (X m))))
   search-first X exists dec = search-unique X' unique (λ w → exists (λ (n , v) → convert-ex w n v)) dec'
     where
       X' : ℕ → Type _
@@ -105,7 +100,7 @@ module _ (χ : Oracle A B) where
       ... | eq p = p
       ... | gt p = ⊥rec (snd x n p (fst y))
 
-      scan : (n : ℕ) → ◯⟨ χ ⟩(((m : ℕ) → m < n → ¬ (X m)) ⊎ Σ ℕ λ k → (k < n) × (X' k))
+      scan : (n : ℕ) → ◯[ χ ](((m : ℕ) → m < n → ¬ (X m)) ⊎ Σ ℕ λ k → (k < n) × (X' k))
       scan zero = ∣ inl (λ m p _ → ¬-<-zero p) ∣
       scan (suc n) = do
         inl z ← scan n -- has the first witness already occured for m < n?
@@ -114,7 +109,7 @@ module _ (χ : Oracle A B) where
           where yes xn → ∣ inr (n , (≤-refl , (xn , z))) ∣ -- first witness appears here
         ∣ inl (λ m p → ⊎rec (z m) (λ q → subst _ (sym q) ¬xn) (<-split p)) ∣ -- otherwise return proof there's no witness so far
 
-      dec' : (n : ℕ) → ◯⟨ χ ⟩ (Dec (X' n))
+      dec' : (n : ℕ) → ◯[ χ ] (Dec (X' n))
       dec' n = do
         inr (m , (p , z)) ← scan (suc n)
           where inl z → ∣ no (λ w → z n ≤-refl (fst w) ) ∣
@@ -124,47 +119,41 @@ module _ (χ : Oracle A B) where
   {- We usually don't need to know that the element selected is the first one, so it's useful
      to have a function that just calls search-first and forgets that the witness is first. -}
   search : (X : ℕ → Type ℓ) (exists : ¬ ¬ (Σ ℕ X)) → (dec : (n : ℕ) →
-                    ◯⟨ χ ⟩ (Dec (X n))) → ◯⟨ χ ⟩ (Σ ℕ X)
+                    ◯[ χ ] (Dec (X n))) → ◯[ χ ] (Σ ℕ X)
   search X exists dec = do
     (n , (x , _)) ← search-first X exists dec
     ∣ n , x ∣
 
-  query : (a : A) → ◯⟨ χ ⟩(χ a ↓)
+  query : (a : A) → ◯[ χ ](χ a ↓)
   query a = hub a (λ z → ∣ z ∣)
 
-  evalWithPath : (x : ◯⟨ χ ⟩ X) → ◯⟨ χ ⟩ (Σ[ x' ∈ X ] (x ≡ ∣ x' ∣))
+  evalWithPath : (x : ◯[ χ ] X) → ◯[ χ ] (Σ[ x' ∈ X ] (x ≡ ∣ x' ∣))
   evalWithPath = nullElim (λ _ → isNull-Null _) λ x → ∣ x , refl ∣
 
-  isNull⊥ : isNull (oDefd χ) ⊥
-  isPathSplitEquiv.sec (isNull⊥ a) = (∇.almost-inh (χ a)) , (λ b → funExt (λ _ → isProp⊥ _ _))
-
-  extract⊥ : ◯⟨ χ ⟩ ⊥ → ⊥
-  extract⊥ = nullRec isNull⊥ (λ x → x)
+  extract⊥ : ◯[ χ ] ⊥ → ⊥
+  extract⊥ = nullRec (isNull⊥ (oDefd χ) λ a → ∇.almost-inh (χ a)) (λ x → x)
 
 variable
   χ χ' χ'' : Oracle A B
 
-¬¬Sheaf→Null : {A : Type ℓ} {B : Type ℓ'} {X : Type ℓ''} {χ : Oracle A B} → (Separated B) → (¬¬Sheaf X) → isNull (λ a → (χ a) ↓) X
-¬¬Sheaf→Null {A = A} {X = X} {χ = χ} Bsep Xsh a = fromIsEquiv const (record { equiv-proof = λ f → isOfHLevelRetractFromIso 0 (fibequiv f) (Xsh (P a) (∇.almost-inh (χ a)) f) })
-  where
-    P : (a : A) → hProp _
-    P a = (χ a ↓) , ∇defd-prop Bsep (χ a)
-    
-    fibequiv : (f : χ a ↓ → X) → Iso (fiber const f) (Σ[ x ∈ X ] ((z : ⟨ P a ⟩) → f z ≡ x))
-    Iso.fun (fibequiv f) (x , u) = x , λ z i → u (~ i) z
-    Iso.inv (fibequiv f) (x , p) = x , funExt (λ z → sym (p z))
-    Iso.rightInv (fibequiv f) (x , p) = refl
-    Iso.leftInv (fibequiv f) (x , u) = refl
+¬¬Sheaf→Null : {A : Type ℓ} {B : Type ℓ'} {X : Type ℓ''} {χ : Oracle A B} → (Separated B) → (¬¬Sheaf X) → isNull (oDefd χ) X
+¬¬Sheaf→Null {A = A} {X = X} {χ = χ} Bsep Xsh a = Xsh ((χ a ↓) , (∇defd-prop Bsep (χ a)) , ∇.almost-inh (χ a))
 
 {- Erase all the computational information to get an element of ∇ X -}
-erase : (χ : Oracle A B) → (Separated B) → ◯⟨ χ ⟩ X → ∇ X
-erase χ Bsep = nullRec (¬¬Sheaf→Null {χ = χ} Bsep ∇-isSheaf) ∇-in
+erase : (χ : Oracle A B) → (Separated B) → ◯[ χ ] X → ∇ X
+erase χ Bsep = nullRec (¬¬Sheaf→Null {χ = χ} Bsep ∇isSheaf) ∇-in
 
-◯→¬¬ : (χ : Oracle A B) → (Separated B) → ◯⟨ χ ⟩ X → ¬ ¬ X
+◯→¬¬ : (χ : Oracle A B) → (Separated B) → ◯[ χ ] X → ¬ ¬ X
 ◯→¬¬ χ Bsep z = ∇→¬¬ (erase χ Bsep z)
 
-recallErase : (χ : Oracle A B) → (sB : Separated B) → {X : Type ℓ} → (x : ◯⟨ χ ⟩ X) → ◯⟨ χ ⟩(erase χ sB x ↓)
+recallErase : (χ : Oracle A B) → (sB : Separated B) → {X : Type ℓ} → (x : ◯[ χ ] X) → ◯[ χ ](erase χ sB x ↓)
 recallErase χ sB = nullElim (λ x → isNull-Null (λ a → χ a ↓)) λ x → ∣ x , (¬¬resize-in refl) ∣
+
+eraseInj : (χ : Oracle A B) → (sB : Separated B) (sX : Separated X) → {w z : ◯[ χ ] X} → (erase χ sB w ≡ erase χ sB z) → (w ≡ z)
+eraseInj {X = X} χ sB sX {w} {z} =
+  nullElim {Y = λ w → (z : ◯[ χ ] X) → erase χ sB w ≡ erase χ sB z → w ≡ z}
+    (λ w → isNullΠ (λ _ → isNullΠ (λ p → isNull≡ (isNull-Null (oDefd χ)))))
+    (λ w₀ → nullElim (λ z → isNullΠ (λ _ → isNull≡ (isNull-Null (oDefd χ)))) (λ z₀ p → cong ∣_∣ (sX _ _ (∇-in-inj p)))) w z
 
 variable
   A' B' : Type ℓ'
@@ -175,26 +164,27 @@ record _≤T_ {A : Type ℓa} {B : Type ℓb} {A' : Type ℓa'} {B' : Type ℓb'
             (χ : Oracle A B) (χ' : Oracle A' B') : Type (ℓ-max (ℓ-max ℓa ℓb) (ℓ-max ℓa' ℓb')) where
   constructor Tred
   field
-    red : (a : A) → ◯⟨ χ' ⟩(χ a ↓)
+    red : (a : A) → ◯[ χ' ](χ a ↓)
 
 TReducible→isNull : {B : Type ℓ} {χ : Oracle A B} {χ' : Oracle A' B'} (sB : Separated B)
-  → χ ≤T χ' → (isNull (λ a → χ a ↓) (◯⟨ χ' ⟩ X))
+  → χ ≤T χ' → (isNull (λ a → χ a ↓) (◯[ χ' ] X))
 TReducible→isNull {X = X} {χ = χ} {χ' = χ'} sB (Tred e) a  = fromIsEquiv _ (snd equiv)
   where
-    ic : isContr (◯⟨ χ' ⟩ (χ a ↓))
+    ic : isContr (◯[ χ' ] (χ a ↓))
     ic = inhProp→isContr (e a) (NullPreservesProp (∇defd-prop sB (χ a)))
   
-    equiv : ◯⟨ χ' ⟩ X ≃ (χ a ↓ → ◯⟨ χ' ⟩ X)
+    equiv : ◯[ χ' ] X ≃ (χ a ↓ → ◯[ χ' ] X)
     equiv =
-      ◯⟨ χ' ⟩ X
+      ◯[ χ' ] X
         ≃⟨ invEquiv (UnitToType≃ _) ⟩
-      (Unit → ◯⟨ χ' ⟩ X)
+      (Unit → ◯[ χ' ] X)
         ≃⟨ preCompEquiv (isContr→≃Unit ic) ⟩
-      (◯⟨ χ' ⟩( χ a ↓) → ◯⟨ χ' ⟩ X)
+      (◯[ χ' ]( χ a ↓) → ◯[ χ' ] X)
         ≃⟨ NullRecEquiv (isNull-Null _) ⟩
-      (χ a ↓ → ◯⟨ χ' ⟩ X)
+      (χ a ↓ → ◯[ χ' ] X)
         ■
 
+{- Turing equivalence -}
 _≡T_ : (χ : Oracle A B) (χ' : Oracle A' B') → Type _
 χ ≡T χ' = (χ ≤T χ') × (χ' ≤T χ)
 
@@ -202,7 +192,7 @@ _≡T_ : (χ : Oracle A B) (χ' : Oracle A' B') → Type _
 Trefl : (χ : Oracle A B) → χ ≤T χ
 Trefl χ = Tred (query χ)
 
-simulate : {χ : Oracle A B} (sB : Separated B) → χ ≤T χ' → ◯⟨ χ ⟩ X → ◯⟨ χ' ⟩ X
+simulate : {χ : Oracle A B} (sB : Separated B) → χ ≤T χ' → ◯[ χ ] X → ◯[ χ' ] X
 simulate sB e = nullRec (TReducible→isNull sB e) ∣_∣
 
 {- Transitivity of Turing degrees -}
@@ -224,7 +214,7 @@ module _ (χ : ℕ × ℕ → ∇ Bool) (uniq : (a : ℕ) → (b b' : ℕ) → �
   graphToFn≤T : graphToFn ≤T χ
   graphToFn≤T = Tred λ a → search χ (λ b → ⟨ χ (a , b) ⟩) (defd a) (dec a)
     where
-      dec : (a : ℕ) → (b : ℕ) → ◯⟨ χ ⟩ (Dec ⟨ χ (a , b) ⟩)
+      dec : (a : ℕ) → (b : ℕ) → ◯[ χ ] (Dec ⟨ χ (a , b) ⟩)
       dec a b = do
         (false , z) ← query χ (a , b)
           where (true , z) → ∣ yes z ∣
@@ -232,10 +222,10 @@ module _ (χ : ℕ × ℕ → ∇ Bool) (uniq : (a : ℕ) → (b b' : ℕ) → �
 
 {- Compute inverse of a surjective function. Variant of Theorem V.3 from paper. -}
 module invert (χ : ℕ → ∇ ℕ) (surj : (m : ℕ) → ¬ ¬ (Σ[ n ∈ ℕ ] ⟨ ∇.is-this (χ n) m ⟩)) where
-  compute-inverse : (n : ℕ) → ◯⟨ χ ⟩ (Σ[ m ∈ ℕ ] ⟨ ∇.is-this (χ m) n ⟩)
+  compute-inverse : (n : ℕ) → ◯[ χ ] (Σ[ m ∈ ℕ ] ⟨ ∇.is-this (χ m) n ⟩)
   compute-inverse n = search χ (λ m → ⟨ ∇.is-this (χ m) n ⟩) (surj n) (dec n)
     where
-      dec : (m n : ℕ) → ◯⟨ χ ⟩ (Dec ⟨ ∇.is-this (χ n) m ⟩)
+      dec : (m n : ℕ) → ◯[ χ ] (Dec ⟨ ∇.is-this (χ n) m ⟩)
       dec m n = do
         (k , z) ← query χ n
         ∣ decRec (λ p → yes (subst _ p z))
@@ -251,10 +241,13 @@ module invert (χ : ℕ → ∇ ℕ) (surj : (m : ℕ) → ¬ ¬ (Σ[ n ∈ ℕ 
 manyOne→≤T : {C : Type ℓ} (χ : Oracle A B) → (f : C → A) → ((χ ∘ f) ≤T χ)
 manyOne→≤T χ f = Tred λ c → query χ (f c)
 
-{- ◯⟨ χ ⟩ X is separated whenever B and X are -}
-separated◯⟨⟩ : (χ : Oracle A B) → (Separated B) → (Separated X) → (Separated (◯⟨ χ ⟩ X))
-separated◯⟨⟩ χ sepB sepX =
-  nullElim (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull≡ (isNull-Null (oDefd χ)))))
-  λ x → nullElim (λ _ → isNullΠ (λ _ → isNull≡ (isNull-Null (oDefd χ))))
-                 (λ y p → cong ∣_∣ (sepX _ _ (p >>= λ p' →
-                   ◯→¬¬ χ sepB (∣∣-inj (λ a → (oDefd χ a) , (∇defd-prop sepB (χ a))) _ _ p'))))
+{- ◯[ χ ] X is separated whenever B and X are -}
+separated◯[] : (χ : Oracle A B) → (Separated B) → (Separated X) → (Separated (◯[ χ ] X))
+separated◯[] χ sepB sepX = separatedNull (λ a → (χ a ↓) , (∇defd-prop sepB (χ a))) (λ a → ◯→¬¬ χ sepB (query χ a)) sepX
+
+map[_] : (χ : Oracle A B) {X : Type ℓ} {Y : Type ℓ'} → (g : X → Y) → ◯[ χ ] X → ◯[ χ ] Y
+map[ χ ] g ∣ x ∣ = ∣ g x ∣
+map[ χ ] g (hub α f) = hub α λ z → map[ χ ] g (f z)
+map[ χ ] g (spoke α f s i) = spoke α (λ z → map[ χ ] g (f z)) s i
+map[ χ ] g (≡hub p i) = ≡hub (λ z i → map[ χ ] g (p z i)) i
+map[ χ ] g (≡spoke p s i i₁) = ≡spoke (λ z i → map[ χ ] g (p z i)) s i i₁
