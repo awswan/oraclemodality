@@ -18,6 +18,7 @@ open import Util.PropTruncationModalInstance
 open import Util.LexNull
 open import Util.Nullification
 open import Util.Encodings
+open import Util.Misc
 
 open import OracleModality
 open import DoubleNegationSheaves
@@ -82,9 +83,15 @@ module _ (χ : Oracle ℕ ℕ) where
   computeHaltingTime c p = natVersion >>= λ {(n , d) → ∣ (ℕ→HT n) , d ∣}
     where
       natVersion : ◯[ χ ] (Σ[ n ∈ ℕ ] decodeAtDom c (ℕ→HT n))
-      natVersion = search χ (λ n → decodeAtDom c (ℕ→HT n))
-        (λ x → p (λ (t , d) → x ((fst haltingTimeCtbl t) , (subst (decodeAtDom c) (sym (retEq haltingTimeCtbl t)) d))))
-        λ n → decodeAtDomDec c (ℕ→HT n)
+      natVersion =
+        search-unique χ
+                      ((λ n → decodeAtDom c (ℕ→HT n)))
+                      (λ n m x y → equiv→Inj (snd (invEquiv haltingTimeCtbl))
+                        (haltingTimeUnique _ _ x y))
+                        ((λ x → p (λ (t , d) →
+                          x ((fst haltingTimeCtbl t) ,
+                            (subst (decodeAtDom c) (sym (retEq haltingTimeCtbl t)) d)))))
+                            (λ n → decodeAtDomDec c (ℕ→HT n))
 
   abstract -- otherwise type checking seems to get stuck
     decodeWithPath : (e : Code) → ⟨ ¬¬resize (Σ[ k ∈ haltingTime ] decodeAtDom e k) ⟩ → Σ[ z ∈ ◯[ χ ] ℕ ] ((k : haltingTime) → (w : decodeAtDom e k) → z ≡ decodeAt e k w)

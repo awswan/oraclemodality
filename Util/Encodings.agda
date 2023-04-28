@@ -70,11 +70,12 @@ module Triangle where
 
 ▵Equiv = Triangle.equiv
 
-Pair▵Iso :  Iso (ℕ × ℕ) Triangle.ℕ≤
-Iso.inv Pair▵Iso ((n , m) , p) = m , (fst p)
-Iso.fun Pair▵Iso (m , k) = ((k + m) , m) , k , refl
-Iso.rightInv Pair▵Iso ((n , m) , p) = Σ≡Prop (λ _ → isProp≤) (ΣPathP ((snd p) , refl))
-Iso.leftInv Pair▵Iso (m , k) = refl
+abstract
+  Pair▵Iso :  Iso (ℕ × ℕ) Triangle.ℕ≤
+  Iso.inv Pair▵Iso ((n , m) , p) = m , (fst p)
+  Iso.fun Pair▵Iso (m , k) = ((k + m) , m) , k , refl
+  Iso.rightInv Pair▵Iso ((n , m) , p) = Σ≡Prop (λ _ → isProp≤) (ΣPathP ((snd p) , refl))
+  Iso.leftInv Pair▵Iso (m , k) = refl
 
 Pair▵Equiv : (ℕ × ℕ) ≃ Triangle.ℕ≤ 
 Pair▵Equiv = isoToEquiv Pair▵Iso

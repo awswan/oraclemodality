@@ -157,7 +157,7 @@ module _ (χ : Oracle ℕ Bool) where
   G→Fun g zb = fst (fst G→EquivEquiv g) zb
 
   G→FunInj : (g h : (◯[ χ ] ℤ∗ × ◯[ χ ] Bool ≡ ◯[ χ ] ℤ∗ × ◯[ χ ] Bool)) → (G→Fun g ≡ G→Fun h) → (g ≡ h)
-  G→FunInj g h p = isEmbedding→Inj (isEquiv→isEmbedding (snd G→EquivEquiv)) g h (Σ≡Prop (λ _ → isPropIsEquiv _) p)
+  G→FunInj g h p = equiv→Inj (snd G→EquivEquiv) (Σ≡Prop (λ _ → isPropIsEquiv _) p)
 
 
 module _ (χ χ' : Oracle ℕ Bool) where
@@ -174,10 +174,10 @@ module _ (χ χ' : Oracle ℕ Bool) where
   χℤ n = χ (ℤ→ℕ n)
 
   separatedG : Separated G
-  separatedG = inj→Separated (fst ∘ fst (G→EquivEquiv χ)) (λ p q r → isEmbedding→Inj (isEquiv→isEmbedding (snd (G→EquivEquiv χ))) _ _ (Σ≡Prop (λ _ → isPropIsEquiv _) r)) (separatedΠ λ _ → separatedNull (λ n → χ n ↓ , ∇defd-prop separatedBool (χ n)) (λ n → ∇.almost-inh (χ n)) (separatedΣ (separatedMaybe (Discrete→Separated discreteℤ)) λ _ → separatedBool))
+  separatedG = inj→Separated (fst ∘ fst (G→EquivEquiv χ)) (λ p q r → equiv→Inj (snd (G→EquivEquiv χ)) (Σ≡Prop (λ _ → isPropIsEquiv _) r)) (separatedΠ λ _ → separatedNull (λ n → χ n ↓ , ∇defd-prop separatedBool (χ n)) (λ n → ∇.almost-inh (χ n)) (separatedΣ (separatedMaybe (Discrete→Separated discreteℤ)) λ _ → separatedBool))
 
   separatedG' : Separated G'
-  separatedG' = inj→Separated (fst ∘ fst (G→EquivEquiv χ')) (λ p q r → isEmbedding→Inj (isEquiv→isEmbedding (snd (G→EquivEquiv χ'))) _ _ (Σ≡Prop (λ _ → isPropIsEquiv _) r)) (separatedΠ λ _ → separatedNull (λ n → χ' n ↓ , ∇defd-prop separatedBool (χ' n)) (λ n → ∇.almost-inh (χ' n)) (separatedΣ (separatedMaybe (Discrete→Separated discreteℤ)) λ _ → separatedBool))
+  separatedG' = inj→Separated (fst ∘ fst (G→EquivEquiv χ')) (λ p q r → equiv→Inj (snd (G→EquivEquiv χ')) (Σ≡Prop (λ _ → isPropIsEquiv _) r)) (separatedΠ λ _ → separatedNull (λ n → χ' n ↓ , ∇defd-prop separatedBool (χ' n)) (λ n → ∇.almost-inh (χ' n)) (separatedΣ (separatedMaybe (Discrete→Separated discreteℤ)) λ _ → separatedBool))
 
   ∇dComp : {X : Pointed ℓ} → ∇ ⟨ Ω X ⟩ → ∇ ⟨ Ω X ⟩ → ∇ ⟨ Ω X ⟩ → ∇ ⟨ Ω X ⟩
   ∇.is-this (∇dComp {X = X} α β γ) s =
@@ -336,7 +336,7 @@ module _ (χ χ' : Oracle ℕ Bool) where
       getPath : (p p' : ◯[ χ ] ℤ∗ → ◯[ χ ] Bool ≡ ◯[ χ ] Bool) →
                 θ (∇-in (cong (D ∘ F (◯[ χ ] ℤ∗)) (funExt p))) ≡ θ (∇-in (cong (D ∘ F (◯[ χ ] ℤ∗)) (funExt p'))) →
                 p ≡ p'
-      getPath p p' q = isoFunInjective funExtIso _ _ (isEmbedding→Inj (DFEmbedding _ _ (nullPreservesLevel (λ n → (χ n ↓) , (∇defd-prop (Discrete→Separated discreteBool) (χ n))) 2 (isOfHLevelMaybe 0 isSetℤ))) _ _ (separatedG _ _ (∇-in-inj (isEmbedding→Inj (isEquiv→isEmbedding isEquivθ) _ _ q))))
+      getPath p p' q = isoFunInjective funExtIso _ _ (isEmbedding→Inj (DFEmbedding _ _ (nullPreservesLevel (λ n → (χ n ↓) , (∇defd-prop (Discrete→Separated discreteBool) (χ n))) 2 (isOfHLevelMaybe 0 isSetℤ))) _ _ (separatedG _ _ (∇-in-inj (equiv→Inj isEquivθ q))))
 
     χPathDefd : (n : ℤ) → (θ (∇-in (cong (D ∘ F (◯[ χ ] ℤ∗)) (funExt χPaths⊤'))) ↓) →
                           (θ (∇-in (cong (D ∘ F (◯[ χ ] ℤ∗)) (funExt (χPaths⊤' ∘ transport (τχ≡ n))))) ↓) →

@@ -1,7 +1,8 @@
 open import Includes
 
-open import Util.DoubleNegation
+open import Cubical.Functions.Embedding
 open import Cubical.Data.Bool
+open import Util.DoubleNegation
 
 module Util.Misc where
 
@@ -9,6 +10,9 @@ inj→Separated : {A : Type ℓ} {B : Type ℓ'} (f : A → B) → ((a a' : A) �
   Separated B → Separated A
 
 inj→Separated f finj sepB a a' p = finj _ _ (sepB _ _ (¬¬-map (cong f) p))
+
+equiv→Inj : {A : Type ℓ} {B : Type ℓ'} {f : A → B} → (isEquiv f) → {a a' : A} → (f a ≡ f a') → a ≡ a'
+equiv→Inj fEquiv p = isEmbedding→Inj (isEquiv→isEmbedding fEquiv) _ _ p
 
 separatedΠ : {A : Type ℓ} {B : A → Type ℓ'} (sepB : (a : A) → Separated (B a)) →
   Separated ((a : A) → B a)

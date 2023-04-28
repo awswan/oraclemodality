@@ -40,7 +40,7 @@ module _ (χ : Oracle A B) where
     mp-inst : ∇ ℕ → Type _
     mp-inst N = ((n : ℕ) → ◯[ χ ] (Dec ⟨ N is n ⟩)) → ◯[ χ ] (N ↓)
 
-  -- Key lemma for relativised Markov's principle. See first part of proof of Theorem III.21
+  -- Key lemma for relativised Markov's principle. See first part of proof of Theorem 3.27
   rel-markov : (N : ∇ ℕ) → mp-inst N
   rel-markov = markov-ind mp-inst step
     where
@@ -184,6 +184,7 @@ TReducible→isNull {X = X} {χ = χ} {χ' = χ'} sB (Tred e) a  = fromIsEquiv _
       (χ a ↓ → ◯[ χ' ] X)
         ■
 
+{- Turing equivalence -}
 _≡T_ : (χ : Oracle A B) (χ' : Oracle A' B') → Type _
 χ ≡T χ' = (χ ≤T χ') × (χ' ≤T χ)
 
@@ -242,11 +243,7 @@ manyOne→≤T χ f = Tred λ c → query χ (f c)
 
 {- ◯[ χ ] X is separated whenever B and X are -}
 separated◯[] : (χ : Oracle A B) → (Separated B) → (Separated X) → (Separated (◯[ χ ] X))
-separated◯[] χ sepB sepX =
-  nullElim (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull≡ (isNull-Null (oDefd χ)))))
-  λ x → nullElim (λ _ → isNullΠ (λ _ → isNull≡ (isNull-Null (oDefd χ))))
-                 (λ y p → cong ∣_∣ (sepX _ _ (p >>= λ p' →
-                   ◯→¬¬ χ sepB (∣∣-inj (λ a → (oDefd χ a) , (∇defd-prop sepB (χ a))) _ _ p'))))
+separated◯[] χ sepB sepX = separatedNull (λ a → (χ a ↓) , (∇defd-prop sepB (χ a))) (λ a → ◯→¬¬ χ sepB (query χ a)) sepX
 
 map[_] : (χ : Oracle A B) {X : Type ℓ} {Y : Type ℓ'} → (g : X → Y) → ◯[ χ ] X → ◯[ χ ] Y
 map[ χ ] g ∣ x ∣ = ∣ g x ∣

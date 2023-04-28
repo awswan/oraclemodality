@@ -121,9 +121,6 @@ module _ {ℓa ℓs ℓ} {A : Type ℓa} (S : A → hProp ℓs) where
             ∣ refl ∣
               ∎
 
---      Z≡≡Z : (y : Null (fst ∘ S) X) → (z : fst (Z y)) → (≡→Z' y (Z→≡ y z) ≡ z)
---      Z≡≡Z = nullElim (λ y → isNullΠ (λ _ → isNull≡ (snd (Z y)))) λ y z → {!!}
-
   isOfHLevelNull : (n : HLevel) → isNull (fst ∘ S) X → isNull (fst ∘ S) (isOfHLevel n X)
   isOfHLevelNull zero nX = isNullΣ nX λ _ → isNullΠ (λ _ → isNull≡ nX)
   isOfHLevelNull (suc zero) nX = isNullΠ (λ _ → isNullΠ (λ _ → isNull≡ nX))
