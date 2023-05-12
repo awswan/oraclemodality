@@ -129,21 +129,21 @@ isSet∇ {A = A} = Separated→isSet Separated∇
 isPathSplitEquiv.sec (∇isSheaf {A = A} (P , (Pprop , Pconn))) = sec , secpath
   where
     sec : (P → ∇ A) → ∇ A
-    ∇.is-this (sec f) a = ¬¬resize (Σ[ p ∈ P ] f p ↓= a)
-    ∇.well-defd (sec f) a b u v = do
-      (p , u') ← ¬¬resize-out u
-      (q , v') ← ¬¬resize-out v
-      let u'' = subst (λ z → f z ↓= a) (Pprop p q) u'
-      ∇.well-defd (f q) _ _ u'' v'
+    ∇.is-this (sec f) a = ¬¬resize ((p : P) → f p ↓= a)
     ∇.almost-inh (sec f ) = do
       p ← Pconn
       (a , u) ← ∇.almost-inh (f p)
-      ¬¬-in (a , ¬¬resize-in (p , u))
+      ¬¬-in (a , (¬¬resize-in (λ p' → subst (λ p → f p ↓= a) (Pprop _ _) u)))
+    ∇.well-defd (sec f) a b u v = do
+      u ← ¬¬resize-out u
+      v ← ¬¬resize-out v
+      p ← Pconn
+      ∇.well-defd (f p) a b (u p) (v p)
 
     secpath : (f : P → ∇ A) → (λ _ → sec f) ≡ f
     secpath f = funExt λ p → Separated∇ _ _ do
       (a , u) ← ∇.almost-inh (f p)
-      ¬¬-in (∇∩→≡ _ _ a (¬¬resize-in (p , u)) u)
+      ¬¬-in (∇∩→≡ _ _ a (¬¬resize-in (λ _ → subst (λ p → f p ↓= a) (Pprop _ _) u)) u)
 
 isPathSplitEquiv.secCong (∇isSheaf {A = A} (P , (Pprop , Pconn))) α β =
   sec , λ p → isSetΠ (λ _ → isSet∇) _ _ _ _
