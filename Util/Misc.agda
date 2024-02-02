@@ -28,7 +28,3 @@ separatedMaybe sepA (just a) (just a') p = cong just (sepA _ _ (¬¬-map (just-i
 
 inh→isContr→isProp : (A → isContr A) → isProp A
 inh→isContr→isProp ic a a' = sym (snd (ic a) a) ∙ snd (ic a) a'
-
-separatedBool : Separated Bool
-separatedBool = Discrete→Separated Cubical.Data.Bool._≟_
-

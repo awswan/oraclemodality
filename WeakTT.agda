@@ -218,7 +218,7 @@ diagWTT n = do
 private
   convertζ : (n : ℕ) → ◯[ κ ] (Σ[ b ∈ Bool ]  ((χ : Oracle ℕ Bool) → (χ n ↓= b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n)) → Σ[ b ∈ ∇ Bool ] ((χ : Oracle ℕ Bool) → (χ n ≡ b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n)
   convertζ n = nullRec (¬¬Sheaf→Null {χ = κ} separatedBool (isNullΣ ∇isSheaf (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNullΠ (λ _ → isNull⊥ _ (snd ∘ snd)))))))
-    (λ (b , u) → (∇-in b) , (λ χ p z → u χ (subst (λ w → [ ∇.is-this w b ]) (sym p) (ιIs b)) z))
+    (λ (b , u) → (∇-in b) , (λ χ p z → u χ (subst (λ w → [ ∇.is-this w b ]) (sym p) (¬¬resize-in refl)) z))
 
 ζwithProof : (n : ℕ) → Σ[ b ∈ ∇ Bool ] ((χ : Oracle ℕ Bool) → (χ n ≡ b) → ¬ wttIsWitnessAt χ κ (p₀ n) (p₁ n) n)
 ζwithProof n = convertζ n (diagWTT n)
@@ -236,4 +236,4 @@ notWTT wtt = rec isProp⊥ (λ x → x) do
 isTuring : ζ ≤T κ
 _≤T_.red isTuring n = do
   ((b , _) , p) ← evalWithPath κ (diagWTT n)
-  ∣ b , subst (λ s → fst (convertζ n s) ↓= b) (sym p) (ιIs b) ∣
+  ∣ b , subst (λ s → fst (convertζ n s) ↓= b) (sym p) (¬¬resize-in refl) ∣

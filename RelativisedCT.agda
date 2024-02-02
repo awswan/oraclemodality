@@ -184,7 +184,7 @@ module _ (χ : Oracle ℕ ℕ) where
     ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → ψ e n ↓= f n) ∥₁
   relativisedCT f = do
     (e , h) ← relativisedECT (λ n → ι (f n))
-    ∣ e , (λ n → h n (ιdefd (f n))) ∣₁
+    ∣ e , (λ n → h n (¬¬resize-in tt)) ∣₁
 
   TuringJump : (ℕ × ℕ) → ∇ ℕ
   TuringJump (e , n) = byCases (ψ e n ↓) 1 0
