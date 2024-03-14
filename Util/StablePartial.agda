@@ -25,6 +25,9 @@ instance
 isProp∂↓ : {A : Type ℓ} (Asep : Separated A) {α : ∂ A} → (isProp (α ↓))
 isProp∂↓ Asep {α = α} = Ω¬¬-props (∂.domain α)
 
+∂defEqStable : {A : Type ℓ} (ASet : Separated A) (α : ∂ A) (b : A) → Stable (α ↓= b)
+∂defEqStable Asep α b p = (Ω¬¬-stab _ (¬¬-map fst p)) , Asep _ _ (¬¬-map (λ q → cong (∂.value α) (isProp∂↓ Asep {α = α} _ (fst q)) ∙ snd q) p)
+
 instance
   open ModalOperator
   ∂modalOp : ModalOperator ℓ-zero ℓ ℓ' ∂
