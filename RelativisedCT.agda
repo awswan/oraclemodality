@@ -160,81 +160,70 @@ module _ (χ : Oracle ℕ ℕ) where
   ψ : ℕ → ℕ → ∂ (◯[ χ ] ℕ)
   ψ e n = φ e n >>= (decode ∘ ℕ→Code)
 
-  -- relativisedECT : (f : ℕ → ∂ (◯[ χ ] ℕ)) →
-  --   ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (z : f n ↓) → ψ e n ↓= ∂.value (f n) z) ∥₁
-  -- relativisedECT f = do
-  --   (e , g) ← compChoice (λ n → ∂.domain (f n))
-  --                        (λ n z e → decode (ℕ→Code e) ↓= ∂.value (f n) z)
-  --                        λ n z → decodeSurj (∂.value (f n) z) >>=
-  --                          λ {(c , u) → ∣ (Code→ℕ c) , (subst (λ c → decode c ↓= ∂.value (f n) z) (sym (retEq CodeCtbl c)) u) ∣₁}
-  --   ∣ e , (λ n z → (fst (lemma2 e n z (g n z))) ,
-  --            (snd (lemma2 e n z (g n z)) ∙∙ cong₂ (λ x y → ∂.value (decode (ℕ→Code (φ-fromDomain e n x))) y) (φ-isPropDomain _ _) (isProp→PathP (λ _ → Ω¬¬-props _) _ _) ∙∙ snd (snd (g n z)))) ∣₁
-  --   where
-  --     lemma : (e : ℕ) (n : ℕ) (z : f n ↓)
-  --       (fgnz : φ-domain e n) →
-  --       ⟨ ∂.domain (decode (ℕ→Code (φ-fromDomain e n fgnz))) ⟩ →
-  --       ⟨ ∂.domain (decode (ℕ→Code (φ-fromDomain e n (φ-domainStable (¬¬resize-out (¬¬resize-in fgnz)))))) ⟩
-  --     lemma e n z fgnz = subst (λ x → ⟨ ∂.domain (decode (ℕ→Code (φ-fromDomain e n x))) ⟩)
-  --       (φ-isPropDomain _ _)
-  --     lemma2 : (e : ℕ) (n : ℕ) (z : f n ↓) →
-  --       (gnz : Σ[ d ∈ φ-domain e n ] (decode (ℕ→Code (φ-fromDomain e n d)) ↓= ∂.value (f n) z)) →
-  --       ψ e n ↓= ∂.value (decode (ℕ→Code (∂.value (φ e n) (¬¬resize-in (fst gnz)))))
-  --       (lemma e n z (fst gnz) (fst (snd gnz)))
-  --     lemma2 e n z gnz = ∂bindDesc (φ e n) (decode ∘ ℕ→Code) (¬¬resize-in (fst gnz))
-  --                                     (lemma e n z (fst gnz) (fst (snd gnz)))
+  decodeCtbl : (z : ◯[ χ ] ℕ) → ∥ Σ[ n ∈ ℕ ] (decode (ℕ→Code n) ↓= z) ∥₁
+  decodeCtbl z = do
+    (c , u) ← decodeSurj z
+    ∣ (Code→ℕ c) , (subst (λ c → decode c ↓= z) (sym (retEq CodeCtbl c)) u) ∣₁
 
-  -- relativisedCT : (f : ℕ → ◯[ χ ] ℕ) →
-  --   ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → ψ e n ↓= f n) ∥₁
-  -- relativisedCT f = do
-  --   (e , h) ← relativisedECT (λ n → ι (f n))
-  --   ∣ e , (λ n → h n (¬¬resize-in tt)) ∣₁
+  relativisedECT : (f : ℕ → ∂ (◯[ χ ] ℕ)) →
+    ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (z : f n ↓) → ψ e n ↓= ∂.value (f n) z) ∥₁
+  relativisedECT f = do
+    (e , g) ← countableCodECT2 (◯[ χ ] ℕ) (decode ∘ ℕ→Code) decodeCtbl (λ n → ∂.domain (f n)) (λ n d z → ¬¬resize (z ≡ ∂.value (f n) d))
+      λ n d → ∣ (∂.value (f n) d) , (¬¬resize-in refl) ∣₁
+    ∣ e , (λ n d → (¬¬resize-in ((¬¬resize-in (fst (g n d))) , ¬¬resize-in-from¬¬ (¬¬-map (λ (k , u) → k , subst (λ u → decodeAtDom (ℕ→Code (φ-fromDomain e n u)) k) (φ-isPropDomain _ _) u) (¬¬resize-out (fst (snd (g n d))))))) , snd (∂bindDesc (φ e n) (decode ∘ ℕ→Code) (¬¬resize-in (fst (g n d))) (¬¬resize-in-from¬¬ (¬¬-map (λ (k , u) → k , subst (λ u → decodeAtDom (ℕ→Code (φ-fromDomain e n u)) k) (φ-isPropDomain _ _) u) (¬¬resize-out (fst (snd (g n d))))))) ∙∙ cong₂ (λ u v → fst (decodeWithPath (ℕ→Code (φ-fromDomain e n u)) v)) (φ-isPropDomain _ _) (isProp→PathP (λ _ → Ω¬¬-props _) _ _) ∙∙ separated◯[] χ separatedℕ separatedℕ _ _ (¬¬resize-out (snd (snd (g n d))))) ∣₁
 
-  -- TuringJump : (ℕ × ℕ) → ∇ ℕ
-  -- TuringJump (e , n) = byCases (ψ e n ↓) 1 0
+  relativisedCT : (f : ℕ → ◯[ χ ] ℕ) →
+    ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → ψ e n ↓= f n) ∥₁
+  relativisedCT f = do
+    (e , h) ← relativisedECT (λ n → ι (f n))
+    ∣ e , (λ n → h n (¬¬resize-in tt)) ∣₁
 
-  -- diag : ℕ → ∇ ℕ
-  -- diag e = byCases (ψ e e ↓= ∣ 0 ∣) 1 0
+  TuringJump : (ℕ × ℕ) → ∇ ℕ
+  TuringJump (e , n) = byCases (ψ e n ↓) 1 0
 
-  -- diagNonComputable₀ : (f : ℕ → ◯[ χ ] ℕ) → diag ≡ erase χ separatedℕ ∘ f → ⊥
-  -- diagNonComputable₀ f p = rec isProp⊥ (λ x → x) do
-  --   (e , h) ← relativisedCT f
-  --   ∣ contr e (h e) ∣₁
-  --   where
-  --     ifzero : (e : ℕ) → (z : ψ e e ↓= f e) →
-  --       (∂.value (ψ e e) (fst z) ≡ ∣ 0 ∣) → ⊥
-  --     ifzero e z q = znots (separatedℕ _ _ (∇.well-defd (diag e) _ _ isZ isOne))
-  --       where
-  --         isOne : diag e ↓= 1
-  --         isOne = byCasesβ⊤ (ψ e e ↓= ∣ 0 ∣) 1 0 (fst z , q)
+  diag : ℕ → ∇ ℕ
+  diag e = byCases (ψ e e ↓= ∣ 0 ∣) 1 0
 
-  --         p' : diag e ≡ erase χ separatedℕ ∣ 0 ∣
-  --         p' = funExt⁻ p e ∙ cong (erase χ separatedℕ) (sym (snd z) ∙ q)
+  diagNonComputable₀ : (f : ℕ → ◯[ χ ] ℕ) → diag ≡ erase χ separatedℕ ∘ f → ⊥
+  diagNonComputable₀ f p = rec isProp⊥ (λ x → x) do
+    (e , h) ← relativisedCT f
+    ∣ contr e (h e) ∣₁
+    where
+      ifzero : (e : ℕ) → (z : ψ e e ↓= f e) →
+        (∂.value (ψ e e) (fst z) ≡ ∣ 0 ∣) → ⊥
+      ifzero e z q = znots (separatedℕ _ _ (∇.well-defd (diag e) _ _ isZ isOne))
+        where
+          isOne : diag e ↓= 1
+          isOne = byCasesβ⊤ (ψ e e ↓= ∣ 0 ∣) 1 0 (fst z , q)
 
-  --         isZ : diag e ↓= 0
-  --         isZ = subst (λ x → x ↓= 0) (sym p') (¬¬resize-in refl)
+          p' : diag e ≡ erase χ separatedℕ ∣ 0 ∣
+          p' = funExt⁻ p e ∙ cong (erase χ separatedℕ) (sym (snd z) ∙ q)
 
-  --     contr : (e : ℕ) → (z : ψ e e ↓= f e) → ⊥
-  --     contr e z = q (fst isZ') (snd isZ')
-  --       where
-  --         q : (w : ⟨ ∂.domain (ψ e e) ⟩) → (∂.value (ψ e e) w ≡ ∣ 0 ∣) → ⊥
-  --         q w u = ifzero e z (cong (∂.value (ψ e e)) (Ω¬¬-props _ _ _) ∙ u)
+          isZ : diag e ↓= 0
+          isZ = subst (λ x → x ↓= 0) (sym p') (¬¬resize-in refl)
+
+      contr : (e : ℕ) → (z : ψ e e ↓= f e) → ⊥
+      contr e z = q (fst isZ') (snd isZ')
+        where
+          q : (w : ⟨ ∂.domain (ψ e e) ⟩) → (∂.value (ψ e e) w ≡ ∣ 0 ∣) → ⊥
+          q w u = ifzero e z (cong (∂.value (ψ e e)) (Ω¬¬-props _ _ _) ∙ u)
         
-  --         isZ : diag e ↓= 0
-  --         isZ = byCasesβ⊥ (ψ e e ↓= ∣ 0 ∣) 1 0 λ r → q (fst r) (snd r)
+          isZ : diag e ↓= 0
+          isZ = byCasesβ⊥ (ψ e e ↓= ∣ 0 ∣) 1 0 λ r → q (fst r) (snd r)
 
-  --         isZ' : ψ e e ↓= ∣ 0 ∣
-  --         isZ' = (fst z) , (
-  --           ∂.value (ψ e e) (fst z)
-  --             ≡⟨ snd z ⟩
-  --           f e
-  --             ≡⟨ eraseInj χ separatedℕ separatedℕ (sym (funExt⁻ p e) ∙ ∇-defd→path (diag e) 0 isZ) ⟩
-  --           ∣ 0 ∣
-  --             ∎
-  --           )
+          isZ' : ψ e e ↓= ∣ 0 ∣
+          isZ' = (fst z) , (
+            ∂.value (ψ e e) (fst z)
+              ≡⟨ snd z ⟩
+            f e
+              ≡⟨ eraseInj χ separatedℕ separatedℕ (sym (funExt⁻ p e) ∙ ∇-defd→path (diag e) 0 isZ) ⟩
+            ∣ 0 ∣
+              ∎
+            )
 
-  -- diagNonComputable : ¬ (diag ≤T χ)
-  -- diagNonComputable (Tred red) = diagNonComputable₀ (fst ∘ mWithPath) (funExt (λ n → snd (mWithPath n)))
-  --   where
-  --     mWithPath : (n : ℕ) → Σ[ m ∈ ◯[ χ ] ℕ ] (diag n ≡ erase χ separatedℕ m)
-  --     mWithPath n = nullRec (isNullΣ (isNull-Null (oDefd χ)) (λ _ → isNull≡ (¬¬Sheaf→Null {χ = χ} separatedℕ ∇isSheaf)))
-  --                         (λ (m , p) → ∣ m ∣ , ∇-defd→path (diag n) m p) (red n)
+  diagNonComputable : ¬ (diag ≤T χ)
+  diagNonComputable (Tred red) = diagNonComputable₀ (fst ∘ mWithPath) (funExt (λ n → snd (mWithPath n)))
+    where
+      mWithPath : (n : ℕ) → Σ[ m ∈ ◯[ χ ] ℕ ] (diag n ≡ erase χ separatedℕ m)
+      mWithPath n = nullRec (isNullΣ (isNull-Null (oDefd χ)) (λ _ → isNull≡ (¬¬Sheaf→Null {χ = χ} separatedℕ ∇isSheaf)))
+                          (λ (m , p) → ∣ m ∣ , ∇-defd→path (diag n) m p) (red n)

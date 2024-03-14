@@ -29,3 +29,19 @@ postulate
     ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (d : ⟨ dom n ⟩) → Σ[ c ∈ φ-domain e n ] [ X n d (φ-fromDomain e n c) ]) ∥₁
 
 
+countableCodECT2 :
+  (C : Type ℓ) →
+  (s : ℕ → ∂ C) →
+  ((c : C) → ∥ Σ[ n ∈ ℕ ] s n ↓= c ∥₁) →
+  (dom : ℕ → Ω¬¬)
+  (X : (n : ℕ) → ⟨ dom n ⟩ → C → Ω¬¬) →
+  (f : (n : ℕ) → (d : ⟨ dom n ⟩) → ∥ Σ[ c ∈ C ] [ X n d c ] ∥₁) →
+  ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (d : ⟨ dom n ⟩) → Σ[ φdefd ∈ φ-domain e n ] Σ[ sdefd ∈ [ ∂.domain (s (φ-fromDomain e n φdefd)) ] ] [ X n d (∂.value (s (φ-fromDomain e n φdefd)) sdefd) ]) ∥₁
+  
+countableCodECT2 C s sSurj dom X f = do
+  (e , g) ← ECT2 dom (λ n d m → ¬¬resize (Σ[ w ∈ [ ∂.domain (s m) ] ] [ X n d (∂.value (s m) w) ]))
+    λ n d → do
+      (c , x) ← f n d
+      (m , (y , p)) ← sSurj c
+      ∣ m , ¬¬resize-in (y , subst (λ c → [ X n d c ]) (sym p) x) ∣₁
+  ∣ e , (λ n d → (fst (g n d)) , (Ω¬¬-stab _ (¬¬-map fst (¬¬resize-out (snd (g n d))))) , Ω¬¬-stab _ (¬¬-map (λ (w , x) → subst (λ w → [ X n d (∂.value (s (φ-fromDomain e n (fst (g n d)))) w) ]) (Ω¬¬-props _ _ _) x) (¬¬resize-out (snd (g n d))))) ∣₁
