@@ -7,7 +7,6 @@ open import Cubical.Data.List hiding ([_])
 
 open import Axioms.NegativeResizing
 open import Axioms.ChurchsThesis
-open import Axioms.ChurchsThesis3
 
 open import Util.PartialElements
 open import Util.StablePartial
@@ -117,7 +116,7 @@ module _ (χ : Oracle ℕ ℕ) where
       step : (n : ℕ) (f : χ n ↓ → ◯[ χ ] ℕ) → ((w : χ n ↓) → ∥ fibreData' (f w) ∥₁) →
              ∥ fibreData' (hub n f) ∥₁
       step n f ih = do
-        (e , eWorks) ← ECT2 (λ m → ∇.is-this (χ n) m) (λ m d e → ¬¬resize (Σ[ t ∈ haltingTime ] (Σ[ d' ∈ decodeAtDom (ℕ→Code e) t ] decodeAt (ℕ→Code e) t d' ≡ f (m , d))))
+        (e , eWorks) ← ComputableChoice (λ m → ∇.is-this (χ n) m) (λ m d e → ¬¬resize (Σ[ t ∈ haltingTime ] (Σ[ d' ∈ decodeAtDom (ℕ→Code e) t ] decodeAt (ℕ→Code e) t d' ≡ f (m , d))))
           λ m d → ih (m , d) >>= λ z → ∣ (Code→ℕ (fst z)) ,
             (¬¬resize-in-from¬¬ (¬¬-map (λ {(t , p) → t , subst (λ c → Σ[ t' ∈ decodeAtDom c t ] decodeAt c t t' ≡ f (m , d)) (sym (retEq CodeCtbl (fst z))) p}) (snd z))) ∣₁
         let w = do
@@ -167,7 +166,7 @@ module _ (χ : Oracle ℕ ℕ) where
   relativisedECT : (f : ℕ → ∂ (◯[ χ ] ℕ)) →
     ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (z : f n ↓) → ψ e n ↓= ∂.value (f n) z) ∥₁
   relativisedECT f = do
-    (e , g) ← countableCodECT2 (◯[ χ ] ℕ) (decode ∘ ℕ→Code) decodeCtbl (λ n → ∂.domain (f n)) (λ n d z → ¬¬resize (z ≡ ∂.value (f n) d))
+    (e , g) ← generalisedComputableChoice (◯[ χ ] ℕ) (decode ∘ ℕ→Code) decodeCtbl (λ n → ∂.domain (f n)) (λ n d z → ¬¬resize (z ≡ ∂.value (f n) d))
       λ n d → ∣ (∂.value (f n) d) , (¬¬resize-in refl) ∣₁
     ∣ e , (λ n d → (¬¬resize-in ((¬¬resize-in (fst (g n d))) , ¬¬resize-in-from¬¬ (¬¬-map (λ (k , u) → k , subst (λ u → decodeAtDom (ℕ→Code (φ-fromDomain e n u)) k) (φ-isPropDomain _ _) u) (¬¬resize-out (fst (snd (g n d))))))) , snd (∂bindDesc (φ e n) (decode ∘ ℕ→Code) (¬¬resize-in (fst (g n d))) (¬¬resize-in-from¬¬ (¬¬-map (λ (k , u) → k , subst (λ u → decodeAtDom (ℕ→Code (φ-fromDomain e n u)) k) (φ-isPropDomain _ _) u) (¬¬resize-out (fst (snd (g n d))))))) ∙∙ cong₂ (λ u v → fst (decodeWithPath (ℕ→Code (φ-fromDomain e n u)) v)) (φ-isPropDomain _ _) (isProp→PathP (λ _ → Ω¬¬-props _) _ _) ∙∙ separated◯[] χ separatedℕ separatedℕ _ _ (¬¬resize-out (snd (snd (g n d))))) ∣₁
 

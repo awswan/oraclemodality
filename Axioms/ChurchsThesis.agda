@@ -65,31 +65,36 @@ postulate
 φ-domainIndependent e n d = (¬¬resize-in d) , (cong (φ-fromDomain e n) (φ-isPropDomain _ _))
 
 postulate
-  ECT : (f : ℕ → ∂ ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (z : f n ↓) → φ e n ↓= (get (f n) z)) ∥₁
+  ComputableChoice :
+    (dom : ℕ → Ω¬¬)
+    (X : (n : ℕ) → ⟨ dom n ⟩ → ℕ → Ω¬¬) →
+    (f : (n : ℕ) → (d : ⟨ dom n ⟩) → ∥ Σ[ m ∈ ℕ ] [ X n d m ] ∥₁) →
+    ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (d : ⟨ dom n ⟩) → Σ[ c ∈ φ-domain e n ] [ X n d (φ-fromDomain e n c) ]) ∥₁
 
--- ECT' : 
 
-module GeneralisedECT (encA : A → ℕ) (encB : B → ℕ) (decA : ℕ → A) (decB : ℕ → B)
-  (p : (a : A) → decA (encA a) ≡ a) (q : (b : B) → decB (encB b) ≡ b)
-  where
+generalisedComputableChoice :
+  (C : Type ℓ) →
+  (s : ℕ → ∂ C) →
+  ((c : C) → ∥ Σ[ n ∈ ℕ ] s n ↓= c ∥₁) →
+  (dom : ℕ → Ω¬¬)
+  (X : (n : ℕ) → ⟨ dom n ⟩ → C → Ω¬¬) →
+  (f : (n : ℕ) → (d : ⟨ dom n ⟩) → ∥ Σ[ c ∈ C ] [ X n d c ] ∥₁) →
+  ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (d : ⟨ dom n ⟩) → Σ[ φdefd ∈ φ-domain e n ] Σ[ sdefd ∈ [ ∂.domain (s (φ-fromDomain e n φdefd)) ] ] [ X n d (∂.value (s (φ-fromDomain e n φdefd)) sdefd) ]) ∥₁
+  
+generalisedComputableChoice C s sSurj dom X f = do
+  (e , g) ← ComputableChoice dom (λ n d m → ¬¬resize (Σ[ w ∈ [ ∂.domain (s m) ] ] [ X n d (∂.value (s m) w) ]))
+    λ n d → do
+      (c , x) ← f n d
+      (m , (y , p)) ← sSurj c
+      ∣ m , ¬¬resize-in (y , subst (λ c → [ X n d c ]) (sym p) x) ∣₁
+  ∣ e , (λ n d → (fst (g n d)) , (Ω¬¬-stab _ (¬¬-map fst (¬¬resize-out (snd (g n d))))) , Ω¬¬-stab _ (¬¬-map (λ (w , x) → subst (λ w → [ X n d (∂.value (s (φ-fromDomain e n (fst (g n d)))) w) ]) (Ω¬¬-props _ _ _) x) (¬¬resize-out (snd (g n d))))) ∣₁
 
-  θ : (e : ℕ) → A → ∂ B
-  ∂.domain (θ e a) = ∂.domain (φ e (encA a))
-  ∂.value (θ e a) u = decB (∂.value (φ e (encA a)) u)
 
-  GECT : (X : A → B → Type) (dom : A → Ω¬¬) (f : (a : A) → ⟨ dom a ⟩ → Σ[ b ∈ B ] X a b) →
-    ∥ Σ[ e ∈ ℕ ] ((a : A) → (d : ⟨ dom a ⟩) → Σ[ u ∈ θ e a ↓ ] X a (get (θ e a) u)) ∥₁
-  GECT X dom f = do
-    (e , z) ← ECT (λ n → record { domain = dom (decA n)
-                                  ; value = λ d → encB (fst (f (decA n) d)) })
-    ∣ e , lemma e z ∣₁
-    where
-      lemma : (e : ℕ) (z : (n : ℕ) → (d : ⟨ dom (decA n) ⟩) → φ e n ↓= encB (fst (f (decA n) d))) (a : A) (d : ⟨ dom a ⟩) → Σ[ u ∈ θ e a ↓ ] X a (get (θ e a) u)
-      lemma e z a d = (fst (z (encA a) d')) ,
-        subst (X a) ((λ i → fst (f (p a (~ i)) (dPath i))) ∙∙ sym (q _) ∙∙ cong decB (sym (snd (z (encA a) d')))) (snd (f a d))
-        where
-          dPath = subst-filler (λ a → ⟨ dom a ⟩) (sym (p a)) d
-          d' = dPath i1
+ECT : (f : ℕ → ∂ ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → (z : f n ↓) → φ e n ↓= (get (f n) z)) ∥₁
+ECT f = do
+  (e , w) ← ComputableChoice (λ n → ∂.domain (f n)) (λ n z m → ¬¬resize (m ≡ get (f n) z))
+    λ n z → ∣ (get (f n) z) , ¬¬resize-in refl ∣₁
+  ∣ e , (λ n z → (¬¬resize-in (fst (w n z))) , separatedℕ _ _ (¬¬-map (λ p → cong (φ-fromDomain e n) (φ-isPropDomain _ _) ∙ p) (¬¬resize-out (snd (w n z))))) ∣₁
 
 CT : (f : ℕ → ℕ) → ∥ Σ[ e ∈ ℕ ] ((n : ℕ) → φ e n ↓= f n) ∥₁
 CT f = do
