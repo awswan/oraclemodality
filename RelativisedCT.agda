@@ -7,7 +7,6 @@ open import Cubical.Data.List hiding ([_])
 
 open import Axioms.NegativeResizing
 open import Axioms.ChurchsThesis
-open import Axioms.ComputableChoice
 open import Axioms.ChurchsThesis3
 
 open import Util.PartialElements
