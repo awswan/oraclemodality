@@ -60,6 +60,30 @@ postulate
 ¬¬⊥-out : [ ¬¬⊥ ] → ⊥
 ¬¬⊥-out x = ¬¬resize-out x λ y → y
 
+¬¬Σ : (p : Ω¬¬) → (q : [ p ] → Ω¬¬) → Ω¬¬
+¬¬Σ p q = ¬¬resize (Σ[ z ∈ [ p ] ] [ q z ])
+
+¬¬Σ-in : {p : Ω¬¬} {q : [ p ] → Ω¬¬} → (z : [ p ]) → (w : [ q z ]) → [ ¬¬Σ p q ]
+¬¬Σ-in z w = ¬¬resize-in (z , w)
+
+¬¬fst : {p : Ω¬¬} {q : [ p ] → Ω¬¬} → [ ¬¬Σ p q ] → [ p ]
+¬¬fst z = Ω¬¬-stab _ (¬¬-map fst (¬¬resize-out z))
+
+¬¬snd' : {p : Ω¬¬} {q : [ p ] → Ω¬¬} → (z : [ ¬¬Σ p q ]) → (w : [ p ]) → [ q w ]
+¬¬snd' {p} {q} z w = Ω¬¬-stab _ (¬¬-map (λ (w' , u) → subst (λ w → [ q w ]) (Ω¬¬-props _ _ _) u) (¬¬resize-out z))
+
+¬¬snd : {p : Ω¬¬} {q : [ p ] → Ω¬¬} → (z : [ ¬¬Σ p q ]) → [ q (¬¬fst z) ]
+¬¬snd z = ¬¬snd' z (¬¬fst z)
+
+¬¬Π : (A : Type ℓ) → (q : A → Ω¬¬) → Ω¬¬
+¬¬Π A q = ¬¬resize ((z : A) → [ q z ])
+
+¬¬Π-in : {A : Type ℓ} {q : A → Ω¬¬} → ((a : A) → [ q a ]) → [ ¬¬Π A q ]
+¬¬Π-in f = ¬¬resize-in f
+
+¬¬Π-out : {A : Type ℓ} {q : A → Ω¬¬} → [ ¬¬Π A q ] → (a : A) → [ q a ]
+¬¬Π-out z a = Ω¬¬-stab _ (¬¬-map (λ f → f a) (¬¬resize-out z))
+
 Ω¬¬-invert : Ω¬¬ → Ω¬¬
 Ω¬¬-invert x = ¬¬resize (¬ [ x ])
 
