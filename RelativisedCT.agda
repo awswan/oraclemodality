@@ -3,7 +3,7 @@ module RelativisedCT where
 open import Includes
 
 open import Cubical.Functions.Surjection
-open import Cubical.Data.List hiding ([_])
+open import Cubical.Data.List hiding ([_] ; rec)
 
 open import Axioms.NegativeResizing
 open import Axioms.ChurchsThesis
