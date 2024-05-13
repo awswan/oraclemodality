@@ -19,7 +19,7 @@ open import Util.PropTruncationModalInstance
 open import Util.List
 open import Util.Misc
 
-open import Cubical.Data.List hiding ([_])
+open import Cubical.Data.List hiding ([_] ; rec)
 
 module WeakTT where
 
