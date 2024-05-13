@@ -14,11 +14,6 @@ private
   variable
     ℓ ℓ' ℓ'' ℓ''' : Level
 
-record ¬¬Partial (A : Type ℓ) : Type ℓ where
-  field
-    is-this : A → Ω¬¬
-    well-defd : (a a' : A) → ⟨ is-this a ⟩ → ⟨ is-this a' ⟩ → ¬ ¬ a ≡ a'
-
 record HasUnderlyingPartial (S : Type ℓ → Type ℓ') : Type (ℓ-max ℓ' (ℓ-suc (ℓ-max ℓ''' (ℓ-max ℓ'' ℓ)))) where
   field
     defined : {A : Type ℓ} → S A → Type ℓ''
