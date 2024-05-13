@@ -102,19 +102,15 @@ module _ (χ : Oracle ℕ ℕ) where
           ∣ (decodeAt e k d) , (λ k' d' → cong₂ (decodeAt e) (haltingTimeUnique _ _ d d') (isProp→PathP (λ _ → isPropDecodeAtDom) _ _)) ∣
 
   private
-    fibreData' : (z : ◯[ χ ] ℕ) → Type
-    fibreData' z = (Σ[ e ∈ Code ] ¬ ¬ (Σ[ t ∈ haltingTime ]  Σ[ d ∈ decodeAtDom e t ] decodeAt e t d ≡ z))
+    fibreData : (z : ◯[ χ ] ℕ) → Type
+    fibreData z = (Σ[ e ∈ Code ] ¬ ¬ (Σ[ t ∈ haltingTime ]  Σ[ d ∈ decodeAtDom e t ] decodeAt e t d ≡ z))
 
-    fibreData2 : (z : ◯[ χ ] ℕ) → Type
-    fibreData2 z = Σ[ e ∈ Code ] [ ¬¬resize (Σ[ t ∈ haltingTime ]  Σ[ d ∈ decodeAtDom e t ] decodeAt e t d ≡ z) ]
-
-
-  decodeSurj₀ : (z : ◯[ χ ] ℕ) → ∥ fibreData' z ∥₁
-  decodeSurj₀ = NullPropElim (oDefd χ) (λ z → ∥ fibreData' z ∥₁ , isPropPropTrunc)
+  decodeSurj₀ : (z : ◯[ χ ] ℕ) → ∥ fibreData z ∥₁
+  decodeSurj₀ = NullPropElim (oDefd χ) (λ z → ∥ fibreData z ∥₁ , isPropPropTrunc)
     (λ n → ∣ returnNat n , (¬¬-in (now , tt , refl)) ∣₁) step
     where
-      step : (n : ℕ) (f : χ n ↓ → ◯[ χ ] ℕ) → ((w : χ n ↓) → ∥ fibreData' (f w) ∥₁) →
-             ∥ fibreData' (hub n f) ∥₁
+      step : (n : ℕ) (f : χ n ↓ → ◯[ χ ] ℕ) → ((w : χ n ↓) → ∥ fibreData (f w) ∥₁) →
+             ∥ fibreData (hub n f) ∥₁
       step n f ih = do
         (e , eWorks) ← ComputableChoice (λ m → ∇.is-this (χ n) m) (λ m d e → ¬¬resize (Σ[ t ∈ haltingTime ] (Σ[ d' ∈ decodeAtDom (ℕ→Code e) t ] decodeAt (ℕ→Code e) t d' ≡ f (m , d))))
           λ m d → ih (m , d) >>= λ z → ∣ (Code→ℕ (fst z)) ,
