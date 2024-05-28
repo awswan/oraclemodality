@@ -11,6 +11,16 @@ record ∂ (A : Type ℓ) : Type ℓ where
     domain : Ω¬¬
     value : ⟨ domain ⟩ → A
 
+∂≡ : (α β : ∂ A) →
+  (p : ∂.domain α ≡ ∂.domain β) →
+  PathP (λ i → ⟨ p i ⟩ → A) (∂.value α) (∂.value β) →
+  α ≡ β
+∂.domain (∂≡ α β p q i) = p i
+∂.value (∂≡ α β p q i) = q i
+
+-- n∂≡2 : (α β : ∂ A) → (p : ∂.domain α ≡ ∂.domain β) →
+--  (∂)
+
 ∂hasUnderlyingPartialDF : HasUnderlyingPartialDomainFirst {ℓ = ℓ} ∂
 HasUnderlyingPartialDomainFirst.domain ∂hasUnderlyingPartialDF α = ⟨ ∂.domain α ⟩
 HasUnderlyingPartialDomainFirst.eval ∂hasUnderlyingPartialDF α = ∂.value α
@@ -27,6 +37,37 @@ isProp∂↓ Asep {α = α} = Ω¬¬-props (∂.domain α)
 
 ∂defEqStable : {A : Type ℓ} (ASet : Separated A) (α : ∂ A) (b : A) → Stable (α ↓= b)
 ∂defEqStable Asep α b p = (Ω¬¬-stab _ (¬¬-map fst p)) , Asep _ _ (¬¬-map (λ q → cong (∂.value α) (isProp∂↓ Asep {α = α} _ (fst q)) ∙ snd q) p)
+
+∂undefdUnique : {A : Type ℓ} → {α β : ∂ A} → ¬ α ↓ → ¬ β ↓ → α ≡ β
+∂undefdUnique {α = α} {β = β} u v =
+  ∂≡ α β (Ω¬¬-ext _ _ (λ w → ⊥rec (u w)) (λ w → ⊥rec (v w)))
+    (toPathP (funExt (λ w → ⊥rec (v w))))
+
+∂defdUnique : {A : Type ℓ} → {α β : ∂ A} → (u : [ ∂.domain α ]) →
+  (v : [ ∂.domain β ]) → (∂.value α u ≡ ∂.value β v) → α ≡ β
+
+∂defdUnique {A = A} {α = α} {β = β} u v p =
+  ∂≡ α β q (toPathP (funExt (λ x →
+    transport (λ i → ⟨ q i ⟩ → A) (∂.value α) x
+      ≡⟨ lemma q x ⟩
+    ∂.value α (subst [_] (sym q) x)
+      ≡⟨ cong (∂.value α) (Ω¬¬-props _ _ _) ⟩
+    ∂.value α u
+      ≡⟨ p ⟩
+    ∂.value β v
+      ≡⟨ cong (∂.value β) (Ω¬¬-props _ _ _) ⟩
+    ∂.value β x ∎
+  )))
+  where
+    q = (Ω¬¬-ext _ _ (λ _ → v) (λ _ → u))
+
+    lemma : {y : Ω¬¬} → (q : ∂.domain α ≡ y) → (z : [ y ]) →
+      transport (λ i → [ q i ] → A) (∂.value α) z ≡
+        ∂.value α (subst [_] (sym q) z)
+    lemma = J (λ y q → (z : [ y ]) →
+                 transport (λ i → [ q i ] → A) (∂.value α) z ≡
+                   ∂.value α (subst [_] (sym q) z))
+              λ z → transportRefl (∂.value α _)
 
 instance
   open ModalOperator

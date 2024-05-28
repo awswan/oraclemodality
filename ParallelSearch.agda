@@ -84,3 +84,4 @@ distinguish' χ sepB f g h k ne = lemma >>= λ {(n , inl np) → ∣ inl (λ p �
                         yes q ← (decχℕ (h n) (k n))
                           where no ¬q → ∣ yes (inr ¬q) ∣
                         ∣ no (λ {(inl ¬p) → ¬p p ; (inr ¬q) → ¬q q}) ∣
+
