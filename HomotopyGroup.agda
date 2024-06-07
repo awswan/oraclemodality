@@ -173,11 +173,12 @@ module _ (χ χ' : Oracle ℕ Bool) where
   χℤ : ℤ → ∇ Bool
   χℤ n = χ (ℤ→ℕ n)
 
-  separatedG : Separated G
-  separatedG = inj→Separated (fst ∘ fst (G→EquivEquiv χ)) (λ p q r → equiv→Inj (snd (G→EquivEquiv χ)) (Σ≡Prop (λ _ → isPropIsEquiv _) r)) (separatedΠ λ _ → separatedNull (λ n → χ n ↓ , ∇defd-prop separatedBool (χ n)) (λ n → ∇.almost-inh (χ n)) (separatedΣ (separatedMaybe (Discrete→Separated discreteℤ)) λ _ → separatedBool))
+  abstract
+    separatedG : Separated G
+    separatedG = inj→Separated (fst ∘ fst (G→EquivEquiv χ)) (λ p q r → equiv→Inj (snd (G→EquivEquiv χ)) (Σ≡Prop (λ _ → isPropIsEquiv _) r)) (separatedΠ λ _ → separatedNull (λ n → χ n ↓ , ∇defd-prop separatedBool (χ n)) (λ n → ∇.almost-inh (χ n)) (separatedΣ (separatedMaybe (Discrete→Separated discreteℤ)) λ _ → separatedBool))
 
-  separatedG' : Separated G'
-  separatedG' = inj→Separated (fst ∘ fst (G→EquivEquiv χ')) (λ p q r → equiv→Inj (snd (G→EquivEquiv χ')) (Σ≡Prop (λ _ → isPropIsEquiv _) r)) (separatedΠ λ _ → separatedNull (λ n → χ' n ↓ , ∇defd-prop separatedBool (χ' n)) (λ n → ∇.almost-inh (χ' n)) (separatedΣ (separatedMaybe (Discrete→Separated discreteℤ)) λ _ → separatedBool))
+    separatedG' : Separated G'
+    separatedG' = inj→Separated (fst ∘ fst (G→EquivEquiv χ')) (λ p q r → equiv→Inj (snd (G→EquivEquiv χ')) (Σ≡Prop (λ _ → isPropIsEquiv _) r)) (separatedΠ λ _ → separatedNull (λ n → χ' n ↓ , ∇defd-prop separatedBool (χ' n)) (λ n → ∇.almost-inh (χ' n)) (separatedΣ (separatedMaybe (Discrete→Separated discreteℤ)) λ _ → separatedBool))
 
   ∇dComp : {X : Pointed ℓ} → ∇ ⟨ Ω X ⟩ → ∇ ⟨ Ω X ⟩ → ∇ ⟨ Ω X ⟩ → ∇ ⟨ Ω X ⟩
   ∇.is-this (∇dComp {X = X} α β γ) s =
@@ -205,7 +206,7 @@ module _ (χ χ' : Oracle ℕ Bool) where
   χPaths⊥ : ℤ∗ → (◯[ χ ] Bool ≡ ◯[ χ ] Bool)
   χPaths⊥ nothing = ⊕≡[] χ ∣ false ∣
   χPaths⊥ (just n) = ⊕≡[] χ (hub (ℤ→ℕ n) λ z → ∣ fst z ∣)
-
+ 
   χPaths⊥' : ◯[ χ ] ℤ∗ → (◯[ χ ] Bool ≡ ◯[ χ ] Bool)
   χPaths⊥' z = cong fst (nullRec (isNull≡ (Type◯-Null (λ n → (χ n ↓) , (∇defd-prop separatedBool (χ n))))) (λ n → Σ≡Prop (λ _ → isPropΠ (λ _ → isPropIsPathSplitEquiv _)) {u = (◯[ χ ] Bool) , (isNull-Null _)} {v = ◯[ χ ] Bool , isNull-Null _} (χPaths⊥ n)) z)
 
@@ -226,113 +227,115 @@ module _ (χ χ' : Oracle ℕ Bool) where
     τχ≡ : (◯[ χ ] ℤ∗) ≡ (◯[ χ ] ℤ∗)
     τχ≡ = ua (isoToEquiv τχIso)
 
-    χPaths≡Lemma⊤₀ : χℤ n ↓= true → (m : Maybe ℤ) → ((χPaths⊤ (τ n m)) ≡ χPaths⊤ m)
-    χPaths≡Lemma⊤₀ u nothing = cong (⊕≡[] χ) (spoke (ℤ→ℕ n) _ (true , u))
-    χPaths≡Lemma⊤₀ u (just m) with (discreteℤ n m)
-    ... | yes p = cong (⊕≡[] χ) (sym (spoke (ℤ→ℕ m) _ (true , subst (λ m → χ (ℤ→ℕ m) ↓= true) p u)))
-    ... | no ¬p = refl
+    abstract
+      χPaths≡Lemma⊤₀ : χℤ n ↓= true → (m : Maybe ℤ) → ((χPaths⊤ (τ n m)) ≡ χPaths⊤ m)
+      χPaths≡Lemma⊤₀ u nothing = cong (⊕≡[] χ) (spoke (ℤ→ℕ n) _ (true , u))
+      χPaths≡Lemma⊤₀ u (just m) with (discreteℤ n m)
+      ... | yes p = cong (⊕≡[] χ) (sym (spoke (ℤ→ℕ m) _ (true , subst (λ m → χ (ℤ→ℕ m) ↓= true) p u)))
+      ... | no ¬p = refl
 
-    χPaths≡Lemma⊤₁ : χℤ n ↓= true → (m : Maybe ℤ) → (χPaths⊤' (transport τχ≡ ∣ m ∣) ≡ χPaths⊤' ∣ m ∣)
-    χPaths≡Lemma⊤₁ u m =
-      χPaths⊤' (transport τχ≡ ∣ m ∣)
-        ≡⟨ (λ i → χPaths⊤' (uaβ (isoToEquiv τχIso) ∣ m ∣ i)) ⟩
-      χPaths⊤' (τχ ∣ m ∣)
-        ≡⟨⟩
-      χPaths⊤ (τ n m )
-        ≡⟨ χPaths≡Lemma⊤₀ u m ⟩
-      χPaths⊤ m
-        ≡⟨⟩
-      χPaths⊤' ∣ m ∣
-        ∎
+      χPaths≡Lemma⊤₁ : χℤ n ↓= true → (m : Maybe ℤ) → (χPaths⊤' (transport τχ≡ ∣ m ∣) ≡ χPaths⊤' ∣ m ∣)
+      χPaths≡Lemma⊤₁ u m =
+        χPaths⊤' (transport τχ≡ ∣ m ∣)
+          ≡⟨ (λ i → χPaths⊤' (uaβ (isoToEquiv τχIso) ∣ m ∣ i)) ⟩
+        χPaths⊤' (τχ ∣ m ∣)
+          ≡⟨⟩
+        χPaths⊤ (τ n m )
+          ≡⟨ χPaths≡Lemma⊤₀ u m ⟩
+        χPaths⊤ m
+          ≡⟨⟩
+        χPaths⊤' ∣ m ∣
+          ∎
 
-    χPaths≡Lemma⊤₂ : χℤ n ↓= true → (χPaths⊤' ∘ (transport τχ≡) ≡ χPaths⊤')
-    χPaths≡Lemma⊤₂ u = funExt (nullElim (λ _ → isNull≡ (subst (isNull _) (ua (cong fst , isEmbeddingFstΣProp λ _ → isPropΠ (λ _ → isPropIsPathSplitEquiv _) )) (isNull≡ (Type◯-Null (λ n → (χ n ↓) , (∇defd-prop (Discrete→Separated discreteBool) (χ n) ) ) ) {x = (◯[ χ ] Bool) , isNull-Null _} {y = (◯[ χ ] Bool) , (isNull-Null _)}))) (χPaths≡Lemma⊤₁ u))
+      χPaths≡Lemma⊤₂ : χℤ n ↓= true → (χPaths⊤' ∘ (transport τχ≡) ≡ χPaths⊤')
+      χPaths≡Lemma⊤₂ u = funExt (nullElim (λ _ → isNull≡ (subst (isNull _) (ua (cong fst , isEmbeddingFstΣProp λ _ → isPropΠ (λ _ → isPropIsPathSplitEquiv _) )) (isNull≡ (Type◯-Null (λ n → (χ n ↓) , (∇defd-prop (Discrete→Separated discreteBool) (χ n) ) ) ) {x = (◯[ χ ] Bool) , isNull-Null _} {y = (◯[ χ ] Bool) , (isNull-Null _)}))) (χPaths≡Lemma⊤₁ u))
 
-    χPaths≡Lemma⊤ : ¬ (χPaths⊤' ∘ (transport τχ≡) ≡ χPaths⊤') → χℤ n ↓= false
-    χPaths≡Lemma⊤ np = Ω¬¬-stab _ (λ nu → np (χPaths≡Lemma⊤₂ (Ω¬¬-stab _ (λ nv → ∇.almost-inh (χℤ n) (λ {(false , u) → nu u ; (true , v) → nv v})))))
+      χPaths≡Lemma⊤ : ¬ (χPaths⊤' ∘ (transport τχ≡) ≡ χPaths⊤') → χℤ n ↓= false
+      χPaths≡Lemma⊤ np = Ω¬¬-stab _ (λ nu → np (χPaths≡Lemma⊤₂ (Ω¬¬-stab _ (λ nv → ∇.almost-inh (χℤ n) (λ {(false , u) → nu u ; (true , v) → nv v})))))
 
-    χPaths≡Converse⊤ : (χPaths⊤' ∘ (transport τχ≡) ≡ χPaths⊤') → χℤ n ↓= true
-    χPaths≡Converse⊤ p = Ω¬¬-stab _ (¬¬-map (λ z → subst (λ b → χℤ n ↓= b) (s z) (snd z)) (∇.almost-inh (χℤ n)))
-      where
-        q : χPaths⊤ (just n) ≡ χPaths⊤ nothing
-        q =
-          χPaths⊤ (just n)
-            ≡⟨⟩
-          χPaths⊤' ∣ just n ∣
-            ≡⟨⟩
-          χPaths⊤' (τχ ∣ nothing ∣)
-            ≡⟨⟩
-          χPaths⊤' (transport τχ≡ ∣ nothing ∣)
-            ≡⟨ funExt⁻ p ∣ nothing ∣ ⟩
-          χPaths⊤' ∣ nothing ∣
-            ≡⟨⟩
-          χPaths⊤ nothing
-            ∎
+      χPaths≡Converse⊤ : (χPaths⊤' ∘ (transport τχ≡) ≡ χPaths⊤') → χℤ n ↓= true
+      χPaths≡Converse⊤ p = Ω¬¬-stab _ (¬¬-map (λ z → subst (λ b → χℤ n ↓= b) (s z) (snd z)) (∇.almost-inh (χℤ n)))
+        where
+          q : χPaths⊤ (just n) ≡ χPaths⊤ nothing
+          q =
+            χPaths⊤ (just n)
+              ≡⟨⟩
+            χPaths⊤' ∣ just n ∣
+              ≡⟨⟩
+            χPaths⊤' (τχ ∣ nothing ∣)
+              ≡⟨⟩
+            χPaths⊤' (transport τχ≡ ∣ nothing ∣)
+              ≡⟨ funExt⁻ p ∣ nothing ∣ ⟩
+            χPaths⊤' ∣ nothing ∣
+              ≡⟨⟩
+            χPaths⊤ nothing
+              ∎
 
-        r : (hub (ℤ→ℕ n) λ z → ∣ fst z ∣) ≡ ∣ true ∣
-        r = ⊕≡Inj[] χ _ _ q
+          r : (hub {S = oDefd χ} (ℤ→ℕ n) λ z → ∣ fst z ∣) ≡ ∣ true ∣
+          r = ⊕≡Inj[] χ _ _ q
 
-        s : (z : χ (ℤ→ℕ n) ↓) → fst z ≡ true
-        s z = separatedBool _ _ (∇→¬¬ (erase χ separatedBool (∣∣-inj (λ m → (oDefd χ m) , (∇defd-prop separatedBool (χ m))) _ _ (sym (spoke _ (λ z → ∣ fst z ∣) z) ∙ r))))
+          s : (z : χ (ℤ→ℕ n) ↓) → fst z ≡ true
+          s z = separatedBool _ _ (∇→¬¬ (erase χ separatedBool (∣∣-inj (λ m → (oDefd χ m) , (∇defd-prop separatedBool (χ m))) _ _ (sym (spoke _ (λ z → ∣ fst z ∣) z) ∙ r))))
 
-    χPaths≡Lemma⊥₀ : χℤ n ↓= false → (m : Maybe ℤ) → ((χPaths⊥ (τ n m)) ≡ χPaths⊥ m)
-    χPaths≡Lemma⊥₀ u nothing = cong (⊕≡[] χ) (spoke (ℤ→ℕ n) _ (false , u))
-    χPaths≡Lemma⊥₀ u (just m) with (discreteℤ n m)
-    ... | yes p = cong (⊕≡[] χ) (sym (spoke (ℤ→ℕ m) _ (false , subst (λ m → χ (ℤ→ℕ m) ↓= false) p u)))
-    ... | no ¬p = refl
+      χPaths≡Lemma⊥₀ : χℤ n ↓= false → (m : Maybe ℤ) → ((χPaths⊥ (τ n m)) ≡ χPaths⊥ m)
+      χPaths≡Lemma⊥₀ u nothing = cong (⊕≡[] χ) (spoke (ℤ→ℕ n) _ (false , u))
+      χPaths≡Lemma⊥₀ u (just m) with (discreteℤ n m)
+      ... | yes p = cong (⊕≡[] χ) (sym (spoke (ℤ→ℕ m) _ (false , subst (λ m → χ (ℤ→ℕ m) ↓= false) p u)))
+      ... | no ¬p = refl
 
-    χPaths≡Lemma⊥₁ : χℤ n ↓= false → (m : Maybe ℤ) → (χPaths⊥' (transport τχ≡ ∣ m ∣) ≡ χPaths⊥' ∣ m ∣)
-    χPaths≡Lemma⊥₁ u m =
-      χPaths⊥' (transport τχ≡ ∣ m ∣)
-        ≡⟨ (λ i → χPaths⊥' (uaβ (isoToEquiv τχIso) ∣ m ∣ i)) ⟩
-      χPaths⊥' (τχ ∣ m ∣)
-        ≡⟨⟩
-      χPaths⊥ (τ n m )
-        ≡⟨ χPaths≡Lemma⊥₀ u m ⟩
-      χPaths⊥ m
-        ≡⟨⟩
-      χPaths⊥' ∣ m ∣
-        ∎
+      χPaths≡Lemma⊥₁ : χℤ n ↓= false → (m : Maybe ℤ) → (χPaths⊥' (transport τχ≡ ∣ m ∣) ≡ χPaths⊥' ∣ m ∣)
+      χPaths≡Lemma⊥₁ u m =
+        χPaths⊥' (transport τχ≡ ∣ m ∣)
+          ≡⟨ (λ i → χPaths⊥' (uaβ (isoToEquiv τχIso) ∣ m ∣ i)) ⟩
+        χPaths⊥' (τχ ∣ m ∣)
+          ≡⟨⟩
+        χPaths⊥ (τ n m )
+          ≡⟨ χPaths≡Lemma⊥₀ u m ⟩
+        χPaths⊥ m
+          ≡⟨⟩
+        χPaths⊥' ∣ m ∣
+          ∎
 
-    χPaths≡Lemma⊥₂ : χℤ n ↓= false → (χPaths⊥' ∘ (transport τχ≡) ≡ χPaths⊥')
-    χPaths≡Lemma⊥₂ u = funExt (nullElim (λ _ → isNull≡ (subst (isNull _) (ua (cong fst , isEmbeddingFstΣProp λ _ → isPropΠ (λ _ → isPropIsPathSplitEquiv _) )) (isNull≡ (Type◯-Null (λ n → (χ n ↓) , (∇defd-prop (Discrete→Separated discreteBool) (χ n) ) ) ) {x = (◯[ χ ] Bool) , isNull-Null _} {y = (◯[ χ ] Bool) , (isNull-Null _)}))) (χPaths≡Lemma⊥₁ u))
+      χPaths≡Lemma⊥₂ : χℤ n ↓= false → (χPaths⊥' ∘ (transport τχ≡) ≡ χPaths⊥')
+      χPaths≡Lemma⊥₂ u = funExt (nullElim (λ _ → isNull≡ (subst (isNull _) (ua (cong fst , isEmbeddingFstΣProp λ _ → isPropΠ (λ _ → isPropIsPathSplitEquiv _) )) (isNull≡ (Type◯-Null (λ n → (χ n ↓) , (∇defd-prop (Discrete→Separated discreteBool) (χ n) ) ) ) {x = (◯[ χ ] Bool) , isNull-Null _} {y = (◯[ χ ] Bool) , (isNull-Null _)}))) (χPaths≡Lemma⊥₁ u))
 
-    χPaths≡Lemma⊥ : ¬ (χPaths⊥' ∘ (transport τχ≡) ≡ χPaths⊥') → χℤ n ↓= true
-    χPaths≡Lemma⊥ np = Ω¬¬-stab _ (λ nu → np (χPaths≡Lemma⊥₂ (Ω¬¬-stab _ (λ nv → ∇.almost-inh (χℤ n) (λ {(true , u) → nu u ; (false , v) → nv v})))))
+      χPaths≡Lemma⊥ : ¬ (χPaths⊥' ∘ (transport τχ≡) ≡ χPaths⊥') → χℤ n ↓= true
+      χPaths≡Lemma⊥ np = Ω¬¬-stab _ (λ nu → np (χPaths≡Lemma⊥₂ (Ω¬¬-stab _ (λ nv → ∇.almost-inh (χℤ n) (λ {(true , u) → nu u ; (false , v) → nv v})))))
 
-    χPaths≡Converse⊥ : (χPaths⊥' ∘ (transport τχ≡) ≡ χPaths⊥') → χℤ n ↓= false
-    χPaths≡Converse⊥ p = Ω¬¬-stab _ (¬¬-map (λ z → subst (λ b → χℤ n ↓= b) (s z) (snd z)) (∇.almost-inh (χℤ n)))
-      where
-        q : χPaths⊥ (just n) ≡ χPaths⊥ nothing
-        q =
-          χPaths⊥ (just n)
-            ≡⟨⟩
-          χPaths⊥' ∣ just n ∣
-            ≡⟨⟩
-          χPaths⊥' (τχ ∣ nothing ∣)
-            ≡⟨⟩
-          χPaths⊥' (transport τχ≡ ∣ nothing ∣)
-            ≡⟨ funExt⁻ p ∣ nothing ∣ ⟩
-          χPaths⊥' ∣ nothing ∣
-            ≡⟨⟩
-          χPaths⊥ nothing
-            ∎
+      χPaths≡Converse⊥ : (χPaths⊥' ∘ (transport τχ≡) ≡ χPaths⊥') → χℤ n ↓= false
+      χPaths≡Converse⊥ p = Ω¬¬-stab _ (¬¬-map (λ z → subst (λ b → χℤ n ↓= b) (s z) (snd z)) (∇.almost-inh (χℤ n)))
+        where
+          q : χPaths⊥ (just n) ≡ χPaths⊥ nothing
+          q =
+            χPaths⊥ (just n)
+              ≡⟨⟩
+            χPaths⊥' ∣ just n ∣
+              ≡⟨⟩
+            χPaths⊥' (τχ ∣ nothing ∣)
+              ≡⟨⟩
+            χPaths⊥' (transport τχ≡ ∣ nothing ∣)
+              ≡⟨ funExt⁻ p ∣ nothing ∣ ⟩
+            χPaths⊥' ∣ nothing ∣
+              ≡⟨⟩
+            χPaths⊥ nothing
+              ∎
 
-        r : (hub (ℤ→ℕ n) λ z → ∣ fst z ∣) ≡ ∣ false ∣
-        r = ⊕≡Inj[] χ _ _ q
+          r : (hub {S = oDefd χ} (ℤ→ℕ n) λ z → ∣ fst z ∣) ≡ ∣ false ∣
+          r = ⊕≡Inj[] χ _ _ q
 
-        s : (z : χ (ℤ→ℕ n) ↓) → fst z ≡ false
-        s z = separatedBool _ _ (∇→¬¬ (erase χ separatedBool (∣∣-inj (λ m → (oDefd χ m) , (∇defd-prop separatedBool (χ m))) _ _ (sym (spoke _ (λ z → ∣ fst z ∣) z) ∙ r))))
+          s : (z : χ (ℤ→ℕ n) ↓) → fst z ≡ false
+          s z = separatedBool _ _ (∇→¬¬ (erase χ separatedBool (∣∣-inj (λ m → (oDefd χ m) , (∇defd-prop separatedBool (χ m))) _ _ (sym (spoke _ (λ z → ∣ fst z ∣) z) ∙ r))))
 
   module _ (θ : ∇ G → ∇ G') (isEquivθ : isEquiv θ)
     (preservesComp : (α β γ : ∇ G) → θ (∇dComp α β γ) ≡ ∇dComp (θ α) (θ β) (θ γ)) where
 
-    compDefd : (α β γ : ∇ G) → (θ α ↓) → (θ β ↓) → (θ γ ↓) → θ (∇dComp α β γ) ↓
-    compDefd α β γ (a , u) (b , v) (c , w) =
-      subst (λ x → x ↓) (sym (preservesComp α β γ))
-            ((a ∙∙ b ∙∙ c) , (¬¬resize-in ((a , u) , ((b , v) , ((c , w) , refl)))))
+    abstract
+      compDefd : (α β γ : ∇ G) → (θ α ↓) → (θ β ↓) → (θ γ ↓) → θ (∇dComp α β γ) ↓
+      compDefd α β γ (a , u) (b , v) (c , w) =
+        subst (λ x → x ↓) (sym (preservesComp α β γ))
+              ((a ∙∙ b ∙∙ c) , (¬¬resize-in ((a , u) , ((b , v) , ((c , w) , refl)))))
 
-    private
+    private abstract
       getPath : (p p' : ◯[ χ ] ℤ∗ → ◯[ χ ] Bool ≡ ◯[ χ ] Bool) →
                 θ (∇-in (cong (D ∘ F (◯[ χ ] ℤ∗)) (funExt p))) ≡ θ (∇-in (cong (D ∘ F (◯[ χ ] ℤ∗)) (funExt p'))) →
                 p ≡ p'
@@ -342,16 +345,17 @@ module _ (χ χ' : Oracle ℕ Bool) where
                           (θ (∇-in (cong (D ∘ F (◯[ χ ] ℤ∗)) (funExt (χPaths⊤' ∘ transport (τχ≡ n))))) ↓) →
                           (θ (∇-in (cong (D ∘ F (◯[ χ ] ℤ∗)) (funExt χPaths⊥'))) ↓) →
                           (θ (∇-in (cong (D ∘ F (◯[ χ ] ℤ∗)) (funExt (χPaths⊥' ∘ transport (τχ≡ n))))) ↓) → ◯[ χ' ] (χℤ n ↓)
-    χPathDefd n (top , ut) (toptau , utt) (bot , bt) (bottau , btt) = map[ χ' ] (⊎rec (λ p → false , (χPaths≡Lemma⊤ n (λ q → p (lemma⊤2 (sym q))))) (λ p → true , (χPaths≡Lemma⊥ n (λ q → p (lemma⊥2 (sym q)))))) cases
+    χPathDefd n (top , ut) (toptau , utt) (bot , bt) (bottau , btt) =
+      map[ χ' ] (⊎rec (λ p → false , (χPaths≡Lemma⊤ n (λ q → p (lemma⊤2 (sym q))))) (λ p → true , (χPaths≡Lemma⊥ n (λ q → p (lemma⊥2 (sym q)))))) cases
       where
         lemma⊤ : top ≡ toptau → (χPaths⊤' ≡ χPaths⊤' ∘ transport (τχ≡ n))
-        lemma⊤ p = getPath _ _ (∇∩→≡ _ _ _ (subst _ p ut) utt)
+        lemma⊤ p = getPath χPaths⊤' (χPaths⊤' ∘ transport (τχ≡ n)) (∇-defd→path _ top ut ∙ cong ∇-in p ∙ sym (∇-defd→path _ toptau utt))
 
         lemma⊤2 : (χPaths⊤' ≡ χPaths⊤' ∘ transport (τχ≡ n)) → top ≡ toptau
         lemma⊤2 p = separatedG' top toptau (∇.well-defd (θ (∇-in (cong (D ∘ F (◯[ χ ] ℤ∗)) (funExt (χPaths⊤' ∘ transport (τχ≡ n)))))) top toptau (subst (λ f → θ (∇-in (cong (D ∘ F (◯[ χ ] ℤ∗)) (funExt f))) ↓= top) p ut) utt)
 
         lemma⊥ : bot ≡ bottau → (χPaths⊥' ≡ χPaths⊥' ∘ transport (τχ≡ n))
-        lemma⊥ p = getPath _ _ (∇∩→≡ _ _ _ (subst _ p bt) btt)
+        lemma⊥ p = getPath _ _ (∇-defd→path _ bot bt ∙∙ cong ∇-in p ∙∙ sym (∇-defd→path _ bottau btt))
 
         lemma⊥2 : (χPaths⊥' ≡ χPaths⊥' ∘ transport (τχ≡ n)) → bot ≡ bottau
         lemma⊥2 p = separatedG' bot bottau (∇.well-defd (θ (∇-in (cong (D ∘ F (◯[ χ ] ℤ∗)) (funExt (χPaths⊥' ∘ transport (τχ≡ n)))))) bot bottau (subst (λ f → θ (∇-in (cong (D ∘ F (◯[ χ ] ℤ∗)) (funExt f))) ↓= bot) p bt) btt)
