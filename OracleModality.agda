@@ -40,7 +40,7 @@ module _ (χ : Oracle A B) where
     mp-inst : ∇ ℕ → Type _
     mp-inst N = ((n : ℕ) → ◯[ χ ] (Dec ⟨ N is n ⟩)) → ◯[ χ ] (N ↓)
 
-  -- Key lemma for relativised Markov's principle. See first part of proof of Theorem 3.27
+  -- Key lemma for relativised Markov's principle. See first part of proof of Theorem 5.5
   rel-markov : (N : ∇ ℕ) → mp-inst N
   rel-markov = markov-ind mp-inst step
     where
@@ -200,7 +200,7 @@ simulate sB e = nullRec (TReducible→isNull sB e) ∣_∣
           χ ≤T χ' → χ' ≤T χ'' → χ ≤T χ''
 ≤TTrans sB (Tred e) f = Tred (λ a → simulate sB f (e a))
 
-{- Compute a function from its graph. Theorem V.2 in paper. -}
+{- Compute a function from its graph. Theorem 5.13 in paper. -}
 module _ (χ : ℕ × ℕ → ∇ Bool) (uniq : (a : ℕ) → (b b' : ℕ) → ⟨ χ (a , b) ⟩ → ⟨ χ (a , b') ⟩ → ¬ ¬ b ≡ b')
   (defd : (a : ℕ) → ¬ ¬ (Σ[ b ∈ ℕ ] ⟨ χ (a , b) ⟩)) where
 
@@ -220,7 +220,7 @@ module _ (χ : ℕ × ℕ → ∇ Bool) (uniq : (a : ℕ) → (b b' : ℕ) → �
           where (true , z) → ∣ yes z ∣
         ∣ no (λ w → ∇.well-defd (χ (a , b)) false true z w false≢true) ∣
 
-{- Compute inverse of a surjective function. Variant of Theorem V.3 from paper. -}
+{- Compute inverse of a surjective function. Variant of Theorem 5.14 from paper. -}
 module invert (χ : ℕ → ∇ ℕ) (surj : (m : ℕ) → ¬ ¬ (Σ[ n ∈ ℕ ] ⟨ ∇.is-this (χ n) m ⟩)) where
   compute-inverse : (n : ℕ) → ◯[ χ ] (Σ[ m ∈ ℕ ] ⟨ ∇.is-this (χ m) n ⟩)
   compute-inverse n = search χ (λ m → ⟨ ∇.is-this (χ m) n ⟩) (surj n) (dec n)
