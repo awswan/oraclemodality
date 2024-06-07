@@ -36,4 +36,4 @@ The main directory contains the following files:
 
 ## Installation
 
-We use cubical mode Agda and the cubical Agda library. We need version v0.7 of the [cubical library](https://github.com/agda/cubical) (currently in development, available on github), which requires Agda 2.6.4 or later [Agda](https://agda.readthedocs.io/en/v2.6.4/). The library needs to be in the Agda search path, as described at https://agda.readthedocs.io/en/v2.6.4.3/tools/package-system.html. These files have been tested and type check correctly with Agda 2.6.4.3 and cubical v0.7.
+We use cubical mode Agda and the cubical Agda library. We need version v0.7 of the [cubical library](https://github.com/agda/cubical) (currently in development, available on github), which requires [Agda](https://agda.readthedocs.io/en/v2.6.4/) 2.6.4 or later. The library needs to be in the Agda search path, as described at https://agda.readthedocs.io/en/v2.6.4.3/tools/package-system.html. These files have been tested and type check correctly with Agda 2.6.4.3 and cubical v0.7.
