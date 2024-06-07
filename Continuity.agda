@@ -1,8 +1,8 @@
 open import Includes
 
 open import OracleModality
-open import RelativisedCT
-open import Axioms.ChurchsThesis
+open import RelativisedCC
+open import Axioms.ComputableChoice
 open import Axioms.NegativeResizing
 
 

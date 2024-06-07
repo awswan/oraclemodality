@@ -2,11 +2,11 @@ open import Includes
 
 open import OracleModality
 open import DoubleNegationSheaves
-open import RelativisedCT
+open import RelativisedCC
 
 open import Cubical.Functions.Embedding
 
-open import Axioms.ChurchsThesis
+open import Axioms.ComputableChoice
 open import Axioms.NegativeResizing
 
 open import Util.DoubleNegation

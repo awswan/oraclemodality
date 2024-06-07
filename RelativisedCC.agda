@@ -1,4 +1,4 @@
-module RelativisedCT where
+module RelativisedCC where
 
 open import Includes
 
@@ -6,7 +6,7 @@ open import Cubical.Functions.Surjection
 open import Cubical.Data.List hiding ([_] ; rec)
 
 open import Axioms.NegativeResizing
-open import Axioms.ChurchsThesis
+open import Axioms.ComputableChoice
 
 open import Util.PartialElements
 open import Util.StablePartial

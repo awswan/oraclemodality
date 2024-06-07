@@ -1,4 +1,4 @@
-module Axioms.ChurchsThesis where
+module Axioms.ComputableChoice where
 
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude

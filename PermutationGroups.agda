@@ -30,7 +30,7 @@ open import Util.Encodings
 open import OracleModality
 open import ParallelSearch
 
-module HomotopyGroup where
+module PermutationGroups where
 
 π₀ : (Oracle ℕ Bool) → Type₁
 π₀ χ = (◯[ χ ] ℕ) ≡ (◯[ χ ] ℕ)
